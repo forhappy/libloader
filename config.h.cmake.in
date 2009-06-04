@@ -1,0 +1,16 @@
+#cmakedefine HAVE_MALLOC_H	1
+#cmakedefine HAVE_ALLOCA_H	1
+#cmakedefine HAVE_ALLOCA	1
+#cmakedefine HAVE_ATEXIT	1
+#cmakedefine HAVE_SIGACTION	1
+#cmakedefine HAVE_EXECINFO_H	1
+#cmakedefine HAVE_BACKTRACE	1
+#cmakedefine HAVE_MALLOC_STATS	1
+#cmakedefine HAVE_STDBOOL_H	1
+#cmakedefine HAVE_SETJMP_H	1
+#cmakedefine HAVE_CLOCK_GETTIME	1
+
+#ifdef NDEBUG
+# define CURRF2_DEBUG_OFF
+#endif
+
