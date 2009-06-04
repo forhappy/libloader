@@ -2,25 +2,45 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
 PROJECT(CURRF2)
 
-SET(CMAKE_C_FLAGS "-Wall -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64")
+SET(CMAKE_C_FLAGS "-std=gnu99 -Wall -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64")
 SET(CMAKE_C_FLAGS_DEBUG "-g -O0")
 SET(CMAKE_C_FLAGS_RELEASE "-O2 -DNDEBUG")
 
 INCLUDE_DIRECTORIES(${CURRF2_BINARY_DIR}
 	${CURRF2_SOURCE_DIR})
 
-SET(COMMON defs.h debug.c debug.h)
+SET(COMMON
+	defs.h
+	debug.c
+	debug.h
+	exception.c
+	exception.h)
+
+SET(PTRACE
+	ptraceutils.h
+	ptraceutils.c
+	)
+
+SET(ELF
+	elfutils.c
+	elfutils.h
+	)
 
 ADD_EXECUTABLE(target
 	target.c
 )
 
 ADD_EXECUTABLE(test_elf
-	test_elf.c
-	elfutils.c
-	elfutils.h
 	${COMMON}
+	test_elf.c
+	${ELF}
 	)
+
+ADD_EXECUTABLE(test_ptrace
+	test_ptrace.c
+	${PTRACE}
+	)
+
 
 
 INCLUDE(CMakeDependentOption)

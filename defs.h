@@ -4,6 +4,7 @@
 #define DEFS_H
 #include <config.h>
 #include <sys/cdefs.h>
+#include <stddef.h>
 #include <stdint.h>
 
 #ifdef HAVE_STDBOOL_H
