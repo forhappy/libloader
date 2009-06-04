@@ -157,7 +157,14 @@ throw_exception (enum exception_level level,
 		/* We are not in a catch block. do all cleanup then
 		 * quit */
 		WARNING(SYSTEM, "throw exception out of a catcher block\n");
-		WARNING(SYSTEM, "exception message: %s\n", message);
+		struct exception tmp;
+		tmp.level = level;
+		tmp.message = message;
+		tmp.val = val;
+		tmp.file = file;
+		tmp.func = func;
+		tmp.line = line;
+		print_exception(WARNING, SYSTEM, tmp);
 		do_cleanup();
 		exit(-1);
 	}

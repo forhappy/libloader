@@ -26,22 +26,37 @@ SET(ELF
 	elfutils.h
 	)
 
+SET(PROC
+	procutils.h
+	procutils.c
+	)
+
+
 ADD_EXECUTABLE(target
 	target.c
 )
 
 ADD_EXECUTABLE(test_elf
 	${COMMON}
-	test_elf.c
 	${ELF}
+	test_elf.c
 	)
 
 ADD_EXECUTABLE(test_ptrace
-	test_ptrace.c
 	${PTRACE}
+	${COMMON}
+	test_ptrace.c
 	)
 
+ADD_EXECUTABLE(test_proc
+	${PROC}
+	${COMMON}
+	)
 
+SET_TARGET_PROPERTIES(test_proc
+	PROPERTIES
+	COMPILE_FLAGS "-DTEST_PROCUTILS"
+	)
 
 INCLUDE(CMakeDependentOption)
 INCLUDE(CheckIncludeFiles)
