@@ -115,6 +115,7 @@ extern void __bug_on(const char * __assertion, const char * __file,
 #ifndef CURRF2_DEBUG_OFF
 /* memory leak detection */
 extern void * __wrap_malloc(size_t size);
+extern void * __wrap_realloc(void * ptr, size_t size);
 extern void __wrap_free(void * ptr);
 extern char * __wrap_strdup(const char * S);
 extern void * __wrap_calloc(size_t count, size_t eltsize);
@@ -124,6 +125,12 @@ extern void show_mem_info();
 #  undef malloc
 # endif
 # define malloc(s)	__wrap_malloc(s)
+
+# ifdef realloc
+#  undef realloc
+# endif
+# define realloc(p, s)	__wrap_realloc(p, s)
+
 
 # ifdef free
 #  undef free

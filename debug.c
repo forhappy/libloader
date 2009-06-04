@@ -366,6 +366,19 @@ char * __wrap_strdup(const char * S)
 	return res;
 }
 
+void * __wrap_realloc(void * ptr, size_t newsize)
+{
+	void * res;
+	res = realloc(ptr, newsize);
+	assert(res != NULL);
+	MEM_TRACE("realloc %p with new size %d, res=%p\n",
+			ptr, newsize, res);
+	if (ptr == NULL) {
+		malloc_times ++;
+	}
+	return res;
+}
+
 #ifdef CURRF2_DEBUG_OFF
 static void
 vmessage_out(int prefix, enum debug_level l, enum debug_component c, char * fmt, va_list ap)

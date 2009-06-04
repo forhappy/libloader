@@ -70,6 +70,9 @@ int main(int argc, char * argv[])
 
 
 		struct elf_handler * handler = elf_init(image, 0);
+		uintptr_t main_addr;
+		main_addr = elf_get_symbol_address(handler, "main");
+		VERBOSE(SYSTEM, "Address of main: 0x%x\n", main_addr);
 
 		elf_cleanup(handler);
 

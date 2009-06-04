@@ -38,7 +38,7 @@ struct elf_handler {
 	struct elf32_shdr	** symtabs;
 	const char			** strtabs;
 	int nr_symtabs;
-	ptrdiff_t load_biad;
+	ptrdiff_t load_bias;
 };
 
 struct elf_handler *
@@ -69,22 +69,70 @@ elf_init(uint8_t * image, ptrdiff_t load_bias)
 	newh->phdr_table = phdr_table;
 	newh->shdr_table = shdr_table;
 	newh->snames = snames;
+	newh->load_bias = load_bias;
 
 	/* iterator over sections */
+	struct elf32_shdr ** symtabs = NULL;
+	const char ** strtabs = NULL;
+	int nr_symtabs = 0;	
 	for (int i = 0; i < hdr->e_shnum; i++) {
-		TRACE(ELF, "section [%02d]: %s\n",
-				i, snames + shdr_table[i].sh_name);
+		if (shdr_table[i].sh_type == SHT_SYMTAB) {
+			nr_symtabs ++;
+
+			symtabs = realloc(symtabs, nr_symtabs * (sizeof(*symtabs)));
+			symtabs[nr_symtabs - 1] = shdr_table + i;
+
+			strtabs = realloc(strtabs, nr_symtabs * (sizeof(*strtabs)));
+			int no_strtab = shdr_table[i].sh_link;
+			strtabs[nr_symtabs - 1] = (const char *)(image + shdr_table[no_strtab].sh_offset);
+			TRACE(ELF, "section [%d] is a symtab, corresponding strtab is section [%02d]\n",
+					i, no_strtab);
+		}
 	}
-	return NULL;
+
+	newh->symtabs = symtabs;
+	newh->strtabs = strtabs;
+	newh->nr_symtabs = nr_symtabs;
+
+	return newh;
 }
 
 void
 elf_cleanup(struct elf_handler * h)
 {
+	if (h->symtabs != NULL)
+		free(h->symtabs);
+	if (h->strtabs != NULL)
+		free(h->strtabs);
 	free(h);
 	return;
 }
 
+uintptr_t
+elf_get_symbol_address(struct elf_handler * h,
+		const char * sym)
+{
+	/* for each symtabs */
+	for (int i = 0; i < h->nr_symtabs; i++) {
+		struct elf32_shdr * sh = h->symtabs[i];
+		int nr_entries = sh->sh_size / sh->sh_entsize;
+		const char * strtab = h->strtabs[i];
+		/* for each symbol */
+		struct elf32_sym * syms = (struct elf32_sym*)
+				(h->image + sh->sh_offset);
+		for (int i = 0; i < nr_entries; i++) {
+			const char * name = strtab + syms[i].st_name;
+			uintptr_t value = syms[i].st_value;
+			if (strcmp(sym, name) == 0) {
+				/* found symbol */
+				if (value == 0)
+					return 0;
+				return value + h->load_bias;
+			}
+		}
+	}
+	return 0;
+}
 
 // vim:ts=4:sw=4
 
