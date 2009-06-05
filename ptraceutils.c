@@ -20,6 +20,19 @@
 
 static pid_t child_pid = -1;
 
+static void
+ptrace_cleanup(struct cleanup * _s)
+{
+	remove_cleanup(_s);
+	/* At least, kill the child process */
+	ptrace(PTRACE_KILL, child_pid, NULL, NULL);
+	child_pid = -1;
+}
+
+static struct cleanup pt_clup_s = {
+	.function = ptrace_cleanup,
+};
+
 /* wait for the chld, and check whether it is exited*/
 static void
 wait_and_check(void)
@@ -29,6 +42,7 @@ wait_and_check(void)
 	/* Check for siginfo */
 	if (si.si_code != CLD_STOPPED) {
 		ptrace(PTRACE_KILL, child_pid, NULL, NULL);
+		child_pid = -1;
 		THROW(EXCEPTION_FATAL, "Child process %d has stopped or been killed", child_pid);
 	}
 	return;
@@ -63,7 +77,28 @@ ptrace_execve(const char * filename,
 	}
 
 	/* in father process */
+	make_cleanup(&pt_clup_s);
 	wait_and_check();
+	return;
+}
+
+void
+ptrace_dupmem(void * dst, uintptr_t addr, int len)
+{
+	assert(child_pid != -1);
+	assert(addr % 4 != 0);
+	assert(len % 4 != 0);
+
+	int i;
+	for (i = 0; i < len; i += 4) {
+		long val;
+		val = ptrace(PTRACE_PEEKDATA, child_pid, addr + i, NULL);
+		if ((val == -1) && (errno != 0)) {
+			THROW(EXCEPTION_FATAL, "ptrace peek data failed: %s",
+					strerror(errno));
+		}
+		*((uint32_t*)(dst + i)) = val;
+	}
 	return;
 }
 
