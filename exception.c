@@ -10,6 +10,8 @@
 #include "exception.h"
 #include "debug.h"
 #include "list.h"
+#include <stdarg.h>
+#include <stdio.h>
 
 static LIST_HEAD(default_cleanup_chain);
 static struct list_head * current_cleanup_chain = &default_cleanup_chain;
@@ -104,7 +106,8 @@ exceptions_state_mc_init(
 		return_mask mask)
 {
 	exception->level = EXCEPTION_NO_ERROR;
-	exception->message = NULL;
+	memset((void*)(exception->message),
+			'\0', EXCEPTION_MSG_MAXLEN);
 	exception->val = 0;
 	exception->func = "";
 	exception->file = "";
@@ -148,18 +151,26 @@ print_exception(enum debug_level l, enum debug_component c,
 }
 
 
-NORETURN void
+NORETURN ATTR(format(printf, 6, 7)) void
 throw_exception (enum exception_level level,
-		const char * message, uintptr_t val,
-		const char * file, const char * func, int line)
+		uintptr_t val,
+		const char * file, const char * func, int line,
+		const char * fmt, ...)
 {
+	va_list ap;
+
 	if (current_catcher == NULL) {
 		/* We are not in a catch block. do all cleanup then
 		 * quit */
 		WARNING(SYSTEM, "throw exception out of a catcher block\n");
 		struct exception tmp;
 		tmp.level = level;
-		tmp.message = message;
+
+		va_start(ap, fmt);
+		vsnprintf((tmp.message),
+				sizeof(tmp.message),
+				fmt, ap);
+		va_end(ap);
 		tmp.val = val;
 		tmp.file = file;
 		tmp.func = func;
@@ -175,7 +186,13 @@ throw_exception (enum exception_level level,
 	 * the cleanup_chain will be restored.*/
 
 	current_catcher->exception->level = level;
-	current_catcher->exception->message = message;
+
+	va_start(ap, fmt);
+	vsnprintf((char*)&(current_catcher->exception->message),
+			EXCEPTION_MSG_MAXLEN,
+			fmt, ap);
+	va_end(ap);
+
 	current_catcher->exception->val = val;
 	current_catcher->exception->file = file;
 	current_catcher->exception->func = func;

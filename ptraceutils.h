@@ -14,13 +14,13 @@
 __BEGIN_DECLS
 
 extern void
-ptrace_execve(const char * filename);
+ptrace_execve(const char * filename, char ** argv);
 
 extern void
-ptrace_dupmem(uint8_t * dst, uintptr_t addr, int len);
+ptrace_dupmem(void * dst, uintptr_t addr, int len);
 
 extern void
-ptrace_updmem(uint8_t * dst, uintptr_t addr, int len);
+ptrace_updmem(void * src, uintptr_t addr, int len);
 
 extern void
 ptrace_callfunc(uintptr_t addr, int nr_args, ...);

@@ -26,6 +26,7 @@ enum debug_component {
 	SYSTEM,
 	MEMORY,
 	ELF,
+	PTRACE,
 	NR_COMPONENTS
 };
 
@@ -35,12 +36,14 @@ static const char * debug_comp_name[NR_COMPONENTS] = {
 	[SYSTEM] = "SYS ",
 	[MEMORY] = "MEM ",
 	[ELF]    = "ELF ",
+	[PTRACE] = "PTRACE ",
 };
 
 static enum debug_level debug_levels[NR_COMPONENTS] = {
 	[MEMORY] = WARNING,
 	[SYSTEM] = TRACE,
 	[ELF]    = TRACE,
+	[PTRACE] = TRACE,
 };
 #endif
 

@@ -26,7 +26,14 @@ extern uintptr_t
 elf_get_symbol_address(struct elf_handler * h,
 		const char * sym);
 
+enum elf_file_type {
+	ELF_DYN,
+	ELF_EXEC,
+	ELF_NOSUPPORT,
+};
 
+extern  enum elf_file_type
+elf_get_image_type(struct elf_handler * h);
 
 #endif
 
