@@ -14,7 +14,9 @@ SET(COMMON
 	debug.c
 	debug.h
 	exception.c
-	exception.h)
+	exception.h
+	utils.c
+	utils.h)
 
 SET(PTRACE
 	ptraceutils.h
@@ -30,7 +32,20 @@ SET(PROC
 	procutils.h
 	procutils.c
 	)
+SET(UTILS
+	utils.c
+	utils.h
+	)
 
+
+ADD_EXECUTABLE(test_utils
+	${UTILS}
+	${COMMON}
+	)
+SET_TARGET_PROPERTIES(test_utils
+	PROPERTIES
+	COMPILE_FLAGS "-DTEST_UTILS"
+	)
 
 ADD_EXECUTABLE(target
 	target.c

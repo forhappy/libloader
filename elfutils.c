@@ -134,5 +134,21 @@ elf_get_symbol_address(struct elf_handler * h,
 	return 0;
 }
 
+extern  enum elf_file_type
+elf_get_image_type(struct elf_handler * h)
+{
+	switch (h->hdr->e_type) {
+		case ET_EXEC:
+			return ELF_EXEC;
+		case ET_DYN:
+			return ELF_DYN;
+		default:
+			THROW(EXCEPTION_FATAL, "doesn't support image type 0x%x",
+					h->hdr->e_type);
+			return ELF_NOSUPPORT;
+	}
+}
+
+
 // vim:ts=4:sw=4
 
