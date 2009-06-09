@@ -59,24 +59,28 @@ proc_get_range(pid_t pid, const char * filename,
 {
 	/* first, mmap the file into myself's memory space
 	 * to get the precise name of it */
-	int fd;
-	fd = open(filename, O_RDONLY);
-	if (fd < 0)
-		THROW(EXCEPTION_FATAL, "Open file failed");
-	void * addr = NULL;
-	addr = mmap(NULL, 4096, PROT_READ, MAP_PRIVATE, fd, 0);
-	close(fd);
-
-	if (addr == NULL)
-		THROW(EXCEPTION_FATAL, "file is not mappable");
-
-	/* second: get the real filename */
 	char fullname[256];
-	const char * perr;
-	perr = proc_get_file(getpid(), (uintptr_t)addr, fullname, 256);
-	munmap(addr, 4096);
-	if (perr == NULL)
-		THROW(EXCEPTION_FATAL, "can't get the full name of the file");
+	if (filename[0] != '[') {
+		int fd;
+		fd = open(filename, O_RDONLY);
+		if (fd < 0)
+			THROW(EXCEPTION_FATAL, "Open file failed");
+		void * addr = NULL;
+		addr = mmap(NULL, 4096, PROT_READ, MAP_PRIVATE, fd, 0);
+		close(fd);
+
+		if (addr == NULL)
+			THROW(EXCEPTION_FATAL, "file is not mappable");
+
+		/* second: get the real filename */
+		const char * perr;
+		perr = proc_get_file(getpid(), (uintptr_t)addr, fullname, 256);
+		munmap(addr, 4096);
+		if (perr == NULL)
+			THROW(EXCEPTION_FATAL, "can't get the full name of the file");
+	} else {
+		strncpy(fullname, filename, 256);
+	}
 
 	/* match the filename */
 	FILE * fp;
@@ -121,6 +125,8 @@ int main()
 
 	uintptr_t s, e;
 	proc_get_range(getpid(), "./test_proc", &s, &e);
+	printf("0x%x, 0x%x\n", s, e);
+	proc_get_range(getpid(), "[stack]", &s, &e);
 	printf("0x%x, 0x%x\n", s, e);
 	do_cleanup();
 	return 0;

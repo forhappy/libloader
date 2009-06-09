@@ -39,7 +39,6 @@ SET(UTILS
 
 
 ADD_EXECUTABLE(test_utils
-	${UTILS}
 	${COMMON}
 	)
 SET_TARGET_PROPERTIES(test_utils

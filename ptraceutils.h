@@ -29,6 +29,12 @@ ptrace_callfunc(uintptr_t addr, int nr_args, ...);
 extern void
 ptrace_insert_bkpt(uintptr_t addr);
 
+extern void
+ptrace_kill(void);
+
+extern void
+ptrace_detach(bool_t wait);
+
 __END_DECLS
 #endif
 

@@ -38,12 +38,18 @@ static void
 wait_and_check(void)
 {
 	siginfo_t si;
-	waitid(P_PID, child_pid, &si, WEXITED | WSTOPPED);
+	int err;
+	err = waitid(P_PID, child_pid, &si, WEXITED | WSTOPPED);
+	if (err < 0) {
+		THROW(EXCEPTION_FATAL, "wait failed");
+	}
 	/* Check for siginfo */
-	if (si.si_code != CLD_STOPPED) {
+	if (si.si_code != CLD_TRAPPED) {
+		int old_pid = child_pid;
 		ptrace(PTRACE_KILL, child_pid, NULL, NULL);
 		child_pid = -1;
-		THROW(EXCEPTION_FATAL, "Child process %d has stopped or been killed", child_pid);
+		THROW(EXCEPTION_FATAL, "Child process %d has stopped or been killed (%d)", old_pid,
+				si.si_code);
 	}
 	return;
 }
@@ -98,6 +104,35 @@ ptrace_dupmem(void * dst, uintptr_t addr, int len)
 					strerror(errno));
 		}
 		*((uint32_t*)(dst + i)) = val;
+	}
+	return;
+}
+
+void
+ptrace_kill(void)
+{
+	ptrace_cleanup(&pt_clup_s);
+}
+
+void
+ptrace_detach(bool_t wait)
+{
+	int err;
+	pid_t old_pid = child_pid;
+	err = ptrace(PTRACE_DETACH, child_pid, NULL, NULL);
+	if (err != 0)
+		THROW(EXCEPTION_FATAL, "cannot detach: %s", strerror(errno));
+	remove_cleanup(&pt_clup_s);
+	/* wait for the process */
+	if (!wait)
+		return;
+
+	siginfo_t si;
+	err = waitid(P_PID, old_pid, &si, WEXITED);
+	if (err == -1) {
+		ERROR(PTRACE, "wait error: %s\n", strerror(errno));
+	} else {
+		TRACE(PTRACE, "target process finished\n");
 	}
 	return;
 }
