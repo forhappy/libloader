@@ -7,6 +7,7 @@
 #define PTRACEUTIILS_H
 
 #include <sys/cdefs.h>
+#include <linux/user.h>
 #include <stdint.h>
 #include <unistd.h>
 #include "defs.h"
@@ -35,6 +36,11 @@ ptrace_kill(void);
 extern void
 ptrace_detach(bool_t wait);
 
+struct user_regs_struct
+ptrace_peekuser(void);
+
+void
+ptrace_pokeuser(struct user_regs_struct s);
 __END_DECLS
 #endif
 

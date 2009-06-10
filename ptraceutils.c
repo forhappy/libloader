@@ -137,6 +137,53 @@ ptrace_detach(bool_t wait)
 	return;
 }
 
+struct user_regs_struct
+ptrace_peekuser(void)
+{
+	struct user_regs_struct ret;
+	memset(&ret, 0, sizeof(ret));
+	assert(child_pid != -1);
+	errno = 0;
+#define peek_reg(x)	ret.x = ptrace(PTRACE_PEEKUSER, child_pid, \
+		(void*)offsetof(struct user_regs_struct, x), NULL)
+	peek_reg(orig_eax);
+	peek_reg(eax);
+	peek_reg(ebx);
+	peek_reg(ecx);
+	peek_reg(edx);
+	peek_reg(esp);
+	peek_reg(eip);
+	peek_reg(ebp);
+	if (errno != 0) {
+		THROW(EXCEPTION_FATAL, "error in peeking regs: %s\n",
+				strerror(errno));
+	}
+#undef peek_reg
+	return ret;
+}
+
+void
+ptrace_pokeuser(struct user_regs_struct s)
+{
+	assert(child_pid != -1);
+	errno = 0;
+#define poke_reg(x)	ptrace(PTRACE_POKEUSER, child_pid, \
+		(void*)offsetof(struct user_regs_struct, x), s.x)
+	poke_reg(orig_eax);
+	poke_reg(eax);
+	poke_reg(ebx);
+	poke_reg(ecx);
+	poke_reg(edx);
+	poke_reg(esp);
+	poke_reg(eip);
+	poke_reg(ebp);
+	if (errno != 0) {
+		THROW(EXCEPTION_FATAL, "error in peeking regs: %s\n",
+				strerror(errno));
+	}
+#undef poke_reg
+}
+
 
 // vim:tabstop=4:shiftwidth=4
 
