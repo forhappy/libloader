@@ -289,6 +289,13 @@ struct reinit_hook {
 };
 
 
+#define assert_throw(x, msg...)	do { \
+	if (!(x))	\
+		THROW(EXCEPTION_FATAL, msg);\
+} while(0)
+
+#define assert_errno_throw(msg...) assert_throw((errno == 0), msg)
+
 __END_DECLS
 
 

@@ -16,8 +16,7 @@ open_proc_file(pid_t pid)
 	memset(filename, '\0', sizeof(filename));
 	snprintf(filename, 64, "/proc/%d/maps", pid);
 	fp = fopen(filename, "r");
-	if (fp == NULL)
-		THROW(EXCEPTION_FATAL, "open map file failed");
+	assert_throw(fp != NULL, "open map file failed");
 	return fp;
 }
 
@@ -66,21 +65,18 @@ proc_get_range(pid_t pid, const char * filename,
 	if (filename[0] != '[') {
 		int fd;
 		fd = open(filename, O_RDONLY);
-		if (fd < 0)
-			THROW(EXCEPTION_FATAL, "Open file failed");
+		assert_throw(fd >= 0, "Open file failed");
 		void * addr = NULL;
 		addr = mmap(NULL, 4096, PROT_READ, MAP_PRIVATE, fd, 0);
 		close(fd);
 
-		if (addr == NULL)
-			THROW(EXCEPTION_FATAL, "file is not mappable");
+		assert_throw(addr != NULL, "file is not mappable");
 
 		/* second: get the real filename */
 		const char * perr;
 		perr = proc_get_file(getpid(), (uintptr_t)addr, fullname, 256);
 		munmap(addr, 4096);
-		if (perr == NULL)
-			THROW(EXCEPTION_FATAL, "can't get the full name of the file");
+		assert_throw(perr != NULL, "can't get the full name of the file");
 	} else {
 		strncpy(fullname, filename, 256);
 	}

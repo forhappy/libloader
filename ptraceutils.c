@@ -36,6 +36,7 @@ static struct cleanup pt_clup_s = {
 	.function = ptrace_cleanup,
 };
 
+
 /* wait for the chld, and check whether it is exited*/
 static void
 wait_and_check(void)
@@ -43,9 +44,8 @@ wait_and_check(void)
 	siginfo_t si;
 	int err;
 	err = waitid(P_PID, child_pid, &si, WEXITED | WSTOPPED);
-	if (err < 0) {
-		THROW(EXCEPTION_FATAL, "wait failed");
-	}
+	assert_throw(err >= 0, "wait failed");
+
 	/* Check for siginfo */
 	if (si.si_code != CLD_TRAPPED) {
 		int old_pid = child_pid;
@@ -68,8 +68,7 @@ ptrace_execve(const char * filename,
 	TRACE(PTRACE, "prepare to execve file %s\n", filename);
 	
 	child_pid = fork();
-	if (child_pid < 0)
-		THROW(EXCEPTION_FATAL, "fork failed: %s", strerror(errno));
+	assert_throw(child_pid >= 0, "fork failed: %s", strerror(errno));
 	if (child_pid == 0) {
 		/* in child process */
 
@@ -79,8 +78,7 @@ ptrace_execve(const char * filename,
 		assert(err != -1);
 
 		err = ptrace(PTRACE_TRACEME, getpid(), NULL, NULL);
-		if (err == -1)
-			THROW(EXCEPTION_FATAL, "ptrace error: %s", strerror(errno));
+		assert_throw(err != -1, "traceme failed: %s", strerror(errno));
 
 		err = execve(filename, argv, environ);
 		THROW(EXCEPTION_FATAL, "execve failed: %s", strerror(errno));
@@ -103,13 +101,75 @@ ptrace_dupmem(void * dst, uintptr_t addr, int len)
 	for (i = 0; i < len; i += 4) {
 		long val;
 		val = ptrace(PTRACE_PEEKDATA, child_pid, addr + i, NULL);
-		if ((val == -1) && (errno != 0)) {
-			THROW(EXCEPTION_FATAL, "ptrace peek data failed: %s",
-					strerror(errno));
-		}
+		assert_errno_throw("ptrace peek data failed: %s", 
+				strerror(errno));
 		*((uint32_t*)(dst + i)) = val;
 	}
 	return;
+}
+
+void
+ptrace_updmem(void * src, uintptr_t addr, int len)
+{
+#if 0
+	ptrace(PTRACE_POKEDATA, child_pid, addr, *(uint32_t*)(src));
+	return;
+#endif
+
+	assert(child_pid != -1);
+
+	uint32_t * start, * end, * p;
+	start = (addr % 4 == 0) ? src : src + (4 - (addr % 4));
+	end = src + len - (addr + len) % 4;
+
+	p = start;
+
+	while (p < end) {
+		ptrace(PTRACE_POKEDATA, child_pid,
+				((void*)(addr) + ((void*)p - src)),
+				(void*)(*p));
+		assert_errno_throw("ptrace peek data failed: %s",
+				strerror(errno));
+		p ++;
+	}
+
+	/* the start and end fragment */
+	if (addr % 4 != 0) {
+		/* peek the start word */
+		uint32_t word = ptrace(PTRACE_PEEKDATA, child_pid, (void*)(addr & 0xfffffffcUL), NULL);
+		assert_errno_throw("ptrace peek data failed: %s", strerror(errno));
+		for (int i = addr % 4; i < 4; i++) {
+			uint8_t * ptr = (uint8_t*)(&word);
+			if (i - addr % 4 > len)
+				break;
+			ptr[i] = ((uint8_t*)(src))[i - addr % 4];
+		}
+		/* poke the word back*/
+		ptrace(PTRACE_POKEDATA, child_pid,
+				(void*)(addr & 0xfffffffcUL), (void*)word);
+		assert_errno_throw("ptrace poke data failed: %s", strerror(errno));
+	}
+
+	/* end fragment */
+	if ((addr + len) % 4 != 0) {
+		/* check a special situation */
+		if (((addr + len) & 0xfffffffcUL) > addr) {
+			/* peek the last word */
+			uint32_t word = ptrace(PTRACE_PEEKDATA, child_pid,
+					(void*)((addr + len) & 0xfffffffcUL), NULL);
+			assert_errno_throw("ptrace peek data failed: %s", strerror(errno));
+			int i, j;
+			for (i = (addr + len) % 4 - 1, j = 1; i >= 0; i--, j++) {
+				uint8_t * ptr = (uint8_t*)&word;
+				ptr[i] = ((uint8_t*)(src))[len - j];
+			}
+
+			/* poke the word back*/
+			ptrace(PTRACE_POKEDATA, child_pid,
+					(void*)((addr + len) & 0xfffffffcUL), (void*)word);
+			assert_errno_throw("ptrace poke data failed: %s", strerror(errno));
+		}
+	}
 }
 
 void
@@ -124,8 +184,7 @@ ptrace_detach(bool_t wait)
 	int err;
 	pid_t old_pid = child_pid;
 	err = ptrace(PTRACE_DETACH, child_pid, NULL, NULL);
-	if (err != 0)
-		THROW(EXCEPTION_FATAL, "cannot detach: %s", strerror(errno));
+	assert_errno_throw("cannot detach: %s", strerror(errno));
 	remove_cleanup(&pt_clup_s);
 	/* wait for the process */
 	if (!wait)
@@ -162,10 +221,7 @@ ptrace_peekuser(void)
 	peek_reg(esp);
 	peek_reg(eip);
 	peek_reg(ebp);
-	if (errno != 0) {
-		THROW(EXCEPTION_FATAL, "error in peeking regs: %s\n",
-				strerror(errno));
-	}
+	assert_errno_throw("error in peeking regs: %s", strerror(errno));
 #undef peek_reg
 	return ret;
 }
@@ -185,13 +241,40 @@ ptrace_pokeuser(struct user_regs_struct s)
 	poke_reg(esp);
 	poke_reg(eip);
 	poke_reg(ebp);
-	if (errno != 0) {
-		THROW(EXCEPTION_FATAL, "error in peeking regs: %s\n",
-				strerror(errno));
-	}
+	assert_errno_throw("error in pokeing regs: %s\n",
+			strerror(errno));
 #undef poke_reg
 }
 
+#define ARCH_INTINSTR	{'\x33'}
+static const uint8_t int_instr[] = ARCH_INTINSTR;
+static uintptr_t current_bkpt = 0;
+#define BKPT_SAVE_SIZE	(((sizeof(int_instr) + 2) / 4 + 1) * 4)
+static uint8_t saved_instr[BKPT_SAVE_SIZE];
+
+void
+ptrace_insert_bkpt(uintptr_t address)
+{
+
+	assert_throw(current_bkpt == 0,
+			"a breakpoint has already been inserted");
+
+	/* compute the start peek address and offset of the instr */
+	uintptr_t addr_start, addr_end, offset;
+	addr_start = address & 0xfffffffcUL;
+	addr_end =((address + sizeof(int_instr)) + 3) & 0xfffffffcUL;
+
+	int duplen = addr_end - addr_start;
+	assert(duplen <= BKPT_SAVE_SIZE);
+	offset = addr_start - address;
+	ptrace_dupmem(saved_instr, addr_start, duplen);
+
+	uint8_t tmp[BKPT_SAVE_SIZE];
+	memcpy(tmp, saved_instr, BKPT_SAVE_SIZE);
+	memcpy(tmp + offset, int_instr, sizeof(int_instr));
+
+	ptrace_updmem(tmp, addr_start, duplen);
+}
 
 // vim:tabstop=4:shiftwidth=4
 

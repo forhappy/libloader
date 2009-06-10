@@ -37,7 +37,6 @@ SET(UTILS
 	utils.h
 	)
 
-
 ADD_EXECUTABLE(test_utils
 	${COMMON}
 	)

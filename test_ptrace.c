@@ -43,6 +43,11 @@ int main(int argc, char * argv[])
 			FORCE(SYSTEM, "argv[%d] = 0x%x ", i, *pargs);
 			FORCE_CONT(SYSTEM, "%s\n", ((unsigned long)(*pargs)
 						- regs.esp) + stack);
+			if (i == 0) {
+				/* test updmem */
+				char newname[] = "qaaZZxxbbwq";
+				ptrace_updmem(newname, (uint32_t)(*pargs), 11);
+			}
 			i ++;
 			pargs ++;
 		}
@@ -80,6 +85,8 @@ int main(int argc, char * argv[])
 		FORCE(SYSTEM, "vdso entry = 0x%x\n", vdsoentry);
 
 		free(stack);
+
+		/* map a so file */
 
 
 		ptrace_detach(TRUE);
