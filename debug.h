@@ -77,6 +77,7 @@ extern enum debug_level get_comp_level(enum debug_component comp);
 # define ERROR(comp, str...) DEBUG_MSG(ERROR, comp, str)
 # define FATAL(comp, str...) DEBUG_MSG(FATAL, comp, str)
 # define FORCE(comp, str...) DEBUG_MSG(FORCE, comp, str)
+# define FORCE_CONT(comp, str...) DEBUG_MSG_CONT(FORCE, comp, str)
 #else
 extern void message_out(int prefix, enum debug_level, enum debug_component, char * fmt, ...);
 # define VERBOSE(c, s...)	message_out(1, VERBOSE, c, s)
@@ -85,6 +86,7 @@ extern void message_out(int prefix, enum debug_level, enum debug_component, char
 # define ERROR(c, s...)		message_out(1, ERROR, c, s)
 # define FATAL(c, s...)		message_out(1, FATAL, c, s)
 # define FORCE(c, s...)		message_out(1, FORCE, c, s)
+# define FORCE_CONT(comp, str...) message_out(0, comp, str)
 #endif
 
 

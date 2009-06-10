@@ -25,8 +25,11 @@ ptrace_cleanup(struct cleanup * _s)
 {
 	remove_cleanup(_s);
 	/* At least, kill the child process */
-	ptrace(PTRACE_KILL, child_pid, NULL, NULL);
-	child_pid = -1;
+	if (child_pid != -1) {
+		TRACE(PTRACE, "kill child %d\n", child_pid);
+		ptrace(PTRACE_KILL, child_pid, NULL, NULL);
+		child_pid = -1;
+	}
 }
 
 static struct cleanup pt_clup_s = {
@@ -48,13 +51,14 @@ wait_and_check(void)
 		int old_pid = child_pid;
 		ptrace(PTRACE_KILL, child_pid, NULL, NULL);
 		child_pid = -1;
+		FORCE(SYSTEM, "signal: %d\n", si.si_status);
 		THROW(EXCEPTION_FATAL, "Child process %d has stopped or been killed (%d)", old_pid,
 				si.si_code);
 	}
 	return;
 }
 
-void
+pid_t
 ptrace_execve(const char * filename,
 		char ** argv)
 {
@@ -85,15 +89,15 @@ ptrace_execve(const char * filename,
 	/* in father process */
 	make_cleanup(&pt_clup_s);
 	wait_and_check();
-	return;
+	return child_pid;
 }
 
 void
 ptrace_dupmem(void * dst, uintptr_t addr, int len)
 {
 	assert(child_pid != -1);
-	assert(addr % 4 != 0);
-	assert(len % 4 != 0);
+	assert(addr % 4 == 0);
+	assert(len % 4 == 0);
 
 	int i;
 	for (i = 0; i < len; i += 4) {
@@ -126,6 +130,10 @@ ptrace_detach(bool_t wait)
 	/* wait for the process */
 	if (!wait)
 		return;
+
+	/* when we wait child, ignore the SIGINT signal */
+	signal(SIGINT, SIG_IGN);
+	child_pid = -1;
 
 	siginfo_t si;
 	err = waitid(P_PID, old_pid, &si, WEXITED);

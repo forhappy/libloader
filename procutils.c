@@ -57,6 +57,9 @@ void
 proc_get_range(pid_t pid, const char * filename,
 		uintptr_t * pstart, uintptr_t * pend)
 {
+	assert(filename != NULL);
+	assert(pstart != NULL);
+	assert(pend != NULL);
 	/* first, mmap the file into myself's memory space
 	 * to get the precise name of it */
 	char fullname[256];

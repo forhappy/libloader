@@ -14,7 +14,7 @@
 
 __BEGIN_DECLS
 
-extern void
+extern pid_t
 ptrace_execve(const char * filename, char ** argv);
 
 extern void
