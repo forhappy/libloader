@@ -41,13 +41,13 @@ int main(int argc, char * argv[])
 		/* args */
 		char ** pargs = stack + sizeof(unsigned int);
 		int i = 0;
+		uint32_t saved_name = 0;
 		while (*pargs != NULL) {
 //			FORCE(SYSTEM, "argv[%d] = 0x%x ", i, *pargs);
 //			FORCE_CONT(SYSTEM, "%s\n", ((unsigned long)(*pargs)
 //						- regs.esp) + stack);
 			if (i == 0) {
 				char newname[] = "qaaZZxxbbwq ";
-				uint32_t saved_name = 0;
 
 				/* test updmem */
 				ptrace_updmem(newname, (uint32_t)(*pargs), 11);
@@ -102,7 +102,7 @@ int main(int argc, char * argv[])
 		uintptr_t main_ptr = elf_get_symbol_address(handler, "main");
 		free(image);
 		FORCE(SYSTEM, "address of main func: 0x%x\n", main_ptr);
-#if 0
+#if 1
 		ptrace_insert_bkpt(main_ptr);
 
 		do {
@@ -117,26 +117,37 @@ int main(int argc, char * argv[])
 
 		ptrace_pokeuser(regs);
 #endif
-//		struct user_regs_struct saved_regs = regs;
-//		ptrace_push("injected string", 16);
-//		ptrace_pokeuser(saved_regs);
+		struct user_regs_struct saved_regs = regs;
+		uint32_t stradd;
+		stradd = ptrace_push("injected string\n", 17);
+		ptrace_pokeuser(saved_regs);
 
 		/* run a systemcall */
-		/* getpid */
 		int retval;
+		/* write */
+		retval = ptrace_syscall(0x04, 3, 1, stradd, 16);
+		FORCE(SYSTEM, "write retval: %d\n", retval);
+
+		/* getpid */
 
 		retval = ptrace_syscall(20, 0);
 		VERBOSE(SYSTEM, "getpid result: %d\n", retval);
 
 		retval = ptrace_syscall(20, 0);
 		VERBOSE(SYSTEM, "getpid result: %d\n", retval);
+
+		/* write */
+		retval = ptrace_syscall(0x04, 3,
+				2, saved_name, 10);
+		FORCE(SYSTEM, "write return 0x%x (%d)\n", retval, retval);
+
 		/* mmap */
-		retval = ptrace_syscall(0xc0, 6,
+		retval = ptrace_syscall(192, 4,
 				8192, 4096,
 				PROT_READ|PROT_WRITE,
 				MAP_PRIVATE|MAP_ANONYMOUS,
 				0, 0);
-		FORCE(SYSTEM, "mmap return 0x%x (%d)\n", retval, retval);
+		FORCE(SYSTEM, "mmap2 return 0x%x (%d)\n", retval, retval);
 
 //		ptrace_cont();
 

@@ -252,18 +252,9 @@ ptrace_peekuser(void)
 	memset(&ret, 0, sizeof(ret));
 	assert(child_pid != -1);
 	errno = 0;
-#define peek_reg(x)	ret.x = ptrace(PTRACE_PEEKUSER, child_pid, \
-		(void*)offsetof(struct user_regs_struct, x), NULL)
-	peek_reg(orig_eax);
-	peek_reg(eax);
-	peek_reg(ebx);
-	peek_reg(ecx);
-	peek_reg(edx);
-	peek_reg(esp);
-	peek_reg(eip);
-	peek_reg(ebp);
+
+	ptrace(PTRACE_GETREGS, child_pid, NULL, &ret);
 	assert_errno_throw("error in peeking regs: %s", strerror(errno));
-#undef peek_reg
 	return ret;
 }
 
@@ -272,19 +263,9 @@ ptrace_pokeuser(struct user_regs_struct s)
 {
 	assert(child_pid != -1);
 	errno = 0;
-#define poke_reg(x)	ptrace(PTRACE_POKEUSER, child_pid, \
-		(void*)offsetof(struct user_regs_struct, x), s.x)
-	poke_reg(orig_eax);
-	poke_reg(eax);
-	poke_reg(ebx);
-	poke_reg(ecx);
-	poke_reg(edx);
-	poke_reg(esp);
-	poke_reg(eip);
-	poke_reg(ebp);
+	ptrace(PTRACE_SETREGS, child_pid, NULL, &s);
 	assert_errno_throw("error in pokeing regs: %s",
 			strerror(errno));
-#undef poke_reg
 }
 
 #define ARCH_INTINSTR	{'\xcc'}
@@ -359,8 +340,6 @@ ptrace_push(void * data, int len)
 
 uint32_t ptrace_syscall(int no, int nr, ...)
 {
-
-
 #define SYSCALL_INSTR {'\xcd', '\x80'}
 	uint8_t syscall_instr[] = SYSCALL_INSTR;
 #define SYSCALL_INSTR_LEN	(sizeof(syscall_instr))
@@ -385,7 +364,7 @@ uint32_t ptrace_syscall(int no, int nr, ...)
 			xcase(4, edi);
 			xcase(5, ebp);
 			default:
-				THROW(EXCEPTION_FATAL, "syscall number too large");
+				THROW(EXCEPTION_FATAL, "syscall args number too large");
 		}
 	}
 #undef xcase

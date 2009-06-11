@@ -5,17 +5,6 @@
 
 int main(int argc, char * argv[])
 {
-	int res;
-#if 0
-	asm volatile ("int $0x80"
-			: "=a" (res)
-			: "a" (192),
-				"b" (8192), "c" (4096), "d" (PROT_READ), "S" (MAP_FIXED|MAP_PRIVATE|MAP_ANONYMOUS)
-			);
-	printf("%x\n", res);
-#endif
-
-
 	/* check for breakpoint */
 	printf("addr of main = %p\n", main);
 	printf("dup 8 bytes from main: ");
