@@ -4,6 +4,7 @@
 
 #include <linux/user.h>
 #include <elf.h>
+#include <sys/mman.h>
 #include "debug.h"
 #include "exception.h"
 #include "ptraceutils.h"
@@ -41,9 +42,9 @@ int main(int argc, char * argv[])
 		char ** pargs = stack + sizeof(unsigned int);
 		int i = 0;
 		while (*pargs != NULL) {
-			FORCE(SYSTEM, "argv[%d] = 0x%x ", i, *pargs);
-			FORCE_CONT(SYSTEM, "%s\n", ((unsigned long)(*pargs)
-						- regs.esp) + stack);
+//			FORCE(SYSTEM, "argv[%d] = 0x%x ", i, *pargs);
+//			FORCE_CONT(SYSTEM, "%s\n", ((unsigned long)(*pargs)
+//						- regs.esp) + stack);
 			if (i == 0) {
 				char newname[] = "qaaZZxxbbwq ";
 				uint32_t saved_name = 0;
@@ -65,9 +66,9 @@ int main(int argc, char * argv[])
 		char ** penv = pargs + 4;
 		i = 0;
 		while (*penv != NULL) {
-			FORCE(SYSTEM, "env[%d] = 0x%x ", i, *penv);
-			FORCE_CONT(SYSTEM, "%s\n", ((unsigned long)(*penv)
-						- regs.esp) + stack);
+//			FORCE(SYSTEM, "env[%d] = 0x%x ", i, *penv);
+//			FORCE_CONT(SYSTEM, "%s\n", ((unsigned long)(*penv)
+//						- regs.esp) + stack);
 			i ++;
 			penv ++;
 		}
@@ -80,8 +81,8 @@ int main(int argc, char * argv[])
 			uint32_t k, v;
 			k = *auxkv;
 			v = *(auxkv + 1);
-			FORCE(SYSTEM, "aux %d: k = 0x%x, v = 0x%x\n",
-					i, k, v);
+//			FORCE(SYSTEM, "aux %d: k = 0x%x, v = 0x%x\n",
+//					i, k, v);
 			if (k == AT_SYSINFO)
 				vdsoentry = v;
 			if (k == AT_SYSINFO_EHDR)
@@ -101,7 +102,7 @@ int main(int argc, char * argv[])
 		uintptr_t main_ptr = elf_get_symbol_address(handler, "main");
 		free(image);
 		FORCE(SYSTEM, "address of main func: 0x%x\n", main_ptr);
-
+#if 0
 		ptrace_insert_bkpt(main_ptr);
 
 		do {
@@ -112,7 +113,32 @@ int main(int argc, char * argv[])
 		} while(regs.eip != main_ptr + 1);
 
 		ptrace_resume();
-		ptrace_cont();
+		regs.eip = main_ptr;
+
+		ptrace_pokeuser(regs);
+#endif
+//		struct user_regs_struct saved_regs = regs;
+//		ptrace_push("injected string", 16);
+//		ptrace_pokeuser(saved_regs);
+
+		/* run a systemcall */
+		/* getpid */
+		int retval;
+
+		retval = ptrace_syscall(20, 0);
+		VERBOSE(SYSTEM, "getpid result: %d\n", retval);
+
+		retval = ptrace_syscall(20, 0);
+		VERBOSE(SYSTEM, "getpid result: %d\n", retval);
+		/* mmap */
+		retval = ptrace_syscall(0xc0, 6,
+				8192, 4096,
+				PROT_READ|PROT_WRITE,
+				MAP_PRIVATE|MAP_ANONYMOUS,
+				0, 0);
+		FORCE(SYSTEM, "mmap return 0x%x (%d)\n", retval, retval);
+
+//		ptrace_cont();
 
 		ptrace_detach(TRUE);
 	} CATCH(exp) {

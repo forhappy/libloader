@@ -51,6 +51,14 @@ ptrace_resume(void);
 void
 ptrace_goto(uintptr_t addr);
 
+/* return the esp */
+uint32_t
+ptrace_push(void * data, int len);
+
+uint32_t
+ptrace_syscall(int no, int nr, ...);
+
+
 __END_DECLS
 #endif
 

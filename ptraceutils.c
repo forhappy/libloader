@@ -12,7 +12,7 @@
 #include <sys/wait.h>
 #include <sys/personality.h>
 #include <linux/user.h>
-
+#include <stdarg.h>
 
 #include "debug.h"
 #include "exception.h"
@@ -172,6 +172,8 @@ ptrace_updmem(void * src, uintptr_t addr, int len)
 		target_ptr += 4;
 	}
 
+		assert_errno_throw("intercept: %s",
+				strerror(errno));
 	if (target_start != addr) {
 		/* head fragment */
 		uintptr_t target_frag = addr & 0xfffffffcul;
@@ -286,18 +288,18 @@ ptrace_pokeuser(struct user_regs_struct s)
 }
 
 #define ARCH_INTINSTR	{'\xcc'}
-static uint8_t int_instr[] = ARCH_INTINSTR;
-#define INTINSTR_LEN	(sizeof(int_instr))
+static uint8_t bkpt_instr[] = ARCH_INTINSTR;
+#define INTINSTR_LEN	(sizeof(bkpt_instr))
 static uintptr_t current_bkpt = 0;
-static uint8_t saved_instr[INTINSTR_LEN];
+static uint8_t saved_bkpt_instr[INTINSTR_LEN];
 
 void
 ptrace_insert_bkpt(uintptr_t address)
 {
 	assert_throw(current_bkpt == 0,
 			"a breakpoint has already been inserted");
-	ptrace_dupmem(saved_instr, address, INTINSTR_LEN);
-	ptrace_updmem(int_instr, address, INTINSTR_LEN);
+	ptrace_dupmem(saved_bkpt_instr, address, INTINSTR_LEN);
+	ptrace_updmem(bkpt_instr, address, INTINSTR_LEN);
 	current_bkpt = address;
 }
 
@@ -328,12 +330,97 @@ ptrace_resume(void)
 		return;
 	}
 
-	ptrace_updmem(saved_instr, current_bkpt, INTINSTR_LEN);
+	ptrace_updmem(saved_bkpt_instr, current_bkpt, INTINSTR_LEN);
 	/* change the eip */
 	ptrace_goto(current_bkpt);
 	current_bkpt = 0;
 
 	return;
+}
+
+uint32_t
+ptrace_push(void * data, int len)
+{
+	uint32_t esp = ptrace(PTRACE_PEEKUSER, child_pid,
+			(void*)offsetof(struct user_regs_struct, esp), NULL);
+	assert_errno_throw("cannot get esp");
+
+	int err;
+	uint32_t real_len = (len + 3) & 0xfffffffcUL;
+	esp -= real_len;
+	ptrace_updmem(data, esp, len);
+	TRACE(PTRACE, "updmemory from 0x%x, len=%d\n", esp, len);
+
+	err = ptrace(PTRACE_POKEUSER, child_pid,
+			(void*)offsetof(struct user_regs_struct, esp), esp);
+	return esp;
+}
+
+
+uint32_t ptrace_syscall(int no, int nr, ...)
+{
+
+
+#define SYSCALL_INSTR {'\xcd', '\x80'}
+	uint8_t syscall_instr[] = SYSCALL_INSTR;
+#define SYSCALL_INSTR_LEN	(sizeof(syscall_instr))
+	uint8_t saved_syscall_instr[SYSCALL_INSTR_LEN];
+
+	TRACE(PTRACE, "call syscall %d\n", no);
+	struct user_regs_struct regs, saved_regs;
+	regs = saved_regs = ptrace_peekuser();
+
+	regs.eax = no;
+
+	va_list ap;
+	va_start(ap, nr);
+#define setreg(x)	regs.x = va_arg(ap, uint32_t); break
+#define xcase(nr, x) case nr: setreg(x)
+	for (int i = 0; i < nr; i++) {
+		switch (i) {
+			xcase(0, ebx);
+			xcase(1, ecx);
+			xcase(2, edx);
+			xcase(3, esi);
+			xcase(4, edi);
+			xcase(5, ebp);
+			default:
+				THROW(EXCEPTION_FATAL, "syscall number too large");
+		}
+	}
+#undef xcase
+#undef setreg
+	va_end(ap);
+	ptrace_pokeuser(regs);
+
+	/* insert the int80 instruction */
+	ptrace_dupmem(saved_syscall_instr, saved_regs.eip, SYSCALL_INSTR_LEN);
+	ptrace_updmem(syscall_instr, saved_regs.eip, SYSCALL_INSTR_LEN);
+
+	/* trace systemcall and continue */
+	ptrace(PTRACE_SYSCALL, child_pid, NULL, NULL);
+	assert_errno_throw("ptrace syscall failed: %s",
+			strerror(errno));
+	
+	wait_and_check();
+
+	ptrace(PTRACE_SYSCALL, child_pid, NULL, NULL);
+	assert_errno_throw("ptrace syscall failed: %s",
+			strerror(errno));
+	wait_and_check();
+
+	/* restore the int80 command */
+	ptrace_updmem(saved_syscall_instr, saved_regs.eip, SYSCALL_INSTR_LEN);
+
+	TRACE(PTRACE, "retrive retval\n");
+	/* retrive retval */
+	uint32_t retval = ptrace(PTRACE_PEEKUSER, child_pid,
+			offsetof(struct user_regs_struct, eax), NULL);
+
+	/* restore register */
+	TRACE(PTRACE, "restore regs\n");
+	ptrace_pokeuser(saved_regs);
+	return retval;
 }
 
 // vim:tabstop=4:shiftwidth=4
