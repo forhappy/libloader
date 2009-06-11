@@ -43,7 +43,18 @@ wait_and_check(void)
 {
 	siginfo_t si;
 	int err;
+	TRACE(PTRACE, "wait...\n");
+	signal(SIGINT, SIG_IGN);
 	err = waitid(P_PID, child_pid, &si, WEXITED | WSTOPPED);
+	signal(SIGINT, SIG_DFL);
+	TRACE(PTRACE, "wait over\n");
+
+	FORCE(PTRACE, "si_code=%d\n", si.si_code);
+	FORCE(PTRACE, "si_status=%d\n", si.si_status);
+
+
+
+
 	assert_throw(err >= 0, "wait failed");
 
 	/* Check for siginfo */
@@ -51,7 +62,7 @@ wait_and_check(void)
 		int old_pid = child_pid;
 		ptrace(PTRACE_KILL, child_pid, NULL, NULL);
 		child_pid = -1;
-		FORCE(SYSTEM, "signal: %d\n", si.si_status);
+		FORCE(PTRACE, "signal: %d\n", si.si_status);
 		THROW(EXCEPTION_FATAL, "Child process %d has stopped or been killed (%d)", old_pid,
 				si.si_code);
 	}
@@ -94,16 +105,48 @@ void
 ptrace_dupmem(void * dst, uintptr_t addr, int len)
 {
 	assert(child_pid != -1);
-	assert(addr % 4 == 0);
-	assert(len % 4 == 0);
+	uintptr_t target_start, target_end;
+	target_start = (addr + 3) & 0xfffffffcul;
+	target_end = (addr + len) & 0xfffffffcul;
 
-	int i;
-	for (i = 0; i < len; i += 4) {
+	uintptr_t target_ptr = target_start;
+	uint32_t * dst_ptr = (uint32_t*)(dst + (target_start - addr));
+
+	while (target_ptr < target_end) {
 		long val;
-		val = ptrace(PTRACE_PEEKDATA, child_pid, addr + i, NULL);
+		val = ptrace(PTRACE_PEEKDATA, child_pid, target_ptr, NULL);
 		assert_errno_throw("ptrace peek data failed: %s", 
 				strerror(errno));
-		*((uint32_t*)(dst + i)) = val;
+		(*(uint32_t*)(dst_ptr)) = val;
+		dst_ptr ++;
+		target_ptr += 4;
+	}
+
+	if (target_start != addr) {
+		/* head fragment */
+		uintptr_t target_frag = addr & 0xfffffffcul;
+		long val = ptrace(PTRACE_PEEKDATA, child_pid, target_frag, NULL);
+		uint8_t * ptr = (uint8_t*)&val;
+		int i = addr - target_frag;
+		int j = 0;
+		for (; (i < 4) && (j < len); i++, j++)
+			((uint8_t*)dst)[j] = ptr[i];
+	}
+
+	if (target_end != addr + len) {
+		if (((addr + len) & 0xfffffffcul) >= addr) {
+			/* tail fragment */
+			uintptr_t tail_frag = target_end;
+			long val = ptrace(PTRACE_PEEKDATA, child_pid, tail_frag, NULL);
+			uint8_t * ptr = (uint8_t*)&val;
+			int i = 0;
+			int j = target_end - addr;
+			for (; j < len; i++, j++) {
+				if (j < 0)
+					continue;
+				((uint8_t*)dst)[j] = ptr[i];
+			}
+		}
 	}
 	return;
 }
@@ -111,65 +154,61 @@ ptrace_dupmem(void * dst, uintptr_t addr, int len)
 void
 ptrace_updmem(void * src, uintptr_t addr, int len)
 {
-#if 0
-	ptrace(PTRACE_POKEDATA, child_pid, addr, *(uint32_t*)(src));
-	return;
-#endif
-
 	assert(child_pid != -1);
+	uintptr_t target_start, target_end;
+	target_start = (addr + 3) & 0xfffffffcul;
+	target_end = (addr + len) & 0xfffffffcul;
 
-	uint32_t * start, * end, * p;
-	start = (addr % 4 == 0) ? src : src + (4 - (addr % 4));
-	end = src + len - (addr + len) % 4;
+	uintptr_t target_ptr = target_start;
+	uint32_t * src_ptr = (uint32_t*)(src + (target_start - addr));
 
-	p = start;
-
-	while (p < end) {
-		ptrace(PTRACE_POKEDATA, child_pid,
-				((void*)(addr) + ((void*)p - src)),
-				(void*)(*p));
-		assert_errno_throw("ptrace peek data failed: %s",
+	while (target_ptr < target_end) {
+		long val;
+		val = ptrace(PTRACE_POKEDATA, child_pid, target_ptr,
+				*src_ptr);
+		assert_errno_throw("ptrace poke data failed: %s", 
 				strerror(errno));
-		p ++;
+		src_ptr ++;
+		target_ptr += 4;
 	}
 
-	/* the start and end fragment */
-	if (addr % 4 != 0) {
-		/* peek the start word */
-		uint32_t word = ptrace(PTRACE_PEEKDATA, child_pid, (void*)(addr & 0xfffffffcUL), NULL);
-		assert_errno_throw("ptrace peek data failed: %s", strerror(errno));
-		for (int i = addr % 4; i < 4; i++) {
-			uint8_t * ptr = (uint8_t*)(&word);
-			if (i - addr % 4 > len)
-				break;
-			ptr[i] = ((uint8_t*)(src))[i - addr % 4];
-		}
-		/* poke the word back*/
-		ptrace(PTRACE_POKEDATA, child_pid,
-				(void*)(addr & 0xfffffffcUL), (void*)word);
-		assert_errno_throw("ptrace poke data failed: %s", strerror(errno));
+	if (target_start != addr) {
+		/* head fragment */
+		uintptr_t target_frag = addr & 0xfffffffcul;
+		long val = ptrace(PTRACE_PEEKDATA, child_pid, target_frag, NULL);
+		assert_errno_throw("ptrace peek data tailed: %s",
+				strerror(errno));
+		uint8_t * ptr = (uint8_t*)&val;
+		int i = addr - target_frag;
+		int j = 0;
+		for (; (i < 4) && (j < len); i++, j++)
+			ptr[i] = ((uint8_t*)src)[j];
+		/* poke the word back */
+		ptrace(PTRACE_POKEDATA, child_pid, target_frag, val);
+		assert_errno_throw("ptrace poke data tailed: %s",
+				strerror(errno));
 	}
 
-	/* end fragment */
-	if ((addr + len) % 4 != 0) {
-		/* check a special situation */
-		if (((addr + len) & 0xfffffffcUL) > addr) {
-			/* peek the last word */
-			uint32_t word = ptrace(PTRACE_PEEKDATA, child_pid,
-					(void*)((addr + len) & 0xfffffffcUL), NULL);
-			assert_errno_throw("ptrace peek data failed: %s", strerror(errno));
-			int i, j;
-			for (i = (addr + len) % 4 - 1, j = 1; i >= 0; i--, j++) {
-				uint8_t * ptr = (uint8_t*)&word;
-				ptr[i] = ((uint8_t*)(src))[len - j];
+	if (target_end != addr + len) {
+		if (((addr + len) & 0xfffffffcul) >= addr) {
+			/* tail fragment */
+			uintptr_t tail_frag = target_end;
+			long val = ptrace(PTRACE_PEEKDATA, child_pid, tail_frag, NULL);
+			uint8_t * ptr = (uint8_t*)&val;
+			int i = 0;
+			int j = target_end - addr;
+			for (; j < len; i++, j++) {
+				if (j < 0)
+					continue;
+				ptr[i] = ((uint8_t*)src)[j];
 			}
-
-			/* poke the word back*/
-			ptrace(PTRACE_POKEDATA, child_pid,
-					(void*)((addr + len) & 0xfffffffcUL), (void*)word);
-			assert_errno_throw("ptrace poke data failed: %s", strerror(errno));
+			/* poke the word back */
+			ptrace(PTRACE_POKEDATA, child_pid, tail_frag, val);
+			assert_errno_throw("ptrace poke data tailed: %s",
+					strerror(errno));
 		}
 	}
+	return;
 }
 
 void
@@ -241,39 +280,60 @@ ptrace_pokeuser(struct user_regs_struct s)
 	poke_reg(esp);
 	poke_reg(eip);
 	poke_reg(ebp);
-	assert_errno_throw("error in pokeing regs: %s\n",
+	assert_errno_throw("error in pokeing regs: %s",
 			strerror(errno));
 #undef poke_reg
 }
 
-#define ARCH_INTINSTR	{'\x33'}
-static const uint8_t int_instr[] = ARCH_INTINSTR;
+#define ARCH_INTINSTR	{'\xcc'}
+static uint8_t int_instr[] = ARCH_INTINSTR;
+#define INTINSTR_LEN	(sizeof(int_instr))
 static uintptr_t current_bkpt = 0;
-#define BKPT_SAVE_SIZE	(((sizeof(int_instr) + 2) / 4 + 1) * 4)
-static uint8_t saved_instr[BKPT_SAVE_SIZE];
+static uint8_t saved_instr[INTINSTR_LEN];
 
 void
 ptrace_insert_bkpt(uintptr_t address)
 {
-
 	assert_throw(current_bkpt == 0,
 			"a breakpoint has already been inserted");
+	ptrace_dupmem(saved_instr, address, INTINSTR_LEN);
+	ptrace_updmem(int_instr, address, INTINSTR_LEN);
+	current_bkpt = address;
+}
 
-	/* compute the start peek address and offset of the instr */
-	uintptr_t addr_start, addr_end, offset;
-	addr_start = address & 0xfffffffcUL;
-	addr_end =((address + sizeof(int_instr)) + 3) & 0xfffffffcUL;
+void
+ptrace_cont(void)
+{
+	ptrace(PTRACE_CONT, child_pid, NULL,NULL);
+	wait_and_check();
+	return ;
+}
 
-	int duplen = addr_end - addr_start;
-	assert(duplen <= BKPT_SAVE_SIZE);
-	offset = addr_start - address;
-	ptrace_dupmem(saved_instr, addr_start, duplen);
+void
+ptrace_goto(uintptr_t addr)
+{
+	ptrace(PTRACE_POKEUSER, child_pid,
+			(void*)offsetof(struct user_regs_struct, eip),
+			addr);
+	assert_errno_throw("error in setting eip: %s",
+			strerror(errno));
+	return;
+}
 
-	uint8_t tmp[BKPT_SAVE_SIZE];
-	memcpy(tmp, saved_instr, BKPT_SAVE_SIZE);
-	memcpy(tmp + offset, int_instr, sizeof(int_instr));
+void
+ptrace_resume(void)
+{
+	if (current_bkpt == 0) {
+		WARNING(PTRACE, "no breakpoint to resume\n");
+		return;
+	}
 
-	ptrace_updmem(tmp, addr_start, duplen);
+	ptrace_updmem(saved_instr, current_bkpt, INTINSTR_LEN);
+	/* change the eip */
+	ptrace_goto(current_bkpt);
+	current_bkpt = 0;
+
+	return;
 }
 
 // vim:tabstop=4:shiftwidth=4

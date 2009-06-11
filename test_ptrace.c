@@ -8,6 +8,7 @@
 #include "exception.h"
 #include "ptraceutils.h"
 #include "procutils.h"
+#include "utils.h"
 #include "elfutils.h"
 
 
@@ -44,9 +45,17 @@ int main(int argc, char * argv[])
 			FORCE_CONT(SYSTEM, "%s\n", ((unsigned long)(*pargs)
 						- regs.esp) + stack);
 			if (i == 0) {
+				char newname[] = "qaaZZxxbbwq ";
+				uint32_t saved_name = 0;
+
 				/* test updmem */
-				char newname[] = "qaaZZxxbbwq";
 				ptrace_updmem(newname, (uint32_t)(*pargs), 11);
+				saved_name = (uint32_t)(*pargs);
+
+				/* test dupmem */
+				memset(newname, '\0', 11);
+				ptrace_dupmem(newname, saved_name, 11);
+				WARNING(SYSTEM, "redup newname=%s\n", newname);
 			}
 			i ++;
 			pargs ++;
@@ -86,8 +95,24 @@ int main(int argc, char * argv[])
 
 		free(stack);
 
-		/* map a so file */
+		/* insert a breakpoint at main */
+		void * image = load_file("./target");
+		struct elf_handler * handler = elf_init(image, 0);
+		uintptr_t main_ptr = elf_get_symbol_address(handler, "main");
+		free(image);
+		FORCE(SYSTEM, "address of main func: 0x%x\n", main_ptr);
 
+		ptrace_insert_bkpt(main_ptr);
+
+		do {
+			FORCE(SYSTEM, "wait for ckpt\n");
+			ptrace_cont();
+			regs = ptrace_peekuser();
+			FORCE(SYSTEM, "stoppedat eip=0x%x\n", regs.eip);
+		} while(regs.eip != main_ptr + 1);
+
+		ptrace_resume();
+		ptrace_cont();
 
 		ptrace_detach(TRUE);
 	} CATCH(exp) {

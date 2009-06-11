@@ -59,6 +59,7 @@ ADD_EXECUTABLE(test_ptrace
 	${PTRACE}
 	${COMMON}
 	${PROC}
+	${ELF}
 	test_ptrace.c
 	)
 

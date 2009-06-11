@@ -41,6 +41,16 @@ ptrace_peekuser(void);
 
 void
 ptrace_pokeuser(struct user_regs_struct s);
+
+void
+ptrace_cont(void);
+
+void
+ptrace_resume(void);
+
+void
+ptrace_goto(uintptr_t addr);
+
 __END_DECLS
 #endif
 
