@@ -100,8 +100,11 @@ int main(int argc, char * argv[])
 		void * image = load_file("./target");
 		struct elf_handler * handler = elf_init(image, 0);
 		uintptr_t main_ptr = elf_get_symbol_address(handler, "main");
+		uintptr_t glbdata_ptr = elf_get_symbol_address(handler, "global_data");
 		free(image);
 		FORCE(SYSTEM, "address of main func: 0x%x\n", main_ptr);
+		FORCE(SYSTEM, "address of global data: 0x%x\n", glbdata_ptr);
+
 #if 1
 		ptrace_insert_bkpt(main_ptr);
 
@@ -117,10 +120,8 @@ int main(int argc, char * argv[])
 
 		ptrace_pokeuser(regs);
 #endif
-		struct user_regs_struct saved_regs = regs;
 		uint32_t stradd;
-		stradd = ptrace_push("injected string\n", 17);
-		ptrace_pokeuser(saved_regs);
+		stradd = ptrace_push("injected string\n", 17, TRUE);
 
 		/* run a systemcall */
 		int retval;
@@ -148,6 +149,9 @@ int main(int argc, char * argv[])
 				MAP_PRIVATE|MAP_ANONYMOUS,
 				0, 0);
 		FORCE(SYSTEM, "mmap2 return 0x%x (%d)\n", retval, retval);
+
+		/* change a static data */
+		ptrace_updmem(&retval, glbdata_ptr, 4);
 
 //		ptrace_cont();
 

@@ -49,12 +49,6 @@ wait_and_check(void)
 	signal(SIGINT, SIG_DFL);
 	TRACE(PTRACE, "wait over\n");
 
-	FORCE(PTRACE, "si_code=%d\n", si.si_code);
-	FORCE(PTRACE, "si_status=%d\n", si.si_status);
-
-
-
-
 	assert_throw(err >= 0, "wait failed");
 
 	/* Check for siginfo */
@@ -172,8 +166,6 @@ ptrace_updmem(void * src, uintptr_t addr, int len)
 		target_ptr += 4;
 	}
 
-		assert_errno_throw("intercept: %s",
-				strerror(errno));
 	if (target_start != addr) {
 		/* head fragment */
 		uintptr_t target_frag = addr & 0xfffffffcul;
@@ -320,7 +312,7 @@ ptrace_resume(void)
 }
 
 uint32_t
-ptrace_push(void * data, int len)
+ptrace_push(void * data, int len, bool_t save_esp)
 {
 	uint32_t esp = ptrace(PTRACE_PEEKUSER, child_pid,
 			(void*)offsetof(struct user_regs_struct, esp), NULL);
@@ -332,8 +324,11 @@ ptrace_push(void * data, int len)
 	ptrace_updmem(data, esp, len);
 	TRACE(PTRACE, "updmemory from 0x%x, len=%d\n", esp, len);
 
-	err = ptrace(PTRACE_POKEUSER, child_pid,
+	if (!save_esp) {
+		err = ptrace(PTRACE_POKEUSER, child_pid,
 			(void*)offsetof(struct user_regs_struct, esp), esp);
+		assert_errno_throw("reset esp failed");
+	}
 	return esp;
 }
 
@@ -391,8 +386,8 @@ uint32_t ptrace_syscall(int no, int nr, ...)
 	/* restore the int80 command */
 	ptrace_updmem(saved_syscall_instr, saved_regs.eip, SYSCALL_INSTR_LEN);
 
-	TRACE(PTRACE, "retrive retval\n");
-	/* retrive retval */
+	TRACE(PTRACE, "retrieve retval\n");
+	/* retrieve retval */
 	uint32_t retval = ptrace(PTRACE_PEEKUSER, child_pid,
 			offsetof(struct user_regs_struct, eax), NULL);
 

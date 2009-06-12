@@ -3,6 +3,8 @@
 #include <unistd.h>
 #include <sys/mman.h>
 
+static int global_data = 0;
+
 int main(int argc, char * argv[])
 {
 	/* check for breakpoint */
@@ -20,7 +22,7 @@ int main(int argc, char * argv[])
 		int c = 'x';
 //		c = getchar();
 		sleep(1);
-		printf("%d, %c\n", i++, c);
+		printf("%d, %c, global_data=%d\n", i++, c, global_data);
 	}
 	return 0;
 }

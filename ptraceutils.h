@@ -53,7 +53,7 @@ ptrace_goto(uintptr_t addr);
 
 /* return the esp */
 uint32_t
-ptrace_push(void * data, int len);
+ptrace_push(void * data, int len, bool_t save_esp);
 
 uint32_t
 ptrace_syscall(int no, int nr, ...);
