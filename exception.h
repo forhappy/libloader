@@ -19,6 +19,7 @@
 #include <assert.h>
 #include <setjmp.h>
 #include <stdint.h>
+#include <errno.h>
 
 #include "defs.h"
 #include "debug.h"

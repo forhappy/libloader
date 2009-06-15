@@ -50,7 +50,6 @@ debug_close()
 	fdebug_out = NULL;
 }
 
-#define SYS_FATAL(str...) DEBUG_MSG(FATAL, SYSTEM, str)
 static void
 debug_backtrace(int signum)
 {

@@ -7,11 +7,12 @@
 
 #include <config.h>
 
+#include <stdarg.h>
+#include <stdio.h>
+
 #include "exception.h"
 #include "debug.h"
 #include "list.h"
-#include <stdarg.h>
-#include <stdio.h>
 
 static LIST_HEAD(default_cleanup_chain);
 static struct list_head * current_cleanup_chain = &default_cleanup_chain;

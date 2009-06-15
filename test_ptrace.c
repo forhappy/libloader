@@ -126,24 +126,24 @@ int main(int argc, char * argv[])
 		/* run a systemcall */
 		int retval;
 		/* write */
-		retval = ptrace_syscall(0x04, 3, 1, stradd, 16);
+		retval = ptrace_syscall(write, 3, 1, stradd, 16);
 		FORCE(SYSTEM, "write retval: %d\n", retval);
 
 		/* getpid */
 
-		retval = ptrace_syscall(20, 0);
+		retval = ptrace_syscall(getpid, 0);
 		VERBOSE(SYSTEM, "getpid result: %d\n", retval);
 
-		retval = ptrace_syscall(20, 0);
+		retval = ptrace_syscall(getpid, 0);
 		VERBOSE(SYSTEM, "getpid result: %d\n", retval);
 
 		/* write */
-		retval = ptrace_syscall(0x04, 3,
+		retval = ptrace_syscall(write, 3,
 				2, saved_name, 10);
 		FORCE(SYSTEM, "write return 0x%x (%d)\n", retval, retval);
 
 		/* mmap */
-		retval = ptrace_syscall(192, 4,
+		retval = ptrace_syscall(mmap2, 4,
 				8192, 4096,
 				PROT_READ|PROT_WRITE,
 				MAP_PRIVATE|MAP_ANONYMOUS,

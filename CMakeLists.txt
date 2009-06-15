@@ -73,6 +73,15 @@ SET_TARGET_PROPERTIES(test_proc
 	COMPILE_FLAGS "-DTEST_PROCUTILS"
 	)
 
+ADD_EXECUTABLE(test_wrapper
+	${PTRACE}
+	${COMMON}
+	${PROC}
+	${ELF}
+	test_wrapper.c
+	)
+
+
 INCLUDE(CMakeDependentOption)
 INCLUDE(CheckIncludeFiles)
 INCLUDE(CheckFunctionExists)

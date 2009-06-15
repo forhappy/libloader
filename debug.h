@@ -41,9 +41,9 @@ static const char * debug_comp_name[NR_COMPONENTS] = {
 
 static enum debug_level debug_levels[NR_COMPONENTS] = {
 	[MEMORY] = WARNING,
-	[SYSTEM] = WARNING,
+	[SYSTEM] = TRACE,
 	[ELF]    = WARNING,
-	[PTRACE] = WARNING,
+	[PTRACE] = TRACE,
 };
 #endif
 
@@ -89,6 +89,14 @@ extern void message_out(int prefix, enum debug_level, enum debug_component, char
 # define FORCE_CONT(comp, str...) message_out(0, comp, str)
 #endif
 
+#define SYS_TRACE(str...) TRACE(SYSTEM, str)
+#define SYS_VERBOSE(str...) VERBOSE(SYSTEM, str)
+#define SYS_WARNING(str...) WARNING(SYSTEM, str)
+#define SYS_WARNING_CONT(str...) WARNING_CONT(SYSTEM, str)
+#define SYS_ERROR(str...) ERROR(SYSTEM, str)
+#define SYS_FATAL(str...) FATAL(SYSTEM, str)
+#define SYS_FORCE(str...) FORCE(SYSTEM, str)
+#define SYS_FORCE_CONT(str...) FORCE_CONT(SYSTEM, str)
 
 /* internal_error: raise a SIGABRT. */
 extern void

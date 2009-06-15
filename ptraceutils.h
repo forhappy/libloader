@@ -10,6 +10,7 @@
 #include <linux/user.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <asm/unistd.h>
 #include "defs.h"
 
 __BEGIN_DECLS
@@ -55,9 +56,12 @@ ptrace_goto(uintptr_t addr);
 uint32_t
 ptrace_push(void * data, int len, bool_t save_esp);
 
+#define syscallno(x) __NR_##x
+
 uint32_t
 ptrace_syscall(int no, int nr, ...);
 
+#define ptrace_syscall(x, nr...)	ptrace_syscall(syscallno(x), nr)
 
 __END_DECLS
 #endif

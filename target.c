@@ -7,6 +7,7 @@ static int global_data = 0;
 
 int main(int argc, char * argv[])
 {
+	printf("argv[0] is \"%s\", at %p\n", argv[0], &argv[0]);
 	/* check for breakpoint */
 	printf("addr of main = %p\n", main);
 	printf("dup 8 bytes from main: ");

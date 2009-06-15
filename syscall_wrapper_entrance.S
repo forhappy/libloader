@@ -19,7 +19,12 @@ string_end:
 .previous	
 
 syscall_wrapper_entrace:
-/* push args */
+	int $0x80
+	ret
+
+
+/*syscall_wrapper_entrace:*/
+/* push args 
 	pushl %ebp
 	pushl %edi
 	pushl %esi
@@ -28,7 +33,7 @@ syscall_wrapper_entrace:
 	pushl %ebx
 	pushl %eax
 	call syscall_wrapper
-	popl %ebx	/* save eax */
+	popl %ebx	save eax
 	popl %ebx
 	popl %ecx
 	popl %edx
@@ -36,5 +41,5 @@ syscall_wrapper_entrace:
 	popl %edi
 	popl %ebp
 	ret
-
+*/
 

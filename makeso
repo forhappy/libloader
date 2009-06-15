@@ -1,0 +1,6 @@
+all: syscall_wrapper_entrance.so
+
+syscall_wrapper_entrance.so: syscall_wrapper_entrance.S
+	as syscall_wrapper_entrance.S -o syscall_wrapper_entrance.o
+	ld -shared syscall_wrapper_entrance.o -o syscall_wrapper_entrance.so
+

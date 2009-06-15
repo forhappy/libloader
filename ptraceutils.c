@@ -99,6 +99,8 @@ void
 ptrace_dupmem(void * dst, uintptr_t addr, int len)
 {
 	assert(child_pid != -1);
+	assert(dst != NULL);
+
 	uintptr_t target_start, target_end;
 	target_start = (addr + 3) & 0xfffffffcul;
 	target_end = (addr + len) & 0xfffffffcul;
@@ -332,7 +334,9 @@ ptrace_push(void * data, int len, bool_t save_esp)
 	return esp;
 }
 
-
+#ifdef ptrace_syscall
+#undef ptrace_syscall
+#endif
 uint32_t ptrace_syscall(int no, int nr, ...)
 {
 #define SYSCALL_INSTR {'\xcd', '\x80'}
@@ -365,6 +369,7 @@ uint32_t ptrace_syscall(int no, int nr, ...)
 #undef xcase
 #undef setreg
 	va_end(ap);
+
 	ptrace_pokeuser(regs);
 
 	/* insert the int80 instruction */
