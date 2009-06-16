@@ -22,7 +22,7 @@ extern void
 ptrace_dupmem(void * dst, uintptr_t addr, int len);
 
 extern void
-ptrace_updmem(void * src, uintptr_t addr, int len);
+ptrace_updmem(const void * src, uintptr_t addr, int len);
 
 extern void
 ptrace_callfunc(uintptr_t addr, int nr_args, ...);
@@ -54,7 +54,7 @@ ptrace_goto(uintptr_t addr);
 
 /* return the esp */
 uint32_t
-ptrace_push(void * data, int len, bool_t save_esp);
+ptrace_push(const void * data, int len, bool_t save_esp);
 
 #define syscallno(x) __NR_##x
 

@@ -148,7 +148,7 @@ ptrace_dupmem(void * dst, uintptr_t addr, int len)
 }
 
 void
-ptrace_updmem(void * src, uintptr_t addr, int len)
+ptrace_updmem(const void * src, uintptr_t addr, int len)
 {
 	assert(child_pid != -1);
 	uintptr_t target_start, target_end;
@@ -314,7 +314,7 @@ ptrace_resume(void)
 }
 
 uint32_t
-ptrace_push(void * data, int len, bool_t save_esp)
+ptrace_push(const void * data, int len, bool_t save_esp)
 {
 	uint32_t esp = ptrace(PTRACE_PEEKUSER, child_pid,
 			(void*)offsetof(struct user_regs_struct, esp), NULL);

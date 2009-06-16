@@ -66,6 +66,7 @@ elf_init(uint8_t * image, ptrdiff_t load_bias)
 	const char * snames = (const char *)
 		(image + shdr_table[hdr->e_shstrndx].sh_offset);
 
+	newh->hdr = hdr;
 	newh->phdr_table = phdr_table;
 	newh->shdr_table = shdr_table;
 	newh->snames = snames;
@@ -134,7 +135,7 @@ elf_get_symbol_address(struct elf_handler * h,
 	return 0;
 }
 
-extern  enum elf_file_type
+extern enum elf_file_type
 elf_get_image_type(struct elf_handler * h)
 {
 	switch (h->hdr->e_type) {
@@ -147,6 +148,14 @@ elf_get_image_type(struct elf_handler * h)
 					h->hdr->e_type);
 			return ELF_NOSUPPORT;
 	}
+}
+
+struct elf32_phdr *
+elf_get_phdr_table(struct elf_handler * h, int * nr_phdrs)
+{
+	if (nr_phdrs != NULL)
+		*nr_phdrs = h->hdr->e_phnum;
+	return h->phdr_table;
 }
 
 

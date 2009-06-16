@@ -35,5 +35,8 @@ enum elf_file_type {
 extern  enum elf_file_type
 elf_get_image_type(struct elf_handler * h);
 
+struct elf32_phdr *
+elf_get_phdr_table(struct elf_handler * h, int * nr_phdrs);
+
 #endif
 

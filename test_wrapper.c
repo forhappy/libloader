@@ -2,9 +2,12 @@
  * test_wrapper.c
  * by WN @ Jun. 15, 2009
  */
-
-#include <linux/user.h>
+//#define __KERNEL_STRICT_NAMES
+//typedef long long	__kernel_loff_t;
+//typedef __kernel_loff_t		loff_t;
+//#include <linux/elf.h>
 #include <elf.h>
+#include <linux/user.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -14,6 +17,31 @@
 #include "procutils.h"
 #include "utils.h"
 #include "elfutils.h"
+
+/* don't include kernel's file */
+struct elf32_phdr{
+  Elf32_Word	p_type;
+  Elf32_Off	p_offset;
+  Elf32_Addr	p_vaddr;
+  Elf32_Addr	p_paddr;
+  Elf32_Word	p_filesz;
+  Elf32_Word	p_memsz;
+  Elf32_Word	p_flags;
+  Elf32_Word	p_align;
+};
+
+
+
+/* copy from kernel's code (binfmt_elf.c) */
+#ifndef PAGE_SIZE
+#define PAGE_SIZE (0x1000)
+#endif
+#define ELF_MIN_ALIGN	PAGE_SIZE
+#define ELF_PAGESTART(_v) ((_v) & ~(unsigned long)(ELF_MIN_ALIGN-1))
+#define ELF_PAGEOFFSET(_v) ((_v) & (ELF_MIN_ALIGN-1))
+#define ELF_PAGEALIGN(_v) (((_v) + ELF_MIN_ALIGN - 1) & ~(ELF_MIN_ALIGN - 1))
+
+
 
 static void *
 get_elf_table(void * stack_image)
@@ -33,17 +61,12 @@ get_elf_table(void * stack_image)
 }
 
 static void
-map_wrap_so(uint32_t * pvdso_entrance,
+map_wrap_so(const char * so_file, uintptr_t load_bias,
+		uint32_t * pvdso_entrance,
 		uint32_t * pvdso_ehdr)
 {
-	static char so_file[] = "./syscall_wrapper_entrance.so";
 	uint32_t name_pos;
 	int fd, err;
-
-	name_pos = ptrace_push(so_file, sizeof(so_file), TRUE);
-	fd = ptrace_syscall(open, 3, name_pos, O_RDONLY, 0);
-	assert_throw(fd >= 0, "open sofile for child failed, return %d", fd);
-	SYS_TRACE("open so file for child, fd=%d\n", fd);
 
 	struct stat s;
 	err = stat(so_file, &s);
@@ -53,24 +76,58 @@ map_wrap_so(uint32_t * pvdso_entrance,
 	int32_t fsize = s.st_size;
 	SYS_TRACE("desired so file length is %d\n", fsize);
 
-	/* find the entry symbol */
+	/* elf operations */
 	void * so_image = load_file(so_file);
-	struct elf_handler * h = elf_init(so_image, 0x3000);
+	struct elf_handler * h = elf_init(so_image, load_bias);
+	/* load program headers */
+	int nr_phdr = 0;
+	struct elf32_phdr * phdr = elf_get_phdr_table(h, &nr_phdr);
+	assert_throw(((phdr != NULL) && (nr_phdr != 0)),
+			"load phdr of file %s failed\n", so_file);
+	/* find the entry symbol */
 	uintptr_t entry_addr = elf_get_symbol_address(h, "syscall_wrapper_entrace");
 	SYS_TRACE("wrapper func address will be 0x%x\n", entry_addr);
+
+
+	name_pos = ptrace_push(so_file, strlen(so_file), TRUE);
+	fd = ptrace_syscall(open, 3, name_pos, O_RDONLY, 0);
+	assert_throw(fd >= 0, "open sofile for child failed, return %d", fd);
+	SYS_TRACE("open so file for child, fd=%d\n", fd);
+
+
+	/* for each program header */
+	for (int i = 0; i < nr_phdr; i++, phdr ++) {
+		SYS_FORCE("phdr %d, type=%d, flag=0x%x\n", i,
+				phdr->p_type, phdr->p_flags);
+		if (phdr->p_type != PT_LOAD)
+			continue;
+
+		int elf_prot = 0, elf_flags = 0;
+		
+		if (phdr->p_flags & PF_R)
+			elf_prot |= PROT_READ;
+		if (phdr->p_flags & PF_W)
+			elf_prot |= PROT_WRITE;
+		if (phdr->p_flags & PF_X)
+			elf_prot |= PROT_EXEC;
+
+		elf_flags = MAP_PRIVATE | MAP_EXECUTABLE;
+
+		unsigned long size = phdr->p_filesz + ELF_PAGEOFFSET(phdr->p_vaddr);
+		unsigned long off = phdr->p_offset - ELF_PAGEOFFSET(phdr->p_vaddr);
+		int32_t map_addr = load_bias + phdr->p_vaddr - ELF_PAGEOFFSET(phdr->p_vaddr);
+
+		map_addr = ptrace_syscall(mmap2, 6,
+				map_addr, size,
+				elf_prot, elf_flags | MAP_FIXED,
+				fd, off);
+		assert_throw(map_addr != 0xffffffff, "map wrap so failed, return 0x%x", map_addr);
+	}
 	elf_cleanup(h);
 	free(so_image);
 
-	int32_t map_addr;
-	map_addr = ptrace_syscall(mmap2, 6,
-			0x3000, fsize,
-			PROT_READ|PROT_WRITE|PROT_EXEC,
-			MAP_PRIVATE|MAP_FIXED,
-			fd, 0);
-	assert_throw(map_addr == 0x3000, "map wrap so failed, return %d", map_addr);
-
 	if (pvdso_ehdr)
-		*pvdso_ehdr = map_addr;
+		*pvdso_ehdr = load_bias;
 	if (pvdso_entrance)
 		*pvdso_entrance = entry_addr;
 }
@@ -121,7 +178,8 @@ wrapper_main(int argc, char * argv[])
 			*pvdso_ehdr, *pvdso_entrance);
 
 	/* begin to map wrapper so */
-	map_wrap_so(pvdso_entrance, pvdso_ehdr);
+	map_wrap_so("./syscall_wrapper_entrance.so", 0x3000,
+			pvdso_entrance, pvdso_ehdr);
 
 	/* reset the stack */
 

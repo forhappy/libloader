@@ -81,6 +81,13 @@ ADD_EXECUTABLE(test_wrapper
 	test_wrapper.c
 	)
 
+ADD_EXECUTABLE(test_wrapper_2
+	${PTRACE}
+	${COMMON}
+	${PROC}
+	${ELF}
+	wrapper.c
+	)
 
 INCLUDE(CMakeDependentOption)
 INCLUDE(CheckIncludeFiles)
