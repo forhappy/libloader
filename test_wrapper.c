@@ -97,7 +97,7 @@ map_wrap_so(const char * so_file, uintptr_t load_bias,
 
 	/* for each program header */
 	for (int i = 0; i < nr_phdr; i++, phdr ++) {
-		SYS_FORCE("phdr %d, type=%d, flag=0x%x\n", i,
+		SYS_FORCE("phdr %d, type=0x%x, flag=0x%x\n", i,
 				phdr->p_type, phdr->p_flags);
 		if (phdr->p_type != PT_LOAD)
 			continue;

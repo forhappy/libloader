@@ -1,13 +1,20 @@
 .section .text
-.global _start
+
+.type show_help_entry, @function
+.global show_help_entry
 
 .type syscall_wrapper_entrace, @function
+.global syscall_wrapper_entrace
+
+
+
+.section .data
 .global vdso_entrace
 .type vdso_entrace, @object
 .global vdso_ehdr
 .type vdso_ehdr, @object
 
-.section .data
+
 vdso_entrace:
 	.word 0
 vdso_ehdr:
@@ -18,28 +25,15 @@ string_end:
 	.asciz "syscall end\n"
 .previous	
 
-syscall_wrapper_entrace:
+show_help_entry:
+	call show_help
+	movl $1, %eax
 	int $0x80
 	ret
 
 
-/*syscall_wrapper_entrace:*/
-/* push args 
-	pushl %ebp
-	pushl %edi
-	pushl %esi
-	pushl %edx
-	pushl %ecx
-	pushl %ebx
-	pushl %eax
+syscall_wrapper_entrace:
 	call syscall_wrapper
-	popl %ebx	save eax
-	popl %ebx
-	popl %ecx
-	popl %edx
-	popl %esi
-	popl %edi
-	popl %ebp
+	int $0x80
 	ret
-*/
 

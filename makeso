@@ -1,6 +1,21 @@
-all: syscall_wrapper_entrance.so
+all: syscall_wrapper_entrance.so test_wrapper_so
 
-syscall_wrapper_entrance.so: syscall_wrapper_entrance.S
-	as syscall_wrapper_entrance.S -o syscall_wrapper_entrance.o
-	ld -shared syscall_wrapper_entrance.o -o syscall_wrapper_entrance.so
+CFLAGS= -g -nostartfiles -nodefaultlibs -nostdlib -fvisibility=hidden -fPIC 
+
+syscall_wrapper_entrance.so: syscall_wrapper_entrance.o syscall_wrapper.o
+	ld -shared -e show_help_entry $^ -o $@
+
+syscall_wrapper_entrance.o: syscall_wrapper_entrance.S
+	as $^ -o $@
+
+syscall_wrapper.o: syscall_wrapper.c
+
+test_wrapper_so: syscall_wrapper_entrance.so test_wrapper_so.o
+	gcc -g -Wl,-rpath,. $^ -o $@
+
+test_wrapper_so.o: test_wrapper_so.c
+	gcc -g -c $< -o $@
+
+clean:
+	rm syscall_wrapper_entrance.so syscall_wrapper_entrance.o syscall_wrapper.o test_wrapper_so.o test_wrapper_so
 
