@@ -33,7 +33,21 @@ show_help_entry:
 
 
 syscall_wrapper_entrace:
+	pushl %eax
+	pushl %ebx
+	pushl %ecx
+	pushl %edx
+	pushl %esi
+	pushl %edi
+	pushl %ebp
 	call syscall_wrapper
+	popl %ebp
+	popl %edi
+	popl %esi
+	popl %edx
+	popl %ecx
+	popl %ebx
+	popl %eax
 	int $0x80
 	ret
 

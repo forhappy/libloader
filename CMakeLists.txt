@@ -2,6 +2,10 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
 PROJECT(CURRF2)
 
+IF (NOT ${CURRF2_BINARY_DIR} STREQUAL ${CURRF2_SOURCE_DIR})
+	MESSAGE(FATAL_ERROR "currently only In-tree-compile is supported")
+ENDIF (NOT ${CURRF2_BINARY_DIR} STREQUAL ${CURRF2_SOURCE_DIR})
+
 SET(CMAKE_C_FLAGS "-std=gnu99 -Wall -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64")
 SET(CMAKE_C_FLAGS_DEBUG "-g -O0")
 SET(CMAKE_C_FLAGS_RELEASE "-O2 -DNDEBUG")
@@ -81,13 +85,28 @@ ADD_EXECUTABLE(test_wrapper
 	test_wrapper.c
 	)
 
+
 ADD_EXECUTABLE(test_wrapper_2
 	${PTRACE}
 	${COMMON}
 	${PROC}
 	${ELF}
 	wrapper.c
+	syscall_wrapper_entrance.so
 	)
+
+ADD_CUSTOM_COMMAND(OUTPUT syscall_wrapper_entrance.so
+	COMMAND make -f makeso
+	MAIN_DEPENDENCY syscall_wrapper_entrance.S
+	DEPENDS syscall_wrapper.c
+	WORKING_DIRECTORY ${CURRF2_SOURCE_DIR}
+	VERBATIM
+	)
+SET_DIRECTORY_PROPERTIES(PROPERTIES
+	ADDITIONAL_MAKE_CLEAN_FILES
+		"syscall_wrapper_entrance.o;syscall_wrapper.o;test_wrapper_so;test_wrapper_so.o"
+	)
+
 
 INCLUDE(CMakeDependentOption)
 INCLUDE(CheckIncludeFiles)

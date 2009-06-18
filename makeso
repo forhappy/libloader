@@ -4,6 +4,7 @@ CFLAGS= -g -nostartfiles -nodefaultlibs -nostdlib -fvisibility=hidden -fPIC
 
 syscall_wrapper_entrance.so: syscall_wrapper_entrance.o syscall_wrapper.o
 	ld -shared -e show_help_entry $^ -o $@
+	@if ! readelf -r $@  | grep "no relocations" > /dev/null ; then echo "*** Warning *** $@ needs relocation" ; fi
 
 syscall_wrapper_entrance.o: syscall_wrapper_entrance.S
 	as $^ -o $@

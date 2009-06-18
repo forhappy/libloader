@@ -44,24 +44,25 @@ syscall_wrapper(void)
 		: "a" (4), "S" (1), "c" (stringXXX), "d" (11)
 		);
 
-
+#if 0
 	while(1);
 
 	asm volatile (
 		"movl $1, %eax\n"
 		"int $0x80\n");
+#endif
 	return;
 }
 
-void
+LOCAL void
 syscall_wrapper_init(void)
 {
 	asm volatile (
-		"movl $0x4, %eax\n"
-		"movl $1, %ebx\n"
-		"movl stringXXX, %ecx\n"
-		"movl $9, %edx\n"
+		"xchgl %%esi, %%ebx\n"
 		"int $0x80\n"
+		"xchgl %%esi, %%ebx\n"
+		:
+		: "a" (4), "S" (1), "c" (stringXXX), "d" (9)
 		);
 	return;
 }
