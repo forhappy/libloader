@@ -1,8 +1,8 @@
-all: syscall_wrapper_entrance.so test_wrapper_so libprintf.os
+all: syscall_wrapper_entrance.so test_wrapper_so
 
-CFLAGS= -g -nostartfiles -nodefaultlibs -nostdlib -fvisibility=hidden -fPIC 
+CFLAGS= -g -nostartfiles -nodefaultlibs -nostdlib -fno-builtin -fvisibility=hidden -fPIC 
 
-syscall_wrapper_entrance.so: syscall_wrapper_entrance.o syscall_wrapper.o
+syscall_wrapper_entrance.so: syscall_wrapper_entrance.o syscall_wrapper.o libprintf.os
 	ld -shared -e show_help_entry $^ -o $@
 	@if ! readelf -r $@  | grep "no relocations" > /dev/null ; then echo "*** Warning *** $@ needs relocation" ; fi
 
@@ -11,20 +11,23 @@ syscall_wrapper_entrance.o: syscall_wrapper_entrance.S
 
 syscall_wrapper.o: syscall_wrapper.c
 
-test_wrapper_so: syscall_wrapper_entrance.so test_wrapper_so.o
+#test_wrapper_so: syscall_wrapper_entrance.so test_wrapper_so.o
+#	gcc -g -Wl,-rpath,. $^ -o $@
+
+test_wrapper_so: syscall_wrapper_entrance.o syscall_wrapper.o libprintf.os test_wrapper_so.o
 	gcc -g -Wl,-rpath,. $^ -o $@
 
 test_wrapper_so.o: test_wrapper_so.c
-	gcc -g -c $< -o $@
+	gcc -g -c $^ -o $@
 
 vsprintf.os: vsprintf.c
 string_32.os: string_32.c
 __ctype.os: __ctype.c
 
 %.os : %.c
-	gcc -fno-builtin $(CFLAGS) -c $< -o $@
+	gcc -fno-builtin $(CFLAGS) -c $^ -o $@
 libprintf.os: vsprintf.os string_32.os __ctype.os
-	ld -r $< -o $@
+	ld -r $^ -o $@
 
 .PHONY: clean
 clean:
@@ -34,4 +37,6 @@ clean:
 		test_wrapper_so.o \
 		test_wrapper_so \
 		*.os
+
+# vim:filetype=make
 

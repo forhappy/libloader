@@ -43,7 +43,7 @@ static enum debug_level debug_levels[NR_COMPONENTS] = {
 	[MEMORY] = WARNING,
 	[SYSTEM] = TRACE,
 	[ELF]    = WARNING,
-	[PTRACE] = TRACE,
+	[PTRACE] = WARNING,
 };
 #endif
 

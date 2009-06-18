@@ -210,6 +210,7 @@ ptrace_updmem(const void * src, uintptr_t addr, int len)
 void
 ptrace_kill(void)
 {
+	FORCE(PTRACE, "kill target process %d\n", child_pid);
 	ptrace_cleanup(&pt_clup_s);
 }
 
@@ -235,6 +236,17 @@ ptrace_detach(bool_t wait)
 		ERROR(PTRACE, "wait error: %s\n", strerror(errno));
 	} else {
 		TRACE(PTRACE, "target process finished\n");
+		VERBOSE(PTRACE, "target process finished with status: %o\n", si.si_status);
+
+		int status = si.si_status;
+		if (WIFEXITED(status)) {
+			VERBOSE(PTRACE, "target exited normally, exit code: %d\n",
+					WEXITSTATUS(status));
+		}
+		if (WIFSIGNALED(status)) {
+			VERBOSE(PTRACE, "target signaled, term sig: %d\n",
+					WTERMSIG(status));
+		}
 	}
 	return;
 }

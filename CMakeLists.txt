@@ -95,15 +95,27 @@ ADD_EXECUTABLE(test_wrapper_2
 	syscall_wrapper_entrance.so
 	)
 
+SET(LIBPRINTF_SRC_FILES
+	syscall_wrapper_entrance.S
+	syscall_wrapper.c
+	test_wrapper_so.c
+	vsprintf.c
+	string_32.c
+	__ctype.c
+	__ctype.h
+	)
+
+
+
 ADD_CUSTOM_COMMAND(OUTPUT syscall_wrapper_entrance.so
 	COMMAND make -f makeso
 	MAIN_DEPENDENCY syscall_wrapper_entrance.S
-	DEPENDS syscall_wrapper.c
+	DEPENDS ${LIBPRINTF_SRC_FILES}
 	WORKING_DIRECTORY ${CURRF2_SOURCE_DIR}
 	VERBATIM
 	)
 
-SET(LIBPRINTF_FILES
+SET(LIBPRINTF_GEN_FILES
 	syscall_wrapper_entrance.o
 	syscall_wrapper.o
 	test_wrapper_so.o
@@ -116,7 +128,7 @@ SET(LIBPRINTF_FILES
 	)
 
 SET_DIRECTORY_PROPERTIES(PROPERTIES
-	ADDITIONAL_MAKE_CLEAN_FILES "${LIBPRINTF_FILES}"
+	ADDITIONAL_MAKE_CLEAN_FILES "${LIBPRINTF_GEN_FILES}"
 	)
 
 INCLUDE(CMakeDependentOption)

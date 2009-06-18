@@ -13,12 +13,16 @@
 .type vdso_entrace, @object
 .global vdso_ehdr
 .type vdso_ehdr, @object
+//.global intercept_start
+//.type intercept_start, @object
 
 
 vdso_entrace:
 	.word 0
 vdso_ehdr:
 	.word 0
+//intercept_start:
+//	.word 0
 string_start:
 	.asciz "syscall start\n"
 string_end:
