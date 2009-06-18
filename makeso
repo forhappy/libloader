@@ -1,4 +1,4 @@
-all: syscall_wrapper_entrance.so test_wrapper_so
+all: syscall_wrapper_entrance.so test_wrapper_so libprintf.os
 
 CFLAGS= -g -nostartfiles -nodefaultlibs -nostdlib -fvisibility=hidden -fPIC 
 
@@ -17,6 +17,21 @@ test_wrapper_so: syscall_wrapper_entrance.so test_wrapper_so.o
 test_wrapper_so.o: test_wrapper_so.c
 	gcc -g -c $< -o $@
 
+vsprintf.os: vsprintf.c
+string_32.os: string_32.c
+__ctype.os: __ctype.c
+
+%.os : %.c
+	gcc -fno-builtin $(CFLAGS) -c $< -o $@
+libprintf.os: vsprintf.os string_32.os __ctype.os
+	ld -r $< -o $@
+
+.PHONY: clean
 clean:
-	rm syscall_wrapper_entrance.so syscall_wrapper_entrance.o syscall_wrapper.o test_wrapper_so.o test_wrapper_so
+	rm -f syscall_wrapper_entrance.so \
+		syscall_wrapper_entrance.o \
+		syscall_wrapper.o \
+		test_wrapper_so.o \
+		test_wrapper_so \
+		*.os
 

@@ -102,11 +102,22 @@ ADD_CUSTOM_COMMAND(OUTPUT syscall_wrapper_entrance.so
 	WORKING_DIRECTORY ${CURRF2_SOURCE_DIR}
 	VERBATIM
 	)
-SET_DIRECTORY_PROPERTIES(PROPERTIES
-	ADDITIONAL_MAKE_CLEAN_FILES
-		"syscall_wrapper_entrance.o;syscall_wrapper.o;test_wrapper_so;test_wrapper_so.o"
+
+SET(LIBPRINTF_FILES
+	syscall_wrapper_entrance.o
+	syscall_wrapper.o
+	test_wrapper_so.o
+	libprintf.o
+	libprintf.os
+	test_wrapper_so
+	vsprintf.os
+	string_32.os
+	__ctype.os
 	)
 
+SET_DIRECTORY_PROPERTIES(PROPERTIES
+	ADDITIONAL_MAKE_CLEAN_FILES "${LIBPRINTF_FILES}"
+	)
 
 INCLUDE(CMakeDependentOption)
 INCLUDE(CheckIncludeFiles)
