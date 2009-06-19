@@ -95,7 +95,17 @@ ADD_EXECUTABLE(test_wrapper_2
 	syscall_wrapper_entrance.so
 	)
 
-SET(LIBPRINTF_SRC_FILES
+ADD_EXECUTABLE(currf2
+	${COMMON}
+	${PTRACE}
+	${PROC}
+	${ELF}
+	currf2.c
+	currf2_args.c
+	syscall_wrapper_entrance.so
+	)
+
+SET(INJECTSO_SRC_FILES
 	syscall_wrapper_entrance.S
 	syscall_wrapper.c
 	test_wrapper_so.c
@@ -105,17 +115,15 @@ SET(LIBPRINTF_SRC_FILES
 	__ctype.h
 	)
 
-
-
 ADD_CUSTOM_COMMAND(OUTPUT syscall_wrapper_entrance.so
 	COMMAND make -f makeso
 	MAIN_DEPENDENCY syscall_wrapper_entrance.S
-	DEPENDS ${LIBPRINTF_SRC_FILES}
+	DEPENDS ${INJECTSO_SRC_FILES}
 	WORKING_DIRECTORY ${CURRF2_SOURCE_DIR}
 	VERBATIM
 	)
 
-SET(LIBPRINTF_GEN_FILES
+SET(INJECTSO_GEN_FILES
 	syscall_wrapper_entrance.o
 	syscall_wrapper.o
 	test_wrapper_so.o
@@ -128,7 +136,7 @@ SET(LIBPRINTF_GEN_FILES
 	)
 
 SET_DIRECTORY_PROPERTIES(PROPERTIES
-	ADDITIONAL_MAKE_CLEAN_FILES "${LIBPRINTF_GEN_FILES}"
+	ADDITIONAL_MAKE_CLEAN_FILES "${INJECTSO_GEN_FILES}"
 	)
 
 INCLUDE(CMakeDependentOption)
