@@ -30,8 +30,8 @@ static struct opts opts = {
 	.init_sym	= NULL,
 	.wrap_sym 	= "syscall_wrapper_entrace",
 	.trig_sym	= "intercept_start",
-	.vdso_entry_sym	= NULL,
-	.vdso_hdr_sym	= NULL,
+	.old_ventry_sym	= NULL,
+	.old_vhdr_sym	= NULL,
 	.inj_bias	= 0x3000,
 };
 
@@ -56,10 +56,10 @@ parse_opt(int key, char *arg, struct argp_state *state)
 			opts.trig_sym = arg;
 			return 0;
 		case 'E':
-			opts.vdso_entry_sym = arg;
+			opts.old_ventry_sym = arg;
 			return 0;
 		case 'H':
-			opts.vdso_hdr_sym = arg;
+			opts.old_vhdr_sym = arg;
 			return 0;
 		case ARGP_KEY_ARG:
 			/* target args */

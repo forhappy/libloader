@@ -7,8 +7,8 @@ struct opts {
 	char * init_sym;
 	char * wrap_sym;
 	char * trig_sym;
-	char * vdso_entry_sym;
-	char * vdso_hdr_sym;
+	char * old_ventry_sym;
+	char * old_vhdr_sym;
 	uint32_t inj_bias;
 	int cmd_idx;
 };
