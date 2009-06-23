@@ -9,6 +9,8 @@ struct opts {
 	char * trig_sym;
 	char * old_ventry_sym;
 	char * old_vhdr_sym;
+	char * img_fn;
+	char * log_fn;
 	uint32_t inj_bias;
 	int cmd_idx;
 };

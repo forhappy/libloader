@@ -41,59 +41,60 @@ SET(UTILS
 	utils.h
 	)
 
-ADD_EXECUTABLE(test_utils
-	${COMMON}
-	)
-SET_TARGET_PROPERTIES(test_utils
-	PROPERTIES
-	COMPILE_FLAGS "-DTEST_UTILS"
-	)
-
 ADD_EXECUTABLE(target
 	target.c
 )
 
-ADD_EXECUTABLE(test_elf
-	${COMMON}
-	${ELF}
-	test_elf.c
-	)
-
-ADD_EXECUTABLE(test_ptrace
-	${PTRACE}
-	${COMMON}
-	${PROC}
-	${ELF}
-	test_ptrace.c
-	)
-
-ADD_EXECUTABLE(test_proc
-	${PROC}
-	${COMMON}
-	)
-
-SET_TARGET_PROPERTIES(test_proc
-	PROPERTIES
-	COMPILE_FLAGS "-DTEST_PROCUTILS"
-	)
-
-ADD_EXECUTABLE(test_wrapper
-	${PTRACE}
-	${COMMON}
-	${PROC}
-	${ELF}
-	test_wrapper.c
-	)
-
-
-ADD_EXECUTABLE(test_wrapper_2
-	${PTRACE}
-	${COMMON}
-	${PROC}
-	${ELF}
-	wrapper.c
-	syscall_wrapper_entrance.so
-	)
+#ADD_EXECUTABLE(test_utils
+#	${COMMON}
+#	)
+#SET_TARGET_PROPERTIES(test_utils
+#	PROPERTIES
+#	COMPILE_FLAGS "-DTEST_UTILS"
+#	)
+#
+#
+#ADD_EXECUTABLE(test_elf
+#	${COMMON}
+#	${ELF}
+#	test_elf.c
+#	)
+#
+#ADD_EXECUTABLE(test_ptrace
+#	${PTRACE}
+#	${COMMON}
+#	${PROC}
+#	${ELF}
+#	test_ptrace.c
+#	)
+#
+#ADD_EXECUTABLE(test_proc
+#	${PROC}
+#	${COMMON}
+#	)
+#
+#SET_TARGET_PROPERTIES(test_proc
+#	PROPERTIES
+#	COMPILE_FLAGS "-DTEST_PROCUTILS"
+#	)
+#
+#ADD_EXECUTABLE(test_wrapper
+#	${PTRACE}
+#	${COMMON}
+#	${PROC}
+#	${ELF}
+#	test_wrapper.c
+#	)
+#
+#
+#ADD_EXECUTABLE(test_wrapper_2
+#	${PTRACE}
+#	${COMMON}
+#	${PROC}
+#	${ELF}
+#	wrapper.c
+#	syscall_wrapper_entrance.so
+#	)
 
 ADD_EXECUTABLE(currf2
 	${COMMON}
@@ -102,6 +103,8 @@ ADD_EXECUTABLE(currf2
 	${ELF}
 	currf2.c
 	currf2_args.c
+	checkpoint.h
+	checkpoint.c
 	syscall_wrapper_entrance.so
 	)
 

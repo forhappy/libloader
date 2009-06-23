@@ -12,6 +12,7 @@
 #include <sys/wait.h>
 #include <sys/personality.h>
 #include <linux/user.h>
+#include <linux/ptrace.h>
 #include <stdarg.h>
 
 #include "debug.h"
@@ -38,7 +39,7 @@ static struct cleanup pt_clup_s = {
 
 
 /* wait for the chld, and check whether it is exited*/
-static void
+static int
 wait_and_check(void)
 {
 	siginfo_t si;
@@ -49,7 +50,7 @@ wait_and_check(void)
 	signal(SIGINT, SIG_DFL);
 	TRACE(PTRACE, "wait over\n");
 
-	assert_throw(err >= 0, "wait failed");
+	CTHROW(err >= 0, "wait failed");
 
 	/* Check for siginfo */
 	if (si.si_code != CLD_TRAPPED) {
@@ -60,7 +61,8 @@ wait_and_check(void)
 		THROW(EXCEPTION_FATAL, "Child process %d has stopped or been killed (%d)", old_pid,
 				si.si_code);
 	}
-	return;
+	TRACE(SYSTEM, "code=%d, status=%d\n",si.si_code, si.si_status);
+	return si.si_status;
 }
 
 pid_t
@@ -73,7 +75,7 @@ ptrace_execve(const char * filename,
 	TRACE(PTRACE, "prepare to execve file %s\n", filename);
 	
 	child_pid = fork();
-	assert_throw(child_pid >= 0, "fork failed: %s", strerror(errno));
+	CTHROW(child_pid >= 0, "fork failed: %s", strerror(errno));
 	if (child_pid == 0) {
 		/* in child process */
 
@@ -83,7 +85,7 @@ ptrace_execve(const char * filename,
 		assert(err != -1);
 
 		err = ptrace(PTRACE_TRACEME, getpid(), NULL, NULL);
-		assert_throw(err != -1, "traceme failed: %s", strerror(errno));
+		CTHROW(err != -1, "traceme failed: %s", strerror(errno));
 
 		err = execve(filename, argv, environ);
 		THROW(EXCEPTION_FATAL, "execve failed: %s", strerror(errno));
@@ -91,7 +93,11 @@ ptrace_execve(const char * filename,
 
 	/* in father process */
 	make_cleanup(&pt_clup_s);
+
 	wait_and_check();
+
+	err = ptrace(PTRACE_SETOPTIONS, child_pid, 0, PTRACE_O_TRACESYSGOOD);
+	CTHROW(err != -1, "ptrace_setoptions failed: %s", strerror(errno));
 	return child_pid;
 }
 
@@ -111,7 +117,7 @@ ptrace_dupmem(void * dst, uintptr_t addr, int len)
 	while (target_ptr < target_end) {
 		long val;
 		val = ptrace(PTRACE_PEEKDATA, child_pid, target_ptr, NULL);
-		assert_errno_throw("ptrace peek data failed: %s", 
+		ETHROW("ptrace peek data failed: %s", 
 				strerror(errno));
 		(*(uint32_t*)(dst_ptr)) = val;
 		dst_ptr ++;
@@ -162,7 +168,7 @@ ptrace_updmem(const void * src, uintptr_t addr, int len)
 		long val;
 		val = ptrace(PTRACE_POKEDATA, child_pid, target_ptr,
 				*src_ptr);
-		assert_errno_throw("ptrace poke data failed: %s", 
+		ETHROW("ptrace poke data failed: %s", 
 				strerror(errno));
 		src_ptr ++;
 		target_ptr += 4;
@@ -172,7 +178,7 @@ ptrace_updmem(const void * src, uintptr_t addr, int len)
 		/* head fragment */
 		uintptr_t target_frag = addr & 0xfffffffcul;
 		long val = ptrace(PTRACE_PEEKDATA, child_pid, target_frag, NULL);
-		assert_errno_throw("ptrace peek data tailed: %s",
+		ETHROW("ptrace peek data tailed: %s",
 				strerror(errno));
 		uint8_t * ptr = (uint8_t*)&val;
 		int i = addr - target_frag;
@@ -181,7 +187,7 @@ ptrace_updmem(const void * src, uintptr_t addr, int len)
 			ptr[i] = ((uint8_t*)src)[j];
 		/* poke the word back */
 		ptrace(PTRACE_POKEDATA, child_pid, target_frag, val);
-		assert_errno_throw("ptrace poke data tailed: %s",
+		ETHROW("ptrace poke data tailed: %s",
 				strerror(errno));
 	}
 
@@ -200,7 +206,7 @@ ptrace_updmem(const void * src, uintptr_t addr, int len)
 			}
 			/* poke the word back */
 			ptrace(PTRACE_POKEDATA, child_pid, tail_frag, val);
-			assert_errno_throw("ptrace poke data tailed: %s",
+			ETHROW("ptrace poke data tailed: %s",
 					strerror(errno));
 		}
 	}
@@ -220,7 +226,7 @@ ptrace_detach(bool_t wait)
 	int err;
 	pid_t old_pid = child_pid;
 	err = ptrace(PTRACE_DETACH, child_pid, NULL, NULL);
-	assert_errno_throw("cannot detach: %s", strerror(errno));
+	ETHROW("cannot detach: %s", strerror(errno));
 	remove_cleanup(&pt_clup_s);
 	/* wait for the process */
 	if (!wait)
@@ -260,7 +266,7 @@ ptrace_peekuser(void)
 	errno = 0;
 
 	ptrace(PTRACE_GETREGS, child_pid, NULL, &ret);
-	assert_errno_throw("error in peeking regs: %s", strerror(errno));
+	ETHROW("error in peeking regs: %s", strerror(errno));
 	return ret;
 }
 
@@ -270,7 +276,7 @@ ptrace_pokeuser(struct user_regs_struct s)
 	assert(child_pid != -1);
 	errno = 0;
 	ptrace(PTRACE_SETREGS, child_pid, NULL, &s);
-	assert_errno_throw("error in pokeing regs: %s",
+	ETHROW("error in pokeing regs: %s",
 			strerror(errno));
 }
 
@@ -283,19 +289,57 @@ static uint8_t saved_bkpt_instr[INTINSTR_LEN];
 void
 ptrace_insert_bkpt(uintptr_t address)
 {
-	assert_throw(current_bkpt == 0,
+	CTHROW(current_bkpt == 0,
 			"a breakpoint has already been inserted");
 	ptrace_dupmem(saved_bkpt_instr, address, INTINSTR_LEN);
 	ptrace_updmem(bkpt_instr, address, INTINSTR_LEN);
 	current_bkpt = address;
 }
 
-void
+uintptr_t
 ptrace_cont(void)
 {
 	ptrace(PTRACE_CONT, child_pid, NULL,NULL);
 	wait_and_check();
-	return ;
+	struct user_regs_struct regs = ptrace_peekuser();
+	return regs.eip;
+}
+
+uintptr_t
+ptrace_next_syscall(int (*hook)(struct user_regs_struct u, bool_t before))
+{
+	TRACE(PTRACE, "run to next syscall\n");
+	struct user_regs_struct uregs;
+	int status;
+	int err;
+	
+	ptrace(PTRACE_SYSCALL, child_pid, NULL, NULL);
+	ETHROW("ptrace pre-syscall failed: %s\n", strerror(errno));
+	status = wait_and_check();
+	if ((status & 0x80) == 0) {
+		/* this is not a syscall, is a trap */
+		uregs = ptrace_peekuser();
+		SYS_FORCE("syscall hit a trap at uregs.eip\n");
+		return uregs.eip;
+	}
+
+	if (hook) {
+		uregs = ptrace_peekuser();
+		err = hook(uregs, TRUE);
+		CTHROW(err >= 0, "syscall pre-hook failed: %s", strerror(errno));
+	}
+
+	ptrace(PTRACE_SYSCALL, child_pid, NULL, NULL);
+	ETHROW("ptrace after-syscall failed: %s\n", strerror(errno));
+	wait_and_check();
+	if (hook) {
+		uregs = ptrace_peekuser();
+		err = hook(uregs, FALSE);
+		CTHROW(err >= 0, "syscall after-hook failed: %s", strerror(errno));
+	}
+
+	struct user_regs_struct regs = ptrace_peekuser();
+	return regs.eip;
 }
 
 void
@@ -304,7 +348,7 @@ ptrace_goto(uintptr_t addr)
 	ptrace(PTRACE_POKEUSER, child_pid,
 			(void*)offsetof(struct user_regs_struct, eip),
 			addr);
-	assert_errno_throw("error in setting eip: %s",
+	ETHROW("error in setting eip: %s",
 			strerror(errno));
 	return;
 }
@@ -330,7 +374,7 @@ ptrace_push(const void * data, int len, bool_t save_esp)
 {
 	uint32_t esp = ptrace(PTRACE_PEEKUSER, child_pid,
 			(void*)offsetof(struct user_regs_struct, esp), NULL);
-	assert_errno_throw("cannot get esp");
+	ETHROW("cannot get esp");
 
 	int err;
 	uint32_t real_len = (len + 3) & 0xfffffffcUL;
@@ -341,7 +385,7 @@ ptrace_push(const void * data, int len, bool_t save_esp)
 	if (!save_esp) {
 		err = ptrace(PTRACE_POKEUSER, child_pid,
 			(void*)offsetof(struct user_regs_struct, esp), esp);
-		assert_errno_throw("reset esp failed");
+		ETHROW("reset esp failed");
 	}
 	return esp;
 }
@@ -390,13 +434,13 @@ uint32_t ptrace_syscall(int no, int nr, ...)
 
 	/* trace systemcall and continue */
 	ptrace(PTRACE_SYSCALL, child_pid, NULL, NULL);
-	assert_errno_throw("ptrace syscall failed: %s",
+	ETHROW("ptrace syscall failed: %s",
 			strerror(errno));
 	
 	wait_and_check();
 
 	ptrace(PTRACE_SYSCALL, child_pid, NULL, NULL);
-	assert_errno_throw("ptrace syscall failed: %s",
+	ETHROW("ptrace syscall failed: %s",
 			strerror(errno));
 	wait_and_check();
 

@@ -31,6 +31,9 @@ ptrace_callfunc(uintptr_t addr, int nr_args, ...);
 extern void
 ptrace_insert_bkpt(uintptr_t addr);
 
+extern uintptr_t
+ptrace_next_syscall(int (*hook)(struct user_regs_struct u, bool_t before));
+
 extern void
 ptrace_kill(void);
 
@@ -43,7 +46,7 @@ ptrace_peekuser(void);
 void
 ptrace_pokeuser(struct user_regs_struct s);
 
-void
+uintptr_t
 ptrace_cont(void);
 
 void

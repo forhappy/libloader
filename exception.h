@@ -297,6 +297,10 @@ struct reinit_hook {
 
 #define assert_errno_throw(msg...) assert_throw((errno == 0), msg)
 
+
+#define ETHROW(x...)	assert_errno_throw(x)
+#define CTHROW(c, x...) assert_throw((c), x)
+
 __END_DECLS
 
 

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/mman.h>
+#include <signal.h>
 
 static int global_data = 0;
 
@@ -26,6 +27,8 @@ int main(int argc, char * argv[])
 //		c = getchar();
 		sleep(1);
 		printf("%d, %c, global_data=%d\n", i++, c, global_data);
+		if (i == 3)
+			break;
 	}
 	return 0;
 }

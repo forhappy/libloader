@@ -41,7 +41,7 @@ static const char * debug_comp_name[NR_COMPONENTS] = {
 
 static enum debug_level debug_levels[NR_COMPONENTS] = {
 	[MEMORY] = WARNING,
-	[SYSTEM] = TRACE,
+	[SYSTEM] = VERBOSE,
 	[ELF]    = WARNING,
 	[PTRACE] = WARNING,
 };

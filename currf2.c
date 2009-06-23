@@ -15,6 +15,8 @@
 #include "utils.h"
 #include "elfutils.h"
 #include "currf2_args.h"
+#include "checkpoint.h"
+
 
 /* don't include kernel's file */
 struct elf32_phdr{
@@ -36,10 +38,6 @@ struct elf32_phdr{
 #define ELF_PAGESTART(_v) ((_v) & ~(unsigned long)(ELF_MIN_ALIGN-1))
 #define ELF_PAGEOFFSET(_v) ((_v) & (ELF_MIN_ALIGN-1))
 #define ELF_PAGEALIGN(_v) (((_v) + ELF_MIN_ALIGN - 1) & ~(ELF_MIN_ALIGN - 1))
-
-
-#define ETHROW(x...)	assert_errno_throw(x)
-#define CTHROW(c, x...) assert_throw((c), x)
 
 static void *
 get_elf_table(void * stack_image)
@@ -112,6 +110,32 @@ check_file(char * fn)
 	ETHROW("stat file %s failed", fn);
 	CTHROW(S_ISREG(s.st_mode), "file %s not regular file", fn);
 	return;
+}
+
+static void
+injector_init(void)
+{
+	
+}
+
+static int
+syscall_hook(struct user_regs_struct u, bool_t before)
+{
+	struct syscall_regs regs;
+	if (before)
+		return 0;
+#define SETREG(x)	regs.x = u.x
+	SETREG(orig_eax);
+	SETREG(eax);
+	SETREG(ebx);
+	SETREG(ecx);
+	SETREG(edx);
+	SETREG(esi);
+	SETREG(edi);
+	SETREG(ebp);
+#undef SETREG
+	return after_syscall(regs);
+
 }
 
 static void
@@ -231,6 +255,32 @@ currf2_main(int argc, char * argv[])
 	ptrace_updmem(stack_image, r.esp, stk_sz);
 	free(stack_image);
 	stack_image = NULL;
+
+	int err;
+	err = checkpoint_init();
+	CTHROW(err == 0, "chkp init failed: %s\n", strerror(errno));
+
+	err = logger_init(child_pid);
+	CTHROW(err == 0, "logger init failed: %s\n", strerror(errno));
+
+	injector_init();
+
+	/* insert a breakpoint at main */
+	uintptr_t main_entry = elf_get_symbol_address(target.h, "main");
+	SYS_TRACE("insert breakpoint at 0x%x\n", main_entry);
+	ptrace_insert_bkpt(main_entry);
+
+	uintptr_t cur_eip = 0;
+	do {
+		cur_eip = ptrace_next_syscall(syscall_hook);
+	} while (cur_eip != main_entry + 1);
+	SYS_VERBOSE("come to user code\n");
+
+
+	err = logger_close();
+	CTHROW(err == 0, "logger close failed: %s\n", strerror(errno));
+
+	ptrace_resume();
 
 	ptrace_detach(TRUE);
 
