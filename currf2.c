@@ -8,6 +8,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+
 #include "debug.h"
 #include "exception.h"
 #include "ptraceutils.h"
@@ -66,7 +67,7 @@ struct elf_file {
 };
 
 static struct elf_file target = {NULL, NULL, NULL};
-static struct elf_file inject = {NULL, NULL, NULL};
+static struct elf_file injector = {NULL, NULL, NULL};
 static void * stack_image = NULL;
 static uint32_t * pvdso_entry = NULL;
 static uint32_t * pvdso_ehdr = NULL;
@@ -83,13 +84,13 @@ static void main_clup(struct cleanup * cleanup)
 		free(target.m);
 		target.m = NULL;
 	}
-	if (inject.h != NULL) {
-		elf_cleanup(inject.h);
-		inject.h = NULL;
+	if (injector.h != NULL) {
+		elf_cleanup(injector.h);
+		injector.h = NULL;
 	}
-	if (inject.m != NULL) {
-		free(inject.m);
-		inject.m = NULL;
+	if (injector.m != NULL) {
+		free(injector.m);
+		injector.m = NULL;
 	}
 	if (stack_image != NULL) {
 		free(stack_image);
@@ -110,12 +111,6 @@ check_file(char * fn)
 	ETHROW("stat file %s failed", fn);
 	CTHROW(S_ISREG(s.st_mode), "file %s not regular file", fn);
 	return;
-}
-
-static void
-injector_init(void)
-{
-	
 }
 
 static int
@@ -166,12 +161,12 @@ map_injector(void)
 {
 	int err;
 	int nr;
-	struct elf32_phdr * phdr = elf_get_phdr_table(inject.h, &nr);
+	struct elf32_phdr * phdr = elf_get_phdr_table(injector.h, &nr);
 	CTHROW((phdr != NULL) && (nr != 0),
-			"load phdr of injector file %s failed", inject.fn);
+			"load phdr of injector file %s failed", injector.fn);
 
 	/* open the file */
-	uint32_t fn_pos = ptrace_push(inject.fn, strlen(inject.fn), TRUE);
+	uint32_t fn_pos = ptrace_push(injector.fn, strlen(injector.fn), TRUE);
 	int fd = ptrace_syscall(open, 3, fn_pos, O_RDONLY, 0);
 	CTHROW(fd >= 0, "open injector from client code failed, return %d", fd);
 	SYS_TRACE("open injector for child, fd=%d\n", fd);
@@ -210,21 +205,43 @@ map_injector(void)
 }
 
 static void
+reloc_injector(uintptr_t addr, uint32_t val, int type, int symval)
+{
+	if ((type != R_386_PC32) && (type != R_386_32)) {
+		SYS_WARNING("doesn't support reloc type 0x%x", type);
+		return;
+	}
+	
+	uint32_t real_val;
+	if (type == R_386_32) {
+		real_val = val;
+	} else {
+		int32_t old_val;
+		ptrace_dupmem(&old_val, addr, sizeof(old_val));
+		real_val = val + old_val - addr;
+	}
+
+	ptrace_updmem(&real_val, addr, sizeof(real_val));
+
+	return;
+}
+
+static void
 currf2_main(int argc, char * argv[])
 {
 	/* check files */
 	check_file(target.fn);
-	check_file(inject.fn);
+	check_file(injector.fn);
 	SYS_TRACE("target exec: %s\n",
 			target.fn);
 	SYS_TRACE("inject so file: %s\n",
-			inject.fn);
+			injector.fn);
 	
 	target.m = load_file(target.fn);
 	target.h = elf_init(target.m, 0);
 
-	inject.m = load_file(inject.fn);
-	inject.h = elf_init(inject.m, opts->inj_bias);
+	injector.m = load_file(injector.fn);
+	injector.h = elf_init(injector.m, opts->inj_bias);
 
 	child_pid = ptrace_execve(target.fn, argv + opts->cmd_idx);
 
@@ -245,11 +262,23 @@ currf2_main(int argc, char * argv[])
 
 	find_vdso();
 	map_injector();
+	
+	/* relocate injector */
+	if (opts->old_vsyscall != NULL) {
+		SYS_TRACE("begin to relocate symbol %s\n", opts->old_vsyscall);
+		elf_reloc_symbol(injector.h, opts->old_vsyscall,
+				old_vdso_entry, reloc_injector);
+	}
 
 	/* set the stack pointers */
 	*pvdso_ehdr = opts->inj_bias;
-	*pvdso_entry = elf_get_symbol_address(inject.h,
+	*pvdso_entry = elf_get_symbol_address(injector.h,
 			opts->wrap_sym);
+
+	uintptr_t injector_entry = elf_get_symbol_address(injector.h,
+			opts->entry);
+	CTHROW(injector_entry != 0, "cannot find entry symbol '%s' from '%s'",
+			opts->entry, injector.fn);
 
 	/* update stack */
 	ptrace_updmem(stack_image, r.esp, stk_sz);
@@ -262,8 +291,6 @@ currf2_main(int argc, char * argv[])
 
 	err = logger_init(child_pid);
 	CTHROW(err == 0, "logger init failed: %s\n", strerror(errno));
-
-	injector_init();
 
 	/* insert a breakpoint at main */
 	uintptr_t main_entry = elf_get_symbol_address(target.h, "main");
@@ -282,6 +309,16 @@ currf2_main(int argc, char * argv[])
 
 	ptrace_resume();
 
+	/* goto the injector '__entry' */
+	/* 1st arg: main's addr */
+	ptrace_push(&main_entry, sizeof(uint32_t), FALSE);
+	/* 2nd arg: old sysinfo addr */
+	ptrace_push(&old_vdso_entry, sizeof(uint32_t), FALSE);
+	/* 3rd arg: old ehdr */
+	ptrace_push(&old_vdso_ehdr, sizeof(uint32_t), FALSE);
+
+	ptrace_goto(injector_entry);
+
 	ptrace_detach(TRUE);
 
 	return;
@@ -295,7 +332,7 @@ main(int argc, char * argv[])
 	assert(opts != NULL);
 
 	target.fn = argv[opts->cmd_idx];
-	inject.fn = opts->inj_so;
+	injector.fn = opts->inj_so;
 
 	volatile struct exception exp;
 	TRY_CATCH(exp, MASK_ALL) {

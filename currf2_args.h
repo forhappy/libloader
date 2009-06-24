@@ -4,13 +4,11 @@
 
 struct opts {
 	char * inj_so;
-	char * init_sym;
 	char * wrap_sym;
-	char * trig_sym;
-	char * old_ventry_sym;
-	char * old_vhdr_sym;
 	char * img_fn;
 	char * log_fn;
+	char * entry;
+	char * old_vsyscall;
 	uint32_t inj_bias;
 	int cmd_idx;
 };

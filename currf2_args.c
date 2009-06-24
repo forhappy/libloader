@@ -15,24 +15,20 @@ static char args_doc[] =
 
 static struct argp_option options[] = {
 	{"injectso",	'j', "filename",	0, "Set the system wrapper so file name, "
-											"'./syscall_wrapper_entrance.so' by default"},
+											"'./libwrapper.so' by default"},
 	{"bias",		'b', "bias",		0, "Set the inject so load bias, 0x3000 by default"},
-	{"soinit",		'i', "initsym",		0, "The injected so init symbol, NULL by default"},
-	{"syswrapper",	'w', "wrapsym",		0, "System call wrapper symbol, syscall_wrapper_entrace by default"},
-	{"trigger",		't', "trigsym",		0, "Trigger symbol, intercept_start by default"},
-	{"vdsoentry",	'E', "ventrysym",	0, "vdso entry symbol, NULL by default"},
-	{"vdsoehdr",	'H', "vehdrsym",	0, "vdso ehdr symbol, NULL by default"},
+	{"syswrapper",	'w', "wrapsym",		0, "System call wrapper symbol, syscall_wrapper_entry by default"},
+	{"entry",		'E', "entry",		0, "entry, \'__entry\' by default"},
+	{"vsyscall",	'e', "vsyscall",	0, "symbol which hold syscall, \'__vsyscall\' by default"},
 	{NULL},
 };
 
 static struct opts opts = {
-	.inj_so		= "./syscall_wrapper_entrance.so",
-	.init_sym	= NULL,
-	.wrap_sym 	= "syscall_wrapper_entrace",
-	.trig_sym	= "intercept_start",
-	.old_ventry_sym	= NULL,
-	.old_vhdr_sym	= NULL,
+	.inj_so		= "./libwrapper.so",
+	.wrap_sym 	= "syscall_wrapper_entry",
 	.inj_bias	= 0x3000,
+	.entry		= "__entry",
+	.old_vsyscall = "__vsyscall",
 };
 
 static error_t
@@ -46,20 +42,14 @@ parse_opt(int key, char *arg, struct argp_state *state)
 		case 'b':
 			opts.inj_bias = strtol(arg, NULL, 0);
 			return 0;
-		case 'i':
-			opts.init_sym = arg;
-			return 0;
 		case 'w':
 			opts.wrap_sym = arg;
 			return 0;
-		case 't':
-			opts.trig_sym = arg;
-			return 0;
 		case 'E':
-			opts.old_ventry_sym = arg;
+			opts.entry = arg;
 			return 0;
-		case 'H':
-			opts.old_vhdr_sym = arg;
+		case 'e':
+			opts.old_vsyscall = arg;
 			return 0;
 		case ARGP_KEY_ARG:
 			/* target args */

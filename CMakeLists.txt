@@ -105,26 +105,27 @@ ADD_EXECUTABLE(currf2
 	currf2_args.c
 	checkpoint.h
 	checkpoint.c
-	syscall_wrapper_entrance.so
+#	syscall_wrapper_entrance.so
 	)
-
-SET(INJECTSO_SRC_FILES
-	syscall_wrapper_entrance.S
-	syscall_wrapper.c
-	test_wrapper_so.c
-	vsprintf.c
-	string_32.c
-	__ctype.c
-	__ctype.h
-	)
-
-ADD_CUSTOM_COMMAND(OUTPUT syscall_wrapper_entrance.so
-	COMMAND make -f makeso
-	MAIN_DEPENDENCY syscall_wrapper_entrance.S
-	DEPENDS ${INJECTSO_SRC_FILES}
-	WORKING_DIRECTORY ${CURRF2_SOURCE_DIR}
-	VERBATIM
-	)
+#
+#SET(INJECTSO_SRC_FILES
+#	syscall_wrapper_entrance.S
+#	syscall_wrapper.c
+#	test_wrapper_so.c
+#	vsprintf.c
+#	string_32.c
+#	__ctype.c
+#	__ctype.h
+#	)
+#
+#ADD_CUSTOM_COMMAND(OUTPUT syscall_wrapper_entrance.so
+#	COMMAND make -f makeso
+#	MAIN_DEPENDENCY syscall_wrapper_entrance.S
+#	DEPENDS ${INJECTSO_SRC_FILES}
+#	WORKING_DIRECTORY ${CURRF2_SOURCE_DIR}
+#	VERBATIM
+#	)
+#
 
 SET(INJECTSO_GEN_FILES
 	syscall_wrapper_entrance.o

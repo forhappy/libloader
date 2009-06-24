@@ -28,15 +28,15 @@ struct elf32_shdr {
 	Elf32_Word	sh_entsize;		/* Entry size if section holds table */
 };
 
-
 struct elf_handler {
-	uint8_t * image;
+	void * image;
 	struct elf32_hdr	* hdr;
 	struct elf32_phdr	* phdr_table;
 	struct elf32_shdr	* shdr_table;
 	const char			* snames; 
 	struct elf32_shdr	** symtabs;
 	const char			** strtabs;
+	struct elf32_shdr   * dynamic;
 	int nr_symtabs;
 	ptrdiff_t load_bias;
 };
@@ -75,7 +75,7 @@ elf_init(uint8_t * image, ptrdiff_t load_bias)
 	/* iterator over sections */
 	struct elf32_shdr ** symtabs = NULL;
 	const char ** strtabs = NULL;
-	int nr_symtabs = 0;	
+	int nr_symtabs = 0;
 	for (int i = 0; i < hdr->e_shnum; i++) {
 		if (shdr_table[i].sh_type == SHT_SYMTAB) {
 			nr_symtabs ++;
@@ -88,6 +88,11 @@ elf_init(uint8_t * image, ptrdiff_t load_bias)
 			strtabs[nr_symtabs - 1] = (const char *)(image + shdr_table[no_strtab].sh_offset);
 			TRACE(ELF, "section [%d] is a symtab, corresponding strtab is section [%02d]\n",
 					i, no_strtab);
+		}
+
+		if (shdr_table[i].sh_type == SHT_DYNAMIC) {
+			TRACE(ELF, "section [%d] is dynamic section\n", i);
+			newh->dynamic = shdr_table + i;
 		}
 	}
 
@@ -135,7 +140,94 @@ elf_get_symbol_address(struct elf_handler * h,
 	return 0;
 }
 
-extern enum elf_file_type
+void
+elf_reloc_symbol(struct elf_handler * h,
+		const char * sym_name, uint32_t val,
+		void (*fn)(uintptr_t addr, uint32_t val, int type, int oldval))
+{
+	struct elf32_shdr * shdr_table = h->shdr_table;
+	/* 1st: find the dynamic section */
+	struct elf32_shdr * sh = h->dynamic;
+	if (sh == NULL) {
+		WARNING(ELF, "There's no '.dynamic' section\n");
+		return;
+	}
+
+	struct {
+		struct elf32_sym * symtab;
+		struct elf32_rel * reltab;
+		struct elf32_shdr * strsh;
+		const char * strtab;
+		int relsz;
+		int relent;
+		int nr_rel;
+	} dyn_info;
+
+	memset(&dyn_info, '\0', sizeof(dyn_info));
+
+	/* fill the dyn_info */
+	dyn_info.strsh = &shdr_table[sh->sh_link];
+	CTHROW(dyn_info.strsh->sh_type == SHT_STRTAB, "corrupted ELF file\n");
+	TRACE(ELF, "dynamic strtab: [%d]\n", sh->sh_link);
+
+	struct dyn_entry {
+		uint32_t d_tag;
+		uint32_t d_value;
+	};
+
+	struct dyn_entry * p = (struct dyn_entry *)(h->image + sh->sh_offset);
+	for (int i = 0 ; (void*)(&p[i]) < ((void*)p) + sh->sh_size; i ++) {
+		if (p[i].d_tag == DT_NULL)
+			break;
+		if (p[i].d_tag == DT_STRTAB) {
+			CTHROW(p[i].d_value == dyn_info.strsh->sh_offset,
+					"corrupted ELF file\n");
+			dyn_info.strtab = h->image +  p[i].d_value;
+		}
+		if (p[i].d_tag == DT_SYMTAB)
+			dyn_info.symtab = h->image + p[i].d_value;
+		if (p[i].d_tag == DT_REL)
+			dyn_info.reltab = h->image + p[i].d_value;
+		if (p[i].d_tag == DT_RELSZ)
+			dyn_info.relsz = p[i].d_value;
+		if (p[i].d_tag == DT_RELENT)
+			dyn_info.relent = p[i].d_value;
+	}
+
+#define CHECKX(x, v)	CTHROW(dyn_info.x != v, "corrupted ELF file")
+	CHECKX(symtab, NULL);
+	CHECKX(reltab, NULL);
+	CHECKX(strsh, NULL);
+	CHECKX(strtab, NULL);
+	CHECKX(relsz, 0);
+	CHECKX(relent, 0);
+#undef CHECKX
+	dyn_info.nr_rel = dyn_info.relsz / dyn_info.relent;
+	TRACE(ELF, "nr_recol=%d\n", dyn_info.nr_rel);
+
+	/* for each recl entry */
+	for (int i = 0; i < dyn_info.nr_rel; i++) {
+		uint32_t offset;
+		uint32_t info;
+		offset = dyn_info.reltab[i].r_offset;
+		info = dyn_info.reltab[i].r_info;
+
+		int type = ELF32_R_TYPE(info);
+		int nsym = ELF32_R_SYM(info);
+
+		struct elf32_sym * sym = &dyn_info.symtab[nsym];
+		const char * name = sym->st_name + dyn_info.strtab;
+		if (strcmp(name, sym_name) == 0) {
+			TRACE(ELF, "find relsym %s, offset=0x%x, info=0x%x, value=0x%x\n",
+					sym_name, offset, info, sym->st_value);
+			if (fn != NULL)
+				fn(offset + h->load_bias, val, type, sym->st_value);
+		}
+	}
+}
+
+
+enum elf_file_type
 elf_get_image_type(struct elf_handler * h)
 {
 	switch (h->hdr->e_type) {
