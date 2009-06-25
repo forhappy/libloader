@@ -13,6 +13,8 @@
 #include <stdlib.h>
 #endif
 
+SCOPE struct state_vector state_vector;
+
 static int logger_fd = 0;
 
 SCOPE int
@@ -57,7 +59,7 @@ checkpoint(void)
 SCOPE int
 before_syscall(struct syscall_regs regs)
 {
-	return __write(logger_fd, &regs, sizeof(regs));
+	return 0;
 }
 
 SCOPE int

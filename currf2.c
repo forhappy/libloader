@@ -16,7 +16,7 @@
 #include "utils.h"
 #include "elfutils.h"
 #include "currf2_args.h"
-#include "checkpoint.h"
+#include "checkpoint/checkpoint.h"
 
 
 /* don't include kernel's file */
@@ -117,8 +117,6 @@ static int
 syscall_hook(struct user_regs_struct u, bool_t before)
 {
 	struct syscall_regs regs;
-	if (before)
-		return 0;
 #define SETREG(x)	regs.x = u.x
 	SETREG(orig_eax);
 	SETREG(eax);
@@ -129,8 +127,10 @@ syscall_hook(struct user_regs_struct u, bool_t before)
 	SETREG(edi);
 	SETREG(ebp);
 #undef SETREG
-	return after_syscall(regs);
-
+	if (before)
+		return before_syscall(regs);
+	else
+		return after_syscall(regs);
 }
 
 static void

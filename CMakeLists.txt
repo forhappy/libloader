@@ -45,56 +45,7 @@ ADD_EXECUTABLE(target
 	target.c
 )
 
-#ADD_EXECUTABLE(test_utils
-#	${COMMON}
-#	)
-#SET_TARGET_PROPERTIES(test_utils
-#	PROPERTIES
-#	COMPILE_FLAGS "-DTEST_UTILS"
-#	)
-#
-#
-#ADD_EXECUTABLE(test_elf
-#	${COMMON}
-#	${ELF}
-#	test_elf.c
-#	)
-#
-#ADD_EXECUTABLE(test_ptrace
-#	${PTRACE}
-#	${COMMON}
-#	${PROC}
-#	${ELF}
-#	test_ptrace.c
-#	)
-#
-#ADD_EXECUTABLE(test_proc
-#	${PROC}
-#	${COMMON}
-#	)
-#
-#SET_TARGET_PROPERTIES(test_proc
-#	PROPERTIES
-#	COMPILE_FLAGS "-DTEST_PROCUTILS"
-#	)
-#
-#ADD_EXECUTABLE(test_wrapper
-#	${PTRACE}
-#	${COMMON}
-#	${PROC}
-#	${ELF}
-#	test_wrapper.c
-#	)
-#
-#
-#ADD_EXECUTABLE(test_wrapper_2
-#	${PTRACE}
-#	${COMMON}
-#	${PROC}
-#	${ELF}
-#	wrapper.c
-#	syscall_wrapper_entrance.so
-#	)
+ADD_SUBDIRECTORY(checkpoint)
 
 ADD_EXECUTABLE(currf2
 	${COMMON}
@@ -103,45 +54,18 @@ ADD_EXECUTABLE(currf2
 	${ELF}
 	currf2.c
 	currf2_args.c
-	checkpoint.h
-	checkpoint.c
-#	syscall_wrapper_entrance.so
-	)
-#
-#SET(INJECTSO_SRC_FILES
-#	syscall_wrapper_entrance.S
-#	syscall_wrapper.c
-#	test_wrapper_so.c
-#	vsprintf.c
-#	string_32.c
-#	__ctype.c
-#	__ctype.h
-#	)
-#
-#ADD_CUSTOM_COMMAND(OUTPUT syscall_wrapper_entrance.so
-#	COMMAND make -f makeso
-#	MAIN_DEPENDENCY syscall_wrapper_entrance.S
-#	DEPENDS ${INJECTSO_SRC_FILES}
-#	WORKING_DIRECTORY ${CURRF2_SOURCE_DIR}
-#	VERBATIM
-#	)
-#
-
-SET(INJECTSO_GEN_FILES
-	syscall_wrapper_entrance.o
-	syscall_wrapper.o
-	test_wrapper_so.o
-	libprintf.o
-	libprintf.os
-	test_wrapper_so
-	vsprintf.os
-	string_32.os
-	__ctype.os
+	libwrapper.so
 	)
 
-SET_DIRECTORY_PROPERTIES(PROPERTIES
-	ADDITIONAL_MAKE_CLEAN_FILES "${INJECTSO_GEN_FILES}"
+TARGET_LINK_LIBRARIES(currf2
+	checkpoint)
+
+ADD_CUSTOM_COMMAND(OUTPUT libwrapper.so
+	COMMAND make -C libwrapper
+	WORKING_DIRECTORY ${CURRF2_SOURCE_DIR}
+	VERBATIM
 	)
+
 
 INCLUDE(CMakeDependentOption)
 INCLUDE(CheckIncludeFiles)

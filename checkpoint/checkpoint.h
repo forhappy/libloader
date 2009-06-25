@@ -23,10 +23,13 @@ __BEGIN_DECLS
 # define __exit exit
 #endif
 
-
-struct state_vector {
+struct syscall_tabent {
 	
 };
+
+extern SCOPE struct state_vector {
+	int dummy;
+} state_vector;
 
 struct syscall_regs {
 	uint32_t orig_eax;
