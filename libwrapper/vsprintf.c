@@ -10,6 +10,7 @@
 #include <stddef.h>
 #include <limits.h>
 #include "__ctype.h"
+#include "vsprintf.h"
 #define PAGE_SIZE (4096)
 #define noinline __attribute__((noinline))
 typedef unsigned int size_t;
@@ -245,11 +246,11 @@ int strict_strto##type(const char *cp, unsigned int base, valtype *res)	\
 {									\
 	int ret;							\
 	if (*cp == '-') {						\
-		ret = strict_strtou##type(cp+1, base, res);		\
+		ret = strict_strtou##type(cp+1, base, (unsigned valtype *)res);		\
 		if (!ret)						\
 			*res = -(*res);					\
 	} else								\
-		ret = strict_strtou##type(cp, base, res);		\
+		ret = strict_strtou##type(cp, base, (unsigned valtype *)res);		\
 									\
 	return ret;							\
 }									\

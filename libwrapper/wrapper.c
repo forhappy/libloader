@@ -5,8 +5,9 @@
 
 #include <stdint.h>
 #include "injector.h"
+#include "utils.h"
 
-static char help_string[] = "this is help string\n";
+static char help_string[] = "This is help string\n";
 
 /* put them to bss section */
 uint32_t old_ventry;
@@ -15,14 +16,7 @@ uint32_t old_vhdr;
 SCOPE void
 show_help(void)
 {
-	INTERNAL_SYSCALL_int80(write, 3, 1, help_string, sizeof(help_string));
-	INTERNAL_SYSCALL_int80(exit, 0);
-	INTERNAL_SYSCALL_int80(exit, 1, 0x10);
-	INTERNAL_SYSCALL_int80(exit, 2, 0x10, 0x11);
-	INTERNAL_SYSCALL_int80(exit, 3, 0x10, 0x11, 0x12);
-	INTERNAL_SYSCALL_int80(exit, 4, 0x10, 0x11, 0x12, 0x13);
-	INTERNAL_SYSCALL_int80(exit, 5, 0x10, 0x11, 0x12, 0x13, 0x14);
-	INTERNAL_SYSCALL_int80(exit, 6, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15);
+	printf(help_string);
 }
 
 SCOPE void
