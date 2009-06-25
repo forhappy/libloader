@@ -183,7 +183,7 @@ map_injector(void)
 			elf_prot |= PROT_READ;
 		if (phdr->p_flags & PF_X)
 			elf_prot |= PROT_EXEC;
-		elf_prot = PROT_WRITE;
+		elf_prot |= PROT_WRITE;
 		elf_flags = MAP_PRIVATE | MAP_EXECUTABLE;
 
 		unsigned long size = phdr->p_filesz + ELF_PAGEOFFSET(phdr->p_vaddr);
@@ -310,12 +310,16 @@ currf2_main(int argc, char * argv[])
 	ptrace_resume();
 
 	/* goto the injector '__entry' */
-	/* 1st arg: main's addr */
+
+	/* order is important, this is ABI between currf2 and injector */
+	/* put the ret val of __entry. it is also the 3rd arg */
 	ptrace_push(&main_entry, sizeof(uint32_t), FALSE);
-	/* 2nd arg: old sysinfo addr */
-	ptrace_push(&old_vdso_entry, sizeof(uint32_t), FALSE);
-	/* 3rd arg: old ehdr */
+
+
+	/* 2nd arg: old ehdr */
 	ptrace_push(&old_vdso_ehdr, sizeof(uint32_t), FALSE);
+	/* 1st arg: old sysinfo addr */
+	ptrace_push(&old_vdso_entry, sizeof(uint32_t), FALSE);
 
 	ptrace_goto(injector_entry);
 

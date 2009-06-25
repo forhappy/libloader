@@ -194,6 +194,12 @@ elf_reloc_symbol(struct elf_handler * h,
 			dyn_info.relent = p[i].d_value;
 	}
 
+	if (dyn_info.reltab == NULL) {
+		WARNING(ELF, "there's no reltable in this image\n");
+		return;
+	}
+
+
 #define CHECKX(x, v)	CTHROW(dyn_info.x != v, "corrupted ELF file")
 	CHECKX(symtab, NULL);
 	CHECKX(reltab, NULL);

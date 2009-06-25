@@ -20,34 +20,11 @@ show_help(void)
 }
 
 SCOPE void
-injector_entry(void)
+injector_entry(uint32_t main_addr, uint32_t old_vdso_ventry, uint32_t old_vdso_vhdr)
 {
-	asm volatile (
-			"\txchgl %%ebx, %%esi\n"
-			"\tint $0x80\n"
-			"\txchgl %%ebx, %%esi\n"
-			:
-			: "a" (0x4), "S" (1), "c" (help_string), "d" (sizeof(help_string))
-			);
 
-	char str[64];
-	int len;
-	len = snprintf(str, 64, "XX:0x%x:XX\n", 0x1234);
-
-	asm volatile (
-			"\txchgl %%ebx, %%esi\n"
-			"\tcall __vsyscall\n"
-			"\txchgl %%ebx, %%esi\n"
-			:
-			: "a" (0x4), "S" (1), "c" (str), "d" (len)
-			);
-
-
-	asm volatile (
-			"\tint $0x80\n"
-			:
-			: "a" (0x1)
-			);
+	printf("Here! we come to injector!!!\n");
+	printf("0x%x, 0x%x, 0x%x\n", old_vdso_vhdr, old_vdso_ventry, main_addr);
 
 }
 
