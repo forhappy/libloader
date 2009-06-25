@@ -10,6 +10,14 @@
 #include <stdint.h>
 #include <unistd.h>
 #include "defs.h"
+#include "syscall_table.h"
+
+#ifndef INJECTOR
+# include "ptraceutils.h"
+# include <stdio.h>
+# include "debug.h"
+# include "exception.h"
+#endif
 
 __BEGIN_DECLS
 
@@ -20,27 +28,14 @@ __BEGIN_DECLS
 # define __read read
 # define __write write
 # define __printf printf
-# define __exit exit
+# define __exit(x) THROW(EXCEPTION_FATAL, "checkpoint exit")
+# define __dup_mem(d, s, sz) ptrace_dupmem(d, s, sz)
 #endif
-
-struct syscall_tabent {
-	
-};
 
 extern SCOPE struct state_vector {
 	int dummy;
+	uint32_t brk;
 } state_vector;
-
-struct syscall_regs {
-	uint32_t orig_eax;
-	uint32_t eax;
-	uint32_t ebx;
-	uint32_t ecx;
-	uint32_t edx;
-	uint32_t esi;
-	uint32_t edi;
-	uint32_t ebp;
-};
 
 extern SCOPE int
 checkpoint_init(void);

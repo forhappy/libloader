@@ -126,6 +126,7 @@ syscall_hook(struct user_regs_struct u, bool_t before)
 	SETREG(esi);
 	SETREG(edi);
 	SETREG(ebp);
+	SETREG(eip);
 #undef SETREG
 	if (before)
 		return before_syscall(regs);

@@ -13,9 +13,12 @@
 #include <stdlib.h>
 #endif
 
-SCOPE struct state_vector state_vector;
+SCOPE struct state_vector state_vector = {
+	0,
+	0,
+};
 
-static int logger_fd = 0;
+int SCOPE logger_fd = 0;
 
 SCOPE int
 checkpoint_init(void)
@@ -59,13 +62,36 @@ checkpoint(void)
 SCOPE int
 before_syscall(struct syscall_regs regs)
 {
+	__printf("before syscall at eip=0x%x\n", regs.eip);
+	if (regs.orig_eax >= NR_SYSCALLS) {
+		__printf("no such syscall: %d\n", regs.orig_eax);
+		__exit(0);
+	}
+
+	if (syscall_table[regs.orig_eax].pre_handler != NULL) {
+		return syscall_table[regs.orig_eax].pre_handler(&regs);
+	} else {
+		__printf("no such syscall pre-handler: %d\n", regs.orig_eax);
+		__exit(0);
+	}
 	return 0;
 }
 
 SCOPE int
 after_syscall(struct syscall_regs regs)
 {
-	return __write(logger_fd, &regs, sizeof(regs));
+	if (regs.orig_eax >= NR_SYSCALLS) {
+		__printf("no such syscall: %d\n", regs.orig_eax);
+		__exit(0);
+	}
+
+	if (syscall_table[regs.orig_eax].post_handler != NULL) {
+		return syscall_table[regs.orig_eax].post_handler(&regs);
+	} else {
+		__printf("no such syscall post-handler: %d\n", regs.orig_eax);
+		__exit(0);
+	}
+	return 0;
 }
 
 // vim:ts=4:sw=4
