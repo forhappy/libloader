@@ -1,5 +1,5 @@
-all: libwrapper.so test_libwrapper
-	cp $< ../
+all: pre-req libwrapper.so test_libwrapper
+	cp ./libwrapper.so ../
 
 CFLAGS= -g -Wall -nostartfiles -nodefaultlibs -nostdlib -fno-builtin -fvisibility=hidden -fPIC 
 
@@ -29,10 +29,19 @@ utils.os: utils.c
 libprintf.os: vsprintf.os string_32.os __ctype.os utils.os
 	ld -r $^ -o $@
 
-.PHONY: clean
+.PHONY: clean pre-req
 
 clean:
 	rm -f *.o *.os
+
+pre-req: config.h defs.h
+
+config.h:
+	@if ! test -e ./config.h ; then ln -s ../config.h .; fi
+
+defs.h:
+	@if ! test -e ./defs.h ; then ln -s ../defs.h .; fi
+
 
 # vim:filetype=make
 
