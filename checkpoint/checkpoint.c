@@ -68,12 +68,8 @@ before_syscall(struct syscall_regs regs)
 		__exit(0);
 	}
 
-	if (syscall_table[regs.orig_eax].pre_handler != NULL) {
+	if (syscall_table[regs.orig_eax].pre_handler != NULL)
 		return syscall_table[regs.orig_eax].pre_handler(&regs);
-	} else {
-		__printf("no such syscall pre-handler: %d\n", regs.orig_eax);
-		__exit(0);
-	}
 	return 0;
 }
 

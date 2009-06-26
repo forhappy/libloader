@@ -20,28 +20,21 @@ __BEGIN_DECLS
 
 extern SCOPE int logger_fd;
 
-#define write_syscall_nr(nr)	do {	\
-	uint32_t x_nr;	\
-	x_nr = nr;	\
-	__write(logger_fd, &x_nr, sizeof(x_nr));	\
-} while(0)
 
-#define write_regs(regs)	do {	\
-	__write(logger_fd, regs, sizeof(*regs));	\
-} while(0)
 
-#define write_eax(regs)	do {	\
-	__write(logger_fd, &regs->eax, sizeof(regs->eax));	\
-} while(0)
-
-#define write_mem(d, sz) do {	\
-	__write(logger_fd, d, sz);	\
-} while(0)
 
 define_post_handler(brk);
 define_post_handler(uname);
 define_post_handler(mmap2);
 define_post_handler(access);
+define_post_handler(open);
+define_post_handler(fstat64);
+define_post_handler(close);
+define_post_handler(stat64);
+define_post_handler(read);
+define_post_handler(set_thread_area);
+define_post_handler(mprotect);
+define_post_handler(munmap);
 
 __END_DECLS
 

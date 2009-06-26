@@ -18,15 +18,15 @@ __BEGIN_DECLS
 #endif
 
 struct syscall_regs {
-	uint32_t orig_eax;
-	uint32_t eax;
-	uint32_t ebx;
-	uint32_t ecx;
-	uint32_t edx;
-	uint32_t esi;
-	uint32_t edi;
-	uint32_t ebp;
-	uint32_t eip;
+	int32_t orig_eax;
+	int32_t eax;
+	int32_t ebx;
+	int32_t ecx;
+	int32_t edx;
+	int32_t esi;
+	int32_t edi;
+	int32_t ebp;
+	int32_t eip;
 };
 
 

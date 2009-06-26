@@ -12,12 +12,10 @@ struct old_utsname {
 int SCOPE
 post_uname(struct syscall_regs * regs)
 {
-	struct old_utsname utsname;
 	write_syscall_nr(__NR_uname);
 	write_eax(regs);
 	if (regs->eax >= 0) {
-		__dup_mem(&utsname, regs->ebx, sizeof(struct old_utsname));
-		write_mem(&utsname, sizeof(utsname));
+		write_mem(regs->ebx, sizeof(struct old_utsname));
 	}
 	return 0;
 }
