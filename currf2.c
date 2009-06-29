@@ -206,25 +206,64 @@ map_injector(void)
 }
 
 static void
-reloc_injector(uintptr_t addr, uint32_t val, int type, int symval)
+reloc_injector(uintptr_t addr, const char * sym, int type, int sym_val)
 {
-	if ((type != R_386_PC32) && (type != R_386_32)) {
+
+	SYS_TRACE("relocate symbol '%s' at address 0x%x\n", sym, addr);
+
+	if ((type != R_386_PC32) && (type != R_386_32) && (type != R_386_RELATIVE)) {
 		SYS_WARNING("doesn't support reloc type 0x%x", type);
 		return;
 	}
 	
 	uint32_t real_val;
-	if (type == R_386_32) {
-		real_val = val;
+
+	if (sym[0] == '\0') {
+		if (type != R_386_RELATIVE) {
+			SYS_WARNING("don't know how to relocate this type: 0x%x\n",
+					type);
+			return;
+		}
+		real_val = 0;
 	} else {
-		int32_t old_val;
-		ptrace_dupmem(&old_val, addr, sizeof(old_val));
-		real_val = val + old_val - addr;
+		if (strncmp(sym, opts->old_vsyscall, strlen(opts->old_vsyscall)) != 0) {
+			SYS_WARNING("don't know how to relocate this symbol: '%s'\n",
+					sym);
+			return;
+		}
+		real_val = old_vdso_entry;
+	}
+
+
+	switch (type) {
+		case R_386_32: {
+			break;
+		}
+		case R_386_PC32: {
+			int32_t old_val;
+			ptrace_dupmem(&old_val, addr, sizeof(old_val));
+			real_val = real_val + old_val - addr;
+			break;
+		}
+		case R_386_RELATIVE: {
+			int32_t old_val;
+			ptrace_dupmem(&old_val, addr, sizeof(old_val));
+			real_val = old_val + opts->inj_bias;
+			break;
+		}
 	}
 
 	ptrace_updmem(&real_val, addr, sizeof(real_val));
-
+	SYS_TRACE("\tset to 0x%x\n", real_val);
 	return;
+}
+
+static void
+inject_statvec(void)
+{
+	uintptr_t addr = elf_get_symbol_address(injector.h, opts->state_vect);
+	CTHROW(addr != 0, "wrong symbol: %s", opts->state_vect);
+	ptrace_updmem(&state_vector, addr, sizeof(state_vector));
 }
 
 static void
@@ -265,21 +304,19 @@ currf2_main(int argc, char * argv[])
 	map_injector();
 	
 	/* relocate injector */
-	if (opts->old_vsyscall != NULL) {
-		SYS_TRACE("begin to relocate symbol %s\n", opts->old_vsyscall);
-		elf_reloc_symbol(injector.h, opts->old_vsyscall,
-				old_vdso_entry, reloc_injector);
-	}
+	SYS_TRACE("begin to relocate symbol %s\n", opts->old_vsyscall);
+	elf_reloc_symbols(injector.h, reloc_injector);
 
 	/* set the stack pointers */
 	*pvdso_ehdr = opts->inj_bias;
 	*pvdso_entry = elf_get_symbol_address(injector.h,
 			opts->wrap_sym);
+	CTHROW(*pvdso_entry != 0, "wrong symbol: %s", opts->wrap_sym);
 
 	uintptr_t injector_entry = elf_get_symbol_address(injector.h,
 			opts->entry);
-	CTHROW(injector_entry != 0, "cannot find entry symbol '%s' from '%s'",
-			opts->entry, injector.fn);
+	CTHROW(injector_entry != 0, "wrong symbol: %s",
+			opts->entry);
 
 	/* update stack */
 	ptrace_updmem(stack_image, r.esp, stk_sz);
@@ -295,6 +332,8 @@ currf2_main(int argc, char * argv[])
 
 	/* insert a breakpoint at main */
 	uintptr_t main_entry = elf_get_symbol_address(target.h, "main");
+	CTHROW(main_entry != 0, "wrong symbol: main");
+
 	SYS_TRACE("insert breakpoint at 0x%x\n", main_entry);
 	ptrace_insert_bkpt(main_entry);
 
@@ -309,6 +348,9 @@ currf2_main(int argc, char * argv[])
 	CTHROW(err == 0, "logger close failed: %s\n", strerror(errno));
 
 	ptrace_resume();
+
+	/* inject the 'state vector' */
+	inject_statvec();
 
 	/* goto the injector '__entry' */
 

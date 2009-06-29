@@ -141,9 +141,9 @@ elf_get_symbol_address(struct elf_handler * h,
 }
 
 void
-elf_reloc_symbol(struct elf_handler * h,
-		const char * sym_name, uint32_t val,
-		void (*fn)(uintptr_t addr, uint32_t val, int type, int oldval))
+elf_reloc_symbols(struct elf_handler * h,
+		void (*fn)(uintptr_t addr, const char * sym,
+			int type, int sym_val))
 {
 	struct elf32_shdr * shdr_table = h->shdr_table;
 	/* 1st: find the dynamic section */
@@ -223,12 +223,11 @@ elf_reloc_symbol(struct elf_handler * h,
 
 		struct elf32_sym * sym = &dyn_info.symtab[nsym];
 		const char * name = sym->st_name + dyn_info.strtab;
-		if (strcmp(name, sym_name) == 0) {
-			TRACE(ELF, "find relsym %s, offset=0x%x, info=0x%x, value=0x%x\n",
-					sym_name, offset, info, sym->st_value);
-			if (fn != NULL)
-				fn(offset + h->load_bias, val, type, sym->st_value);
-		}
+
+		TRACE(ELF, "find relsym %s, offset=0x%x, info=0x%x, value=0x%x\n",
+				name, offset, info, sym->st_value);
+		if (fn != NULL)
+			fn(offset + h->load_bias, name, type, sym->st_value);
 	}
 }
 

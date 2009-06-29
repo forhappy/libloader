@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include "injector.h"
 #include "injector_utils.h"
+#include "checkpoint/checkpoint.h"
 
 static char help_string[] = "This is help string\n";
 
@@ -25,6 +26,7 @@ injector_entry(uint32_t main_addr, uint32_t old_vdso_ventry, uint32_t old_vdso_v
 
 	printf("Here! we come to injector!!!\n");
 	printf("0x%x, 0x%x, 0x%x\n", old_vdso_vhdr, old_vdso_ventry, main_addr);
+	printf("brk=0x%x\n", state_vector.brk);
 
 }
 

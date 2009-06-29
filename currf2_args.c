@@ -20,6 +20,7 @@ static struct argp_option options[] = {
 	{"syswrapper",	'w', "wrapsym",		0, "System call wrapper symbol, syscall_wrapper_entry by default"},
 	{"entry",		'E', "entry",		0, "entry, \'__entry\' by default"},
 	{"vsyscall",	'e', "vsyscall",	0, "symbol which hold syscall, \'__vsyscall\' by default"},
+	{"statevect",	'v', "statevect",	0, "state_vect's symbol, \'state_vector\' by default"},
 	{NULL},
 };
 
@@ -28,7 +29,8 @@ static struct opts opts = {
 	.wrap_sym 	= "syscall_wrapper_entry",
 	.inj_bias	= 0x3000,
 	.entry		= "__entry",
-	.old_vsyscall = "__vsyscall",
+	.old_vsyscall	= "__vsyscall",
+	.state_vect		= "state_vector",
 };
 
 static error_t
@@ -50,6 +52,9 @@ parse_opt(int key, char *arg, struct argp_state *state)
 			return 0;
 		case 'e':
 			opts.old_vsyscall = arg;
+			return 0;
+		case 'v':
+			opts.state_vect = arg;
 			return 0;
 		case ARGP_KEY_ARG:
 			/* target args */

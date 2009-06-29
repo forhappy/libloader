@@ -9,6 +9,7 @@ struct opts {
 	char * log_fn;
 	char * entry;
 	char * old_vsyscall;
+	char * state_vect;
 	uint32_t inj_bias;
 	int cmd_idx;
 };

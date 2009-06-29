@@ -21,7 +21,6 @@
 # include "exception.h"
 #else
 # include "injector.h"
-# include "injector.h"
 # include "injector_utils.h"
 #endif
 

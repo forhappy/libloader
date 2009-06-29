@@ -66,7 +66,6 @@ checkpoint(void)
 SCOPE int
 before_syscall(struct syscall_regs regs)
 {
-	__printf("before syscall at eip=0x%x\n", regs.eip);
 	if (regs.orig_eax >= NR_SYSCALLS) {
 		__printf("no such syscall: %d\n", regs.orig_eax);
 		__exit(0);

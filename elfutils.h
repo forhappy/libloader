@@ -39,8 +39,8 @@ struct elf32_phdr *
 elf_get_phdr_table(struct elf_handler * h, int * nr_phdrs);
 
 void
-elf_reloc_symbol(struct elf_handler * h,
-		const char * sym, uint32_t val,
-		void (*fn)(uintptr_t addr, uint32_t val, int type, int oldval));
+elf_reloc_symbols(struct elf_handler * h,
+		void (*fn)(uintptr_t addr, const char * sym,
+			int type, int sym_val));
 #endif
 
