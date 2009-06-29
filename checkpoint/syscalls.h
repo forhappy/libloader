@@ -35,6 +35,11 @@ define_post_handler(read);
 define_post_handler(set_thread_area);
 define_post_handler(mprotect);
 define_post_handler(munmap);
+define_post_handler(set_tid_address);
+define_post_handler(set_robust_list);
+define_post_handler(rt_sigaction);
+define_post_handler(rt_sigprocmask);
+define_post_handler(ugetrlimit);
 
 __END_DECLS
 

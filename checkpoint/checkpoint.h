@@ -77,11 +77,28 @@ struct user_desc {
 	unsigned int  useable:1;
 };
 
+#define K_NSIG	(64)
+#define _NSIG_WORDS	(2)
+
+typedef struct {
+	unsigned long sig[_NSIG_WORDS];
+} k_sigset_t;
+
+struct k_sigaction {
+	void * sa_handler;
+	unsigned long sa_flags;
+	void * sa_restorer;
+	k_sigset_t sa_mask;		/* mask last for extensibility */
+};
 
 extern SCOPE struct state_vector {
 	int dummy;
 	uint32_t brk;
+	uint32_t clear_child_tid;
+	uint32_t robust_list;
 	struct user_desc thread_area[GDT_ENTRY_TLS_ENTRIES];
+	struct k_sigaction sigactions[K_NSIG];
+	k_sigset_t sigmask;
 } state_vector;
 
 extern SCOPE int

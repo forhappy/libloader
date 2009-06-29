@@ -25,6 +25,11 @@ SCOPE struct syscall_tabent syscall_table[] = {
 	[__NR_set_thread_area]	= {NULL, &post_set_thread_area},
 	[__NR_mprotect]	= {NULL, &post_mprotect},
 	[__NR_munmap]	= {NULL, &post_munmap},
+	[__NR_set_tid_address]	= {NULL, &post_set_tid_address},
+	[__NR_set_robust_list]	= {NULL, &post_set_robust_list},
+	[__NR_rt_sigaction]	= {NULL, &post_rt_sigaction},
+	[__NR_rt_sigprocmask]	= {NULL, &post_rt_sigprocmask},
+	[__NR_ugetrlimit]	= {NULL, &post_ugetrlimit},
 	[NR_SYSCALLS]	= {NULL, NULL},
 };
 

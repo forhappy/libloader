@@ -14,8 +14,10 @@
 #endif
 
 SCOPE struct state_vector state_vector = {
-	0,
-	0,
+	.dummy	= 0,
+	.brk	= 0,
+	.clear_child_tid	= 0,
+	.robust_list	= 0,
 };
 
 int SCOPE logger_fd = 0;

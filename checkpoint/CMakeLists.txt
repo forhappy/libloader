@@ -12,6 +12,11 @@ SET(HANDLERS
 	set_thread_area.c
 	mprotect.c
 	munmap.c
+	set_tid_address.c
+	set_robust_list.c
+	rt_sigaction.c
+	rt_sigprocmask.c
+	ugetrlimit.c
 	)
 
 ADD_LIBRARY(checkpoint
