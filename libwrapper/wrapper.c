@@ -5,7 +5,7 @@
 
 #include <stdint.h>
 #include "injector.h"
-#include "utils.h"
+#include "injector_utils.h"
 
 static char help_string[] = "This is help string\n";
 

@@ -7,7 +7,7 @@
 #include <stdarg.h>
 #include "injector.h"
 #include "vsprintf.h"
-#include "utils.h"
+#include "injector_utils.h"
 
 SCOPE char buffer[BUFFER_SIZE];
 

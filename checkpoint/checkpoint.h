@@ -19,6 +19,10 @@
 # include <alloca.h>
 # include "debug.h"
 # include "exception.h"
+#else
+# include "injector.h"
+# include "injector.h"
+# include "injector_utils.h"
 #endif
 
 __BEGIN_DECLS
@@ -33,21 +37,7 @@ __BEGIN_DECLS
 # define __exit(x) THROW(EXCEPTION_FATAL, "checkpoint exit")
 # define __dup_mem(d, s, sz) ptrace_dupmem(d, s, sz)
 
-#define write_syscall_nr(nr)	do {	\
-	uint32_t x_nr;	\
-	x_nr = nr;	\
-	__write(logger_fd, &x_nr, sizeof(x_nr));	\
-} while(0)
-
-#define write_regs(regs)	do {	\
-	__write(logger_fd, regs, sizeof(*regs));	\
-} while(0)
-
-#define write_eax(regs)	do {	\
-	__write(logger_fd, &regs->eax, sizeof(regs->eax));	\
-} while(0)
-
-#define write_mem(addr, sz) do {	\
+# define write_mem(addr, sz) do {	\
 	void * p;			\
 	if (sz <= (1 << 20))		\
 		p = alloca(sz);		\
@@ -59,7 +49,40 @@ __BEGIN_DECLS
 		free(p);		\
 } while(0)
 
+#else
+# define __open(args...)	INTERNAL_SYSCALL(open, 3, args)
+# define __close(args)		INTERNAL_SYSCALL(close, 1, args)
+# define __read(args...)	INTERNAL_SYSCALL(read, 3, args)
+# define __write(args...)	INTERNAL_SYSCALL(write, 3, args)
+# define __printf(args...)	printf(args)
+# define __exit(x)		INTERNAL_SYSCALL(exit, 1, x)
+
+# define __dup_mem(d, s, sz)	memcpy(d, (void*)s, sz)
+
+# define write_mem(addr, sz) do {	\
+	__write(logger_fd, addr, sz);	\
+} while(0)
+
 #endif
+
+# define write_syscall_nr(nr)	do {	\
+	uint32_t x_nr;	\
+	x_nr = nr;	\
+	__write(logger_fd, &x_nr, sizeof(x_nr));	\
+} while(0)
+
+# define write_regs(regs)	do {	\
+	__write(logger_fd, regs, sizeof(*regs));	\
+} while(0)
+
+# define write_eax(regs)	do {	\
+	__write(logger_fd, &regs->eax, sizeof(regs->eax));	\
+} while(0)
+
+
+
+
+
 
 #define GDT_ENTRY_TLS_MIN	6
 #define GDT_ENTRY_TLS_ENTRIES 3

@@ -6,7 +6,9 @@
 #ifndef INJECTOR_H
 #define INJECTOR_H
 
-#define INJECTOR
+#ifndef INJECTOR
+# define INJECTOR
+#endif
 
 #include <stdint.h>
 #include <asm/unistd.h>

@@ -34,6 +34,7 @@ logger_init(pid_t pid)
 #ifndef INJECTOR
 	int fd;
 	char filename[64];
+	memset(&state_vector, '\0', sizeof(state_vector));
 	snprintf(filename, 64, "/var/lib/currf2/%d.log",
 			pid);
 	fd = __open(filename, O_WRONLY|O_APPEND|O_CREAT, 0666);
@@ -45,6 +46,7 @@ logger_init(pid_t pid)
 	logger_fd = fd;
 	return 0;
 #endif
+	return 0;
 }
 
 

@@ -15,6 +15,8 @@ __BEGIN_DECLS
 
 #ifndef INJECTOR
 # define SCOPE
+#else
+# define SCOPE ATTR(visibility ("hidden"))
 #endif
 
 struct syscall_regs {
