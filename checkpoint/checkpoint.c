@@ -8,7 +8,7 @@
 #include <fcntl.h>
 
 
-#ifndef INJECTOR
+#ifndef IN_INJECTOR
 #include <stdio.h>
 #include <stdlib.h>
 #endif
@@ -31,7 +31,7 @@ checkpoint_init(void)
 SCOPE int
 logger_init(pid_t pid)
 {
-#ifndef INJECTOR
+#ifndef IN_INJECTOR
 	int fd;
 	char filename[64];
 	memset(&state_vector, '\0', sizeof(state_vector));

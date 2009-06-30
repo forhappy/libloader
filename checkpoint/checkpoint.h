@@ -12,7 +12,7 @@
 #include "defs.h"
 #include "syscall_table.h"
 
-#ifndef INJECTOR
+#ifndef IN_INJECTOR
 # include "ptraceutils.h"
 # include <stdio.h>
 # include <stdlib.h>
@@ -26,7 +26,7 @@
 
 __BEGIN_DECLS
 
-#ifndef INJECTOR
+#ifndef IN_INJECTOR
 # define SCOPE
 # define __open open
 # define __close close
@@ -48,7 +48,7 @@ __BEGIN_DECLS
 		free(p);		\
 } while(0)
 
-#else
+#else	/* IN_INJECTOR */
 # define __open(args...)	INTERNAL_SYSCALL(open, 3, args)
 # define __close(args)		INTERNAL_SYSCALL(close, 1, args)
 # define __read(args...)	INTERNAL_SYSCALL(read, 3, args)
@@ -62,7 +62,7 @@ __BEGIN_DECLS
 	__write(logger_fd, addr, sz);	\
 } while(0)
 
-#endif
+#endif	/* IN_INJECTOR */
 
 # define write_syscall_nr(nr)	do {	\
 	uint32_t x_nr;	\

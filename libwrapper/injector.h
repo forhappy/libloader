@@ -6,8 +6,8 @@
 #ifndef INJECTOR_H
 #define INJECTOR_H
 
-#ifndef INJECTOR
-# define INJECTOR
+#ifndef IN_INJECTOR
+# define IN_INJECTOR
 #endif
 
 #include <stdint.h>

@@ -21,12 +21,13 @@ wrapper.o: wrapper.c injector.h
 vsprintf.os: vsprintf.c
 string_32.os: string_32.c
 __ctype.os: __ctype.c
-injector_utils.os: injector_utils.c
+injector_utils.os: injector_utils.c injector_utils.h
+injector_debug.os: injector_debug.c injector_debug.h
 
 %.os : %.c
-	gcc -fno-builtin $(CFLAGS) -c $^ -o $@
+	gcc -fno-builtin $(CFLAGS) -c $< -o $@
 
-libprintf.os: vsprintf.os string_32.os __ctype.os injector_utils.os
+libprintf.os: vsprintf.os string_32.os __ctype.os injector_utils.os injector_debug.os
 	ld -r $^ -o $@
 
 libcheckpoint.os:

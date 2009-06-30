@@ -26,5 +26,30 @@ printf(const char * fmt, ...)
 	return i;
 }
 
+SCOPE int
+fdprintf(int fd, const char * fmt, ...)
+{
+
+	va_list args;
+	int i;
+
+	va_start(args, fmt);
+	i = vsnprintf(buffer, BUFFER_SIZE, fmt, args);
+	va_end(args);
+
+	INTERNAL_SYSCALL(write, 3, fd, buffer, i);
+	return i;
+}
+
+SCOPE int
+vfdprintf(int fd, const char * fmt, va_list args)
+{
+	int i;
+	i = vsnprintf(buffer, BUFFER_SIZE, fmt, args);
+
+	INTERNAL_SYSCALL(write, 3, fd, buffer, i);
+	return i;
+}
+
 // vim:ts=4:sw=4
 

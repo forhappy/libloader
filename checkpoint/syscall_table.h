@@ -13,7 +13,7 @@
 
 __BEGIN_DECLS
 
-#ifndef INJECTOR
+#ifndef IN_INJECTOR
 # define SCOPE
 #else
 # define SCOPE ATTR(visibility ("hidden"))
