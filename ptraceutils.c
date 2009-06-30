@@ -168,7 +168,7 @@ ptrace_updmem(const void * src, uintptr_t addr, int len)
 		long val;
 		val = ptrace(PTRACE_POKEDATA, child_pid, target_ptr,
 				*src_ptr);
-		ETHROW("ptrace poke data failed: %s", 
+		ETHROW("ptrace poke data to 0x%x failed: %s", target_ptr,
 				strerror(errno));
 		src_ptr ++;
 		target_ptr += 4;

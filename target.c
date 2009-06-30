@@ -8,8 +8,6 @@ static int global_data = 0;
 
 int main(int argc, char * argv[])
 {
-//	volatile int x = 1;
-//	while(x == 1);
 	printf("argv[0] is \"%s\", at %p\n", argv[0], &argv[0]);
 	/* check for breakpoint */
 	printf("addr of main = %p\n", main);
@@ -25,6 +23,8 @@ int main(int argc, char * argv[])
 	while(1) {
 		int c = 'x';
 //		c = getchar();
+//		volatile int x = 1;
+//		while(x == 1);
 		sleep(1);
 		printf("%d, %c, global_data=%d\n", i++, c, global_data);
 		if (i == 3)

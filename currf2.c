@@ -129,9 +129,9 @@ syscall_hook(struct user_regs_struct u, bool_t before)
 	SETREG(eip);
 #undef SETREG
 	if (before)
-		return before_syscall(regs);
+		return before_syscall(&regs);
 	else
-		return after_syscall(regs);
+		return after_syscall(&regs);
 }
 
 static void
@@ -191,12 +191,33 @@ map_injector(void)
 		unsigned long off = phdr->p_offset - ELF_PAGEOFFSET(phdr->p_vaddr);
 		int32_t map_addr = opts->inj_bias + phdr->p_vaddr - ELF_PAGEOFFSET(phdr->p_vaddr);
 
-		SYS_TRACE("map to 0x%x, size=0x%x, off=0x%x\n", map_addr, size, off);
+		SYS_TRACE("map to 0x%x, size=0x%x, memsz=0x%x, off=0x%x\n", map_addr, size, phdr->p_memsz, off);
 
-		int32_t ret_addr = ptrace_syscall(mmap2, 6,
+		uint32_t ret_addr = ptrace_syscall(mmap2, 6,
 				map_addr, size, elf_prot,
 				elf_flags | MAP_FIXED, fd, off >> PAGE_SHIFT);
 		CTHROW(map_addr == ret_addr, "map injector failed, return 0x%x", ret_addr);
+
+		if (phdr->p_memsz > size) {
+			/* we need to map additional 0 pages */
+			uint32_t add_sz = ELF_PAGEALIGN(phdr->p_memsz - ELF_PAGEALIGN(size));
+			uint32_t start = ELF_PAGEALIGN(map_addr + size);
+
+			SYS_TRACE("meed additional zeroed page: memsz=0x%x, mapped size=0x%x, additional size=0x%x\n",
+					phdr->p_memsz, size, add_sz);
+
+			uint32_t ret_addr = ptrace_syscall(mmap2, 6,
+					start, add_sz, elf_prot,
+					elf_flags | MAP_FIXED | MAP_ANONYMOUS, 0, 0);
+			CTHROW(ret_addr == start,
+					"map injector additional page failed, return %x", ret_addr);
+
+			/* zero those pages */
+			int zsz = phdr->p_memsz - size;
+			void * zeros = calloc(1, zsz);
+			ptrace_updmem(zeros, map_addr + size, zsz);
+			free(zeros);
+		}
 	}
 
 	/* close the file */

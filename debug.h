@@ -27,6 +27,7 @@ enum debug_component {
 	MEMORY,
 	ELF,
 	PTRACE,
+	INJECTOR,
 	NR_COMPONENTS
 };
 
@@ -37,6 +38,7 @@ static const char * debug_comp_name[NR_COMPONENTS] = {
 	[MEMORY] = "MEM ",
 	[ELF]    = "ELF ",
 	[PTRACE] = "PTRACE ",
+	[INJECTOR] = "INJECTOR",
 };
 
 static enum debug_level debug_levels[NR_COMPONENTS] = {
@@ -44,6 +46,7 @@ static enum debug_level debug_levels[NR_COMPONENTS] = {
 	[SYSTEM] = VERBOSE,
 	[ELF]    = VERBOSE,
 	[PTRACE] = VERBOSE,
+	[INJECTOR] = TRACE,
 };
 #endif
 
@@ -97,6 +100,17 @@ extern void message_out(int prefix, enum debug_level, enum debug_component, char
 #define SYS_FATAL(str...) FATAL(SYSTEM, str)
 #define SYS_FORCE(str...) FORCE(SYSTEM, str)
 #define SYS_FORCE_CONT(str...) FORCE_CONT(SYSTEM, str)
+
+#define INJ_TRACE(str...) TRACE(INJECTOR, str)
+#define INJ_VERBOSE(str...) VERBOSE(INJECTOR, str)
+#define INJ_WARNING(str...) WARNING(INJECTOR, str)
+#define INJ_WARNING_CONT(str...) WARNING_CONT(INJECTOR, str)
+#define INJ_ERROR(str...) ERROR(INJECTOR, str)
+#define INJ_FATAL(str...) FATAL(INJECTOR, str)
+#define INJ_FORCE(str...) FORCE(INJECTOR, str)
+#define INJ_FORCE_CONT(str...) FORCE_CONT(INJECTOR, str)
+
+
 
 /* internal_error: raise a SIGABRT. */
 extern void

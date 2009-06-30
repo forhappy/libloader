@@ -27,6 +27,23 @@ printf(const char * fmt, ...)
 }
 
 SCOPE int
+printf_int80(const char * fmt, ...)
+{
+
+	va_list args;
+	int i;
+
+	va_start(args, fmt);
+	i = vsnprintf(buffer, BUFFER_SIZE, fmt, args);
+	va_end(args);
+
+	INTERNAL_SYSCALL_int80(write, 3, 1, buffer, i);
+	return i;
+}
+
+
+
+SCOPE int
 fdprintf(int fd, const char * fmt, ...)
 {
 

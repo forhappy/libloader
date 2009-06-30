@@ -1,11 +1,15 @@
 
 #include <stdint.h>
+#include <dlfcn.h>
 
-uint32_t oldxxxxx;
-uint32_t oldyy;
-uint32_t __vsyscall;
+void __vsyscall()
+{
+	return;
+}
+
 int main()
 {
+	while(1);
 	return 0;
 }
 

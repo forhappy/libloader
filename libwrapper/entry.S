@@ -15,7 +15,46 @@ show_help_entry:
 	ret
 
 syscall_wrapper_entry:
+	
+	pushl $0		/* eip */
+	pushl $0		/* orig_eax */
+	pushl %ebp
+	pushl %edi
+	pushl %esi
+	pushl %edx
+	pushl %ecx
+	pushl %ebx
+	pushl %eax
+	call __before_syscall
+	popl %eax
+	popl %ebx
+	popl %ecx
+	popl %edx
+	popl %esi
+	popl %edi
+	popl %ebp
+	addl $0x8, %esp
+
 	call __vsyscall
+
+	pushl $0		/* eip */
+	pushl $0		/* orig_eax */
+	pushl %ebp
+	pushl %edi
+	pushl %esi
+	pushl %edx
+	pushl %ecx
+	pushl %ebx
+	pushl %eax
+	call __after_syscall
+	popl %eax
+	popl %ebx
+	popl %ecx
+	popl %edx
+	popl %esi
+	popl %edi
+	popl %ebp
+	addl $0x8, %esp
 	ret
 
 __entry:

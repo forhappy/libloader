@@ -64,30 +64,30 @@ checkpoint(void)
 }
 
 SCOPE int
-before_syscall(struct syscall_regs regs)
+before_syscall(struct syscall_regs * regs)
 {
-	if (regs.orig_eax >= NR_SYSCALLS) {
-		__printf("no such syscall: %d\n", regs.orig_eax);
+	if (regs->orig_eax >= NR_SYSCALLS) {
+		__printf("no such syscall: %d\n", regs->orig_eax);
 		__exit(0);
 	}
 
-	if (syscall_table[regs.orig_eax].pre_handler != NULL)
-		return syscall_table[regs.orig_eax].pre_handler(&regs);
+	if (syscall_table[regs->orig_eax].pre_handler != NULL)
+		return syscall_table[regs->orig_eax].pre_handler(regs);
 	return 0;
 }
 
 SCOPE int
-after_syscall(struct syscall_regs regs)
+after_syscall(struct syscall_regs * regs)
 {
-	if (regs.orig_eax >= NR_SYSCALLS) {
-		__printf("no such syscall: %d\n", regs.orig_eax);
+	if (regs->orig_eax >= NR_SYSCALLS) {
+		__printf("no such syscall: %d\n", regs->orig_eax);
 		__exit(0);
 	}
 
-	if (syscall_table[regs.orig_eax].post_handler != NULL) {
-		return syscall_table[regs.orig_eax].post_handler(&regs);
+	if (syscall_table[regs->orig_eax].post_handler != NULL) {
+		return syscall_table[regs->orig_eax].post_handler(regs);
 	} else {
-		__printf("no such syscall post-handler: %d\n", regs.orig_eax);
+		__printf("no such syscall post-handler: %d\n", regs->orig_eax);
 		__exit(0);
 	}
 	return 0;

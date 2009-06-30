@@ -22,6 +22,7 @@
 #else
 # include "injector.h"
 # include "injector_utils.h"
+# include "injector_debug.h"
 #endif
 
 __BEGIN_DECLS
@@ -35,6 +36,8 @@ __BEGIN_DECLS
 # define __printf printf
 # define __exit(x) THROW(EXCEPTION_FATAL, "checkpoint exit")
 # define __dup_mem(d, s, sz) ptrace_dupmem(d, s, sz)
+
+extern int SCOPE logger_fd;
 
 # define write_mem(addr, sz) do {	\
 	void * p;			\
@@ -57,6 +60,8 @@ __BEGIN_DECLS
 # define __exit(x)		INTERNAL_SYSCALL(exit, 1, x)
 
 # define __dup_mem(d, s, sz)	memcpy(d, (void*)s, sz)
+
+extern int SCOPE logger_fd;
 
 # define write_mem(addr, sz) do {	\
 	__write(logger_fd, addr, sz);	\
@@ -133,10 +138,10 @@ extern SCOPE int
 logger_close(void);
 
 extern SCOPE int
-before_syscall(struct syscall_regs regs);
+before_syscall(struct syscall_regs * regs);
 
 extern SCOPE int
-after_syscall(struct syscall_regs regs);
+after_syscall(struct syscall_regs * regs);
 
 __END_DECLS
 

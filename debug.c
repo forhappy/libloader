@@ -14,6 +14,8 @@
 
 #include <unistd.h>
 
+#include <errno.h>
+
 #ifdef HAVE_EXECINFO_H
 /* backtrace */
 # include <execinfo.h>
@@ -97,6 +99,7 @@ debug_init(const char * filename)
 	} else {
 		colorful_terminal = 0;
 	}
+	errno = 0;
 
 	/* install signal handlers */
 	struct signals_handler {

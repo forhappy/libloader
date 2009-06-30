@@ -17,6 +17,7 @@ SET(HANDLERS
 	rt_sigaction.c
 	rt_sigprocmask.c
 	ugetrlimit.c
+	write.c
 	)
 
 ADD_LIBRARY(checkpoint

@@ -40,6 +40,7 @@ define_post_handler(set_robust_list);
 define_post_handler(rt_sigaction);
 define_post_handler(rt_sigprocmask);
 define_post_handler(ugetrlimit);
+define_post_handler(write);
 
 __END_DECLS
 

@@ -86,6 +86,8 @@ extern SCOPE void message_out(int prefix, enum debug_level, enum debug_component
 #define INJ_FORCE(str...) FORCE(INJECTOR, str)
 #define INJ_FORCE_CONT(str...) FORCE_CONT(INJECTOR, str)
 
+#define ASSERT(c)	do { if (!c) {INJ_FATAL("assertion failed\n"); __exit(-1);  } } while(0)
+
 __END_DECLS
 
 

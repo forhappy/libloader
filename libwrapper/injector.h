@@ -130,7 +130,7 @@ asm (".L__X'%ebx = 1\n\t"
 #define INTERNAL_SYSCALL(name, nr, args...)	\
 	     INTERNAL_SYSCALL_##nr(name, args)
 
-#define INTERNAL_SYSCALL_0(name)		INTERNAL_SYSCALL_0_5(name, "call __vsyscall\n", 0)
+#define INTERNAL_SYSCALL_0(name, args...)	INTERNAL_SYSCALL_0_5(name, "call __vsyscall\n", 0)
 #define INTERNAL_SYSCALL_1(name, args...)	INTERNAL_SYSCALL_0_5(name, "call __vsyscall\n", 1, args)
 #define INTERNAL_SYSCALL_2(name, args...)	INTERNAL_SYSCALL_0_5(name, "call __vsyscall\n", 2, args)
 #define INTERNAL_SYSCALL_3(name, args...)	INTERNAL_SYSCALL_0_5(name, "call __vsyscall\n", 3, args)
@@ -141,7 +141,7 @@ asm (".L__X'%ebx = 1\n\t"
 #define INTERNAL_SYSCALL_int80(name, nr, args...)	\
 	     INTERNAL_SYSCALL_int80_##nr(name, args)
 
-#define INTERNAL_SYSCALL_int80_0(name, args...)		INTERNAL_SYSCALL_0_5(name, "int $0x80\n", 0, args)
+#define INTERNAL_SYSCALL_int80_0(name, args...)	INTERNAL_SYSCALL_0_5(name, "int $0x80\n", 0, args)
 #define INTERNAL_SYSCALL_int80_1(name, args...)	INTERNAL_SYSCALL_0_5(name, "int $0x80\n", 1, args)
 #define INTERNAL_SYSCALL_int80_2(name, args...)	INTERNAL_SYSCALL_0_5(name, "int $0x80\n", 2, args)
 #define INTERNAL_SYSCALL_int80_3(name, args...)	INTERNAL_SYSCALL_0_5(name, "int $0x80\n", 3, args)
@@ -149,7 +149,7 @@ asm (".L__X'%ebx = 1\n\t"
 #define INTERNAL_SYSCALL_int80_5(name, args...)	INTERNAL_SYSCALL_0_5(name, "int $0x80\n", 5, args)
 #define INTERNAL_SYSCALL_int80_6(name, args...)	INTERNAL_SYSCALL_6(name, "int $0x80\n", args)
 
-
+extern SCOPE int self_pid;
 
 __END_DECLS
 

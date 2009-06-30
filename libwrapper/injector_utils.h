@@ -17,6 +17,9 @@ extern SCOPE int
 printf(const char * fmt, ...);
 
 extern SCOPE int
+printf_int80(const char * fmt, ...);
+
+extern SCOPE int
 fdprintf(int fd, const char * fmt, ...);
 
 extern SCOPE int

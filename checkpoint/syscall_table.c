@@ -30,6 +30,7 @@ SCOPE struct syscall_tabent syscall_table[] = {
 	[__NR_rt_sigaction]	= {NULL, &post_rt_sigaction},
 	[__NR_rt_sigprocmask]	= {NULL, &post_rt_sigprocmask},
 	[__NR_ugetrlimit]	= {NULL, &post_ugetrlimit},
+	[__NR_write]		= {NULL, &post_write},
 	[NR_SYSCALLS]	= {NULL, NULL},
 };
 
