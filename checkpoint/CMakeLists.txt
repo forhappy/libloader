@@ -18,6 +18,9 @@ SET(HANDLERS
 	rt_sigprocmask.c
 	ugetrlimit.c
 	write.c
+	nanosleep.c
+	ioctl.c
+	ioctl_tty.c
 	)
 
 ADD_LIBRARY(checkpoint

@@ -358,6 +358,14 @@ currf2_main(int argc, char * argv[])
 	SYS_TRACE("insert breakpoint at 0x%x\n", main_entry);
 	ptrace_insert_bkpt(main_entry);
 
+	/* set the wrapper entry code to 'int $80; ret' */
+#define TRIVAL_WRAPPER	"\xcd\x80\xc3"
+#define SZ_TRIVAL_WRAPPER	sizeof(TRIVAL_WRAPPER)
+	uint8_t wrapper_bkup[SZ_TRIVAL_WRAPPER];
+	ptrace_dupmem(wrapper_bkup, *pvdso_entry, SZ_TRIVAL_WRAPPER);
+	ptrace_updmem(TRIVAL_WRAPPER, *pvdso_entry, SZ_TRIVAL_WRAPPER);
+
+
 	uintptr_t cur_eip = 0;
 	do {
 		cur_eip = ptrace_next_syscall(syscall_hook);
@@ -369,6 +377,10 @@ currf2_main(int argc, char * argv[])
 	CTHROW(err == 0, "logger close failed: %s\n", strerror(errno));
 
 	ptrace_resume();
+
+	/* reset the wrapper entry */
+	ptrace_updmem(wrapper_bkup, *pvdso_entry, SZ_TRIVAL_WRAPPER);
+
 
 	/* inject the 'state vector' */
 	inject_statvec();

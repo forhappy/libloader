@@ -60,25 +60,43 @@ post_rt_sigprocmask(struct syscall_regs * regs)
 	write_syscall_nr(__NR_sigprocmask);
 	write_eax(regs);
 	if (regs->eax == 0) {
-		if (regs->edx != 0) 
-			write_mem(regs->edx, regs->esi);
+
 		int how = regs->ebx;
-		k_sigset_t mask;
-		__dup_mem(&mask, regs->ecx, regs->esi);
+		int set = regs->ecx;
+		int oset = regs->edx;
+		int sigsetsize = regs->esi;
+		if (sigsetsize != sizeof(k_sigset_t)) {
+			INJ_WARNING("sigsetsize %d != %d\n",
+					sigsetsize, sizeof(k_sigset_t));
+			return 0;
+		}
 
-		sigdelsetmask(&mask, sigmask(SIGKILL)|sigmask(SIGSTOP));
+		if (set) {
+			k_sigset_t mask;
+			__dup_mem(&mask, set, sigsetsize);
 
-		if (how == SIG_BLOCK) {
-			sigorsets(&state_vector.sigmask,
+			sigdelsetmask(&mask, sigmask(SIGKILL)|sigmask(SIGSTOP));
+			if (how == SIG_BLOCK) {
+				sigorsets(&state_vector.sigmask,
 					&state_vector.sigmask,
 					&mask);
-		} else if (how == SIG_UNBLOCK) {
-			signandsets(&state_vector.sigmask,
+			} else if (how == SIG_UNBLOCK) {
+				signandsets(&state_vector.sigmask,
 					&state_vector.sigmask,
 					&mask);
-		} else {
-			/* SIG_SETMASK */
-			state_vector.sigmask = mask;
+			} else {
+				/*  SIG_SETMASK */
+				state_vector.sigmask = mask;
+			}
+		}
+		
+		if (oset) {
+			if (set == 0) {
+				k_sigset_t mask;
+				__dup_mem(&mask, oset, sigsetsize);
+				state_vector.sigmask = mask;
+			}
+			write_mem(oset, sigsetsize);
 		}
 	}
 	return 0;

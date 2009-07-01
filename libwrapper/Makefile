@@ -1,4 +1,4 @@
-all: pre-req libwrapper.so # test_libwrapper
+all: clean libwrapper.so # test_libwrapper
 	cp ./libwrapper.so ../
 
 CFLAGS= -g -Wall -nostartfiles -nodefaultlibs -nostdlib -fno-builtin -fvisibility=hidden -fPIC  -I../  -I.
