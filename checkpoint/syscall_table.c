@@ -33,6 +33,8 @@ SCOPE struct syscall_tabent syscall_table[] = {
 	[__NR_write]		= {NULL, &post_write},
 	[__NR_nanosleep]	= {NULL, &post_nanosleep},
 	[__NR_ioctl]		= {&pre_ioctl, &post_ioctl},
+	[__NR_fcntl64]		= {NULL, &post_fcntl64},
+	[__NR_getdents64]		= {NULL, &post_getdents64},
 	[NR_SYSCALLS]	= {NULL, NULL},
 };
 

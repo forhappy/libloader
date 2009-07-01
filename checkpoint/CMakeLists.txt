@@ -21,6 +21,8 @@ SET(HANDLERS
 	nanosleep.c
 	ioctl.c
 	ioctl_tty.c
+	fcntl64.c
+	getdents64.c
 	)
 
 ADD_LIBRARY(checkpoint

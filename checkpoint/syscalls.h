@@ -46,6 +46,9 @@ define_post_handler(nanosleep);
 define_pre_handler(ioctl);
 define_post_handler(ioctl);
 
+define_post_handler(fcntl64);
+define_post_handler(getdents64);
+
 __END_DECLS
 
 #endif
