@@ -28,18 +28,6 @@ checkpoint_init(void)
 	return 0;
 }
 
-SCOPE void
-make_checkpoint(void)
-{
-#ifdef IN_INJECTOR
-	return;
-#else
-	return;
-#endif
-}
-
-
-
 SCOPE int
 logger_init(pid_t pid)
 {
@@ -103,6 +91,17 @@ after_syscall(struct syscall_regs * regs)
 		__exit(0);
 	}
 	return 0;
+}
+
+
+SCOPE void
+make_checkpoint(void)
+{
+#ifdef IN_INJECTOR
+	return;
+#else
+	return;
+#endif
 }
 
 // vim:ts=4:sw=4

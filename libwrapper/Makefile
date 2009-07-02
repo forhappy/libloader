@@ -15,7 +15,6 @@ wrapper.o: wrapper.c injector.h
 
 #test_libwrapper: entry.o wrapper.o libprintf.os test_libwrapper.o
 #	gcc -g -Wl,-rpath,. $^ -o $@
-
 #test_libwrapper.o: test_libwrapper.c
 #	gcc -g -c $^ -o $@
 
