@@ -8,9 +8,9 @@
 #include <fcntl.h>
 
 #include "injector.h"
+#include "checkpoint/checkpoint.h"
 #include "injector_utils.h"
 #include "injector_debug.h"
-#include "checkpoint/checkpoint.h"
 
 
 static char help_string[] = "This is help string\n";
@@ -37,7 +37,6 @@ __before_syscall(struct syscall_regs r)
 	r.orig_eax = current_syscall;
 //	INJ_TRACE("before syscall %d\n", current_syscall);
 	before_syscall(&r);
-//	INJ_TRACE("over\n");
 	return;
 }
 
@@ -47,7 +46,6 @@ __after_syscall(struct syscall_regs r)
 	r.orig_eax = current_syscall;
 //	INJ_TRACE("after syscall %d\n", current_syscall);
 	after_syscall(&r);
-//	INJ_TRACE("over\n");
 	return;
 }
 

@@ -131,6 +131,9 @@ extern SCOPE struct state_vector {
 extern SCOPE int
 checkpoint_init(void);
 
+extern SCOPE void
+make_checkpoint(void);
+
 extern SCOPE int
 logger_init(pid_t pid);
 

@@ -28,6 +28,18 @@ checkpoint_init(void)
 	return 0;
 }
 
+SCOPE void
+make_checkpoint(void)
+{
+#ifdef IN_INJECTOR
+	return;
+#else
+	return;
+#endif
+}
+
+
+
 SCOPE int
 logger_init(pid_t pid)
 {

@@ -1,7 +1,8 @@
 all: clean libwrapper.so # test_libwrapper
 	cp ./libwrapper.so ../
 
-CFLAGS= -g -Wall -nostartfiles -nodefaultlibs -nostdlib -fno-builtin -fvisibility=hidden -fPIC  -I../  -I.
+CFLAGS= -g -Wall -nostartfiles -nodefaultlibs -nostdlib -fno-builtin -fvisibility=hidden -fPIC -DIN_INJECTOR \
+       	-I../  -I.
 
 libwrapper.so: entry.o wrapper.o libprintf.os libcheckpoint.os
 	ld -shared -e show_help_entry $^ -o $@

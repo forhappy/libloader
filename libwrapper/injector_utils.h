@@ -25,4 +25,7 @@ fdprintf(int fd, const char * fmt, ...);
 extern SCOPE int
 vfdprintf(int fd, const char * fmt, va_list args);
 
+extern SCOPE char *
+readline(int fd);
+
 #endif

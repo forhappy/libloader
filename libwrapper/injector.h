@@ -14,6 +14,9 @@
 #include <asm/unistd.h>
 #include "defs.h"
 
+#ifdef SCOPE
+# undef SCOPE
+#endif
 #define SCOPE ATTR(visibility ("hidden"))
 
 __BEGIN_DECLS
