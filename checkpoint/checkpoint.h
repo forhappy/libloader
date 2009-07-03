@@ -132,7 +132,7 @@ extern SCOPE int
 checkpoint_init(void);
 
 extern SCOPE void
-make_checkpoint(void);
+make_checkpoint(const char * ckpt_fn);
 
 extern SCOPE int
 logger_init(pid_t pid);
@@ -145,6 +145,9 @@ before_syscall(struct syscall_regs * regs);
 
 extern SCOPE int
 after_syscall(struct syscall_regs * regs);
+
+extern SCOPE char *
+readline(int fd);
 
 __END_DECLS
 

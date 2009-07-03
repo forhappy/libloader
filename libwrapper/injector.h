@@ -153,6 +153,9 @@ asm (".L__X'%ebx = 1\n\t"
 #define INTERNAL_SYSCALL_int80_6(name, args...)	INTERNAL_SYSCALL_6(name, "int $0x80\n", args)
 
 extern SCOPE int self_pid;
+extern SCOPE char logger_filename[];
+extern SCOPE char ckpt_filename[];
+
 
 __END_DECLS
 

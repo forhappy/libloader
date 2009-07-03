@@ -29,13 +29,15 @@ show_help(void)
 
 
 static uint32_t current_syscall = 0;
+SCOPE char logger_filename[64] = "";
+SCOPE char ckpt_filename[64] = "";
 
 SCOPE void
 __before_syscall(struct syscall_regs r)
 {
 	current_syscall = r.eax;
 	r.orig_eax = current_syscall;
-//	INJ_TRACE("before syscall %d\n", current_syscall);
+	INJ_TRACE("before syscall %d\n", current_syscall);
 	before_syscall(&r);
 	return;
 }
@@ -44,7 +46,7 @@ SCOPE void
 __after_syscall(struct syscall_regs r)
 {
 	r.orig_eax = current_syscall;
-//	INJ_TRACE("after syscall %d\n", current_syscall);
+	INJ_TRACE("after syscall %d\n", current_syscall);
 	after_syscall(&r);
 	return;
 }
@@ -59,27 +61,32 @@ injector_entry(uint32_t main_addr, uint32_t old_vdso_ventry, uint32_t old_vdso_v
 	INJ_TRACE("Here! we come to injector!!!\n");
 	INJ_TRACE("0x%x, 0x%x, 0x%x\n", old_vdso_vhdr, old_vdso_ventry, main_addr);
 
-	char filename[64];
-
 	self_pid = INTERNAL_SYSCALL(getpid, 0);
 
-	snprintf(filename, 64, "/var/lib/currf2/%d.log", self_pid);
-	INJ_TRACE("logger fn: %s\n", filename);
+	snprintf(logger_filename, 64, "/var/lib/currf2/%d.log", self_pid);
+	INJ_TRACE("logger fn: %s\n", logger_filename);
 
-	int fd = INTERNAL_SYSCALL(open, 3, filename, O_WRONLY|O_APPEND, 0666);
+	snprintf(logger_filename, 64, "/var/lib/currf2/%d.ckpt", self_pid);
+	INJ_TRACE("ckpt fn: %s\n", ckpt_filename);
+
+	int fd = INTERNAL_SYSCALL(open, 3, logger_filename, O_WRONLY|O_APPEND, 0666);
 	INJ_TRACE("logger fd = %d\n", fd);
-	ASSERT(fd > 0);
+	ASSERT(fd > 0, "open logger failed: %d\n", fd);
 
 	/* dup the fd to 1023 */
 	err = INTERNAL_SYSCALL(dup2, 2, fd, 1023);
-	ASSERT(err == 1023);
+	ASSERT(err == 1023, "dup2 failed: %d\n", err);
 	INJ_TRACE("dup fd to 1023\n");
 
 	err = INTERNAL_SYSCALL(close, 1, fd);
-	ASSERT(err == 0);
+	ASSERT(err == 0, "close failed: %d\n", err);
 	INJ_TRACE("close %d\n", fd);
 
 	logger_fd = 1023;
+
+	make_checkpoint(ckpt_filename);
+	err = INTERNAL_SYSCALL(ftruncate64, 2, logger_fd, 0);
+	ASSERT(err == 0, "ftruncate64 failed: %d\n", err);
 }
 
 // vim:ts=4:sw=4
