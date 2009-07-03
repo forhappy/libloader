@@ -38,6 +38,7 @@ __before_syscall(struct syscall_regs r)
 	current_syscall = r.eax;
 	r.orig_eax = current_syscall;
 	INJ_TRACE("before syscall %d\n", current_syscall);
+	INJ_TRACE("eip = 0x%x\n", r.eip);
 	before_syscall(&r);
 	return;
 }
@@ -54,7 +55,8 @@ __after_syscall(struct syscall_regs r)
 
 
 SCOPE void
-injector_entry(uint32_t main_addr, uint32_t old_vdso_ventry, uint32_t old_vdso_vhdr)
+injector_entry(struct syscall_regs r,
+		uint32_t old_vdso_ventry, uint32_t old_vdso_vhdr, uint32_t main_addr)
 {
 	int err;
 
@@ -66,7 +68,7 @@ injector_entry(uint32_t main_addr, uint32_t old_vdso_ventry, uint32_t old_vdso_v
 	snprintf(logger_filename, 64, "/var/lib/currf2/%d.log", self_pid);
 	INJ_TRACE("logger fn: %s\n", logger_filename);
 
-	snprintf(logger_filename, 64, "/var/lib/currf2/%d.ckpt", self_pid);
+	snprintf(ckpt_filename, 64, "/var/lib/currf2/%d.ckpt", self_pid);
 	INJ_TRACE("ckpt fn: %s\n", ckpt_filename);
 
 	int fd = INTERNAL_SYSCALL(open, 3, logger_filename, O_WRONLY|O_APPEND, 0666);
@@ -85,8 +87,11 @@ injector_entry(uint32_t main_addr, uint32_t old_vdso_ventry, uint32_t old_vdso_v
 	logger_fd = 1023;
 
 	make_checkpoint(ckpt_filename);
-	err = INTERNAL_SYSCALL(ftruncate64, 2, logger_fd, 0);
-	ASSERT(err == 0, "ftruncate64 failed: %d\n", err);
+	err = INTERNAL_SYSCALL(ftruncate, 2, logger_fd, 0);
+	ASSERT(err == 0, "ftruncate failed: %d\n", err);
+	INJ_WARNING("main ip=0x%x:0x%x\n", main_addr, r.eip);
+	INJ_WARNING("eax=%d\n", r.eax);
+	__exit(10);
 }
 
 // vim:ts=4:sw=4

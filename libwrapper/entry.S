@@ -15,9 +15,10 @@ show_help_entry:
 	ret
 
 syscall_wrapper_entry:
-	
-	pushl $0		/* eip */
+	pushl %esp
+	pushl 4(%esp)		/* eip */
 	pushl $0		/* orig_eax */
+	pushf
 	pushl %ebp
 	pushl %edi
 	pushl %esi
@@ -33,12 +34,15 @@ syscall_wrapper_entry:
 	popl %esi
 	popl %edi
 	popl %ebp
-	addl $0x8, %esp
+	popf
+	addl $0xC, %esp
 
 	call __vsyscall
 
-	pushl $0		/* eip */
+	pushl %esp
+	pushl 4(%esp)		/* eip */
 	pushl $0		/* orig_eax */
+	pushf
 	pushl %ebp
 	pushl %edi
 	pushl %esi
@@ -54,11 +58,31 @@ syscall_wrapper_entry:
 	popl %esi
 	popl %edi
 	popl %ebp
-	addl $0x8, %esp
+	popf
+	addl $0xC, %esp
 	ret
 
 __entry:
+	pushl %esp
+	pushl 12(%esp)		/* eip */
+	pushl $0		/* orig_eax */
+	pushf
+	pushl %ebp
+	pushl %edi
+	pushl %esi
+	pushl %edx
+	pushl %ecx
+	pushl %ebx
+	pushl %eax
 	call injector_entry
-	addl $0x8, %esp
+	popl %eax
+	popl %ebx
+	popl %ecx
+	popl %edx
+	popl %esi
+	popl %edi
+	popl %ebp
+	popf
+	addl $20, %esp
 	ret
 

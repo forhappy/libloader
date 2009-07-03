@@ -50,6 +50,8 @@ restart:
 			else
 				p_nxtl = p;
 			*p = '\0';
+			if (*p_nxtl_save == '\0')
+				return NULL;
 			return p_nxtl_save;
 		}
 		p++;
@@ -57,8 +59,11 @@ restart:
 
 	/* file is short enough that only half of
 	 * the readline buffer is OK. */
-	if (p < readline_buffer + READLINE_BUFFER_SIZE)
+	if (p < readline_buffer + READLINE_BUFFER_SIZE) {
+		if (*p == '\0')
+			return NULL;
 		return p;
+	}
 
 	int sz;
 	if (p_nxtl < half_readline_buffer) {
@@ -149,13 +154,39 @@ after_syscall(struct syscall_regs * regs)
 	return 0;
 }
 
+#ifdef IN_INJECTOR
+
+struct mem_region {
+	uint32_t start;
+	uint32_t end;
+	uint32_t prot;
+	uint32_t offset;
+	char fn[0];
+};
+
 static void ATTR(unused)
 do_make_checkpoint(int ckpt_fd, int maps_fd)
 {
 	char * p = readline(maps_fd);
-	while (p != NULL)
-		INJ_WARNING("%s\n", p);
+	while (p != NULL) {
+		void * start, * end;
+		int l = -1;
+		uint32_t offset;
+		char prot[5]="XXXX\0";
+
+		INJ_TRACE("%s\n", p);
+
+		sscanf(p, "%lx-%lx %4s %x %*2d:%*2d %*d %n",
+				&start, &end, prot, &offset, &l);
+		INJ_WARNING("start=%p, end=%p, prot=%s, offset=0x%x l=%d\n",
+				start, end, prot, offset, l);
+		if (l > 0)
+			INJ_WARNING("fn: %s\n", p + l);
+
+		p = readline(maps_fd);
+	}
 }
+#endif
 
 SCOPE void
 make_checkpoint(const char * ckpt_fn)
@@ -174,6 +205,7 @@ make_checkpoint(const char * ckpt_fn)
 	INTERNAL_SYSCALL(close, 1, ckpt_fd);
 	INTERNAL_SYSCALL(close, 1, maps_fd);
 
+//	__exit(-1);
 	return;
 #else
 	return;
