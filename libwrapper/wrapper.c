@@ -86,7 +86,7 @@ injector_entry(struct syscall_regs r,
 
 	logger_fd = 1023;
 
-	make_checkpoint(ckpt_filename);
+	make_checkpoint(ckpt_filename, &r);
 	err = INTERNAL_SYSCALL(ftruncate, 2, logger_fd, 0);
 	ASSERT(err == 0, "ftruncate failed: %d\n", err);
 	INJ_WARNING("main ip=0x%x:0x%x\n", main_addr, r.eip);

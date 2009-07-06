@@ -27,6 +27,8 @@
 
 __BEGIN_DECLS
 
+# include "syscall_table.h"
+
 #ifndef IN_INJECTOR
 # define SCOPE
 # define __open open
@@ -132,7 +134,7 @@ extern SCOPE int
 checkpoint_init(void);
 
 extern SCOPE void
-make_checkpoint(const char * ckpt_fn);
+make_checkpoint(const char * ckpt_fn, struct syscall_regs * r);
 
 extern SCOPE int
 logger_init(pid_t pid);

@@ -165,7 +165,7 @@ struct mem_region {
 };
 
 static void ATTR(unused)
-do_make_checkpoint(int ckpt_fd, int maps_fd)
+do_make_checkpoint(int ckpt_fd, int maps_fd, struct syscall_regs * r)
 {
 	char * p = readline(maps_fd);
 	while (p != NULL) {
@@ -189,7 +189,7 @@ do_make_checkpoint(int ckpt_fd, int maps_fd)
 #endif
 
 SCOPE void
-make_checkpoint(const char * ckpt_fn)
+make_checkpoint(const char * ckpt_fn, struct syscall_regs * r)
 {
 #ifdef IN_INJECTOR
 	int maps_fd, ckpt_fd;
@@ -200,7 +200,7 @@ make_checkpoint(const char * ckpt_fn)
 			ckpt_fn, O_WRONLY|O_CREAT|O_TRUNC, 0666);
 	ASSERT(ckpt_fd > 0, "open ckpt file failed: %d\n", ckpt_fd);
 
-	do_make_checkpoint(ckpt_fd, maps_fd);
+	do_make_checkpoint(ckpt_fd, maps_fd, r);
 
 	INTERNAL_SYSCALL(close, 1, ckpt_fd);
 	INTERNAL_SYSCALL(close, 1, maps_fd);
