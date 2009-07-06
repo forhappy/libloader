@@ -38,7 +38,7 @@ syscall_wrapper_entry:
 	addl $0xC, %esp
 
 	call __vsyscall
-
+	
 	pushl %esp
 	pushl 4(%esp)		/* eip */
 	pushl $0		/* orig_eax */

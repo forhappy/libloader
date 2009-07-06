@@ -91,7 +91,6 @@ injector_entry(struct syscall_regs r,
 	ASSERT(err == 0, "ftruncate failed: %d\n", err);
 	INJ_WARNING("main ip=0x%x:0x%x\n", main_addr, r.eip);
 	INJ_WARNING("eax=%d\n", r.eax);
-	__exit(10);
 }
 
 // vim:ts=4:sw=4

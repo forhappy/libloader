@@ -4,6 +4,7 @@
  */
 
 #include "checkpoint.h"
+#include <sys/mman.h>
 #include <unistd.h>
 #include <fcntl.h>
 
@@ -161,6 +162,7 @@ struct mem_region {
 	uint32_t end;
 	uint32_t prot;
 	uint32_t offset;
+	uint32_t fn_len;
 	char fn[0];
 };
 
@@ -178,13 +180,38 @@ do_make_checkpoint(int ckpt_fd, int maps_fd, struct syscall_regs * r)
 
 		sscanf(p, "%lx-%lx %4s %x %*2d:%*2d %*d %n",
 				&start, &end, prot, &offset, &l);
-		INJ_WARNING("start=%p, end=%p, prot=%s, offset=0x%x l=%d\n",
+
+		INJ_TRACE("start=%p, end=%p, prot=%s, offset=0x%x l=%d\n",
 				start, end, prot, offset, l);
 		if (l > 0)
-			INJ_WARNING("fn: %s\n", p + l);
+			INJ_TRACE("fn: %s\n", p + l);
+
+		struct mem_region m;
+		m.start = (uint32_t)start;
+		m.end = (uint32_t)end;
+		m.prot = 0;
+		if (prot[0] == 'r')
+			m.prot |= PROT_READ;
+		if (prot[1] == 'w')
+			m.prot |= PROT_WRITE;
+		if (prot[2] == 'x')
+			m.prot |= PROT_EXEC;
+		m.offset = offset;
+		m.fn_len = 0;
+		if (l > 0)
+			m.fn_len = strlen(p + l) + 1;
+
+		__write(ckpt_fd, &m, sizeof(m));
+		if (l > 0)
+		__write(ckpt_fd, p + l, m.fn_len);
+
+		__write(ckpt_fd, start, end-start);
 
 		p = readline(maps_fd);
 	}
+
+	/* write state vector */
+	__write(ckpt_fd, &state_vector, sizeof(state_vector));
 }
 #endif
 
