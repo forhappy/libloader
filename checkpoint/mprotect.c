@@ -1,10 +1,22 @@
 
 #include "syscalls.h"
+
+#ifndef SYSCALL_PRINTER
+
 int SCOPE
 post_mprotect(struct syscall_regs * regs)
 {
-	write_syscall_nr(__NR_mprotect);
+	
 	write_eax(regs);
 	return 0;
 }
+
+#else
+
+void
+output_mprotect(void)
+{
+	
+}
+#endif
 

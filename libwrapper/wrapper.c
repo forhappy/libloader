@@ -89,8 +89,8 @@ injector_entry(struct syscall_regs r,
 	make_checkpoint(ckpt_filename, &r);
 	err = INTERNAL_SYSCALL(ftruncate, 2, logger_fd, 0);
 	ASSERT(err == 0, "ftruncate failed: %d\n", err);
-	INJ_WARNING("main ip=0x%x:0x%x\n", main_addr, r.eip);
-	INJ_WARNING("eax=%d\n", r.eax);
+	INJ_TRACE("main ip=0x%x:0x%x\n", main_addr, r.eip);
+	INJ_TRACE("eax=%d\n", r.eax);
 }
 
 // vim:ts=4:sw=4

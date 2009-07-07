@@ -4,6 +4,8 @@
 
 #include "ioctl_tty.h"
 
+#ifndef SYSCALL_PRINTER
+
 SCOPE int
 pre_tty_ioctl(int fd, uint32_t cmd, uint32_t arg)
 {
@@ -29,4 +31,5 @@ post_tty_ioctl(int fd, uint32_t cmd, uint32_t arg)
 	return 0;
 }
 
+#endif
 

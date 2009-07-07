@@ -2,6 +2,8 @@
 #include "ioctl.h"
 #include "ioctl_tty.h"
 
+#ifndef SYSCALL_PRINTER
+
 int SCOPE
 pre_ioctl(struct syscall_regs * regs)
 {
@@ -39,6 +41,15 @@ post_ioctl(struct syscall_regs * regs)
 
 	return 0;
 }
+
+#else
+
+void
+output_ioctl(void)
+{
+	
+}
+#endif
 
 // vim:ts=4:sw=4
 

@@ -10,7 +10,6 @@
 #include <stdint.h>
 #include <unistd.h>
 #include "defs.h"
-#include "syscall_table.h"
 
 #ifndef IN_INJECTOR
 # include "ptraceutils.h"
@@ -26,8 +25,6 @@
 #endif
 
 __BEGIN_DECLS
-
-# include "syscall_table.h"
 
 #ifndef IN_INJECTOR
 # define SCOPE
@@ -85,11 +82,6 @@ extern int SCOPE logger_fd;
 	__write(logger_fd, &regs->eax, sizeof(regs->eax));	\
 } while(0)
 
-
-
-
-
-
 #define GDT_ENTRY_TLS_MIN	6
 #define GDT_ENTRY_TLS_ENTRIES 3
 #define GDT_ENTRY_TLS_MAX 	(GDT_ENTRY_TLS_MIN + GDT_ENTRY_TLS_ENTRIES - 1)
@@ -132,6 +124,9 @@ extern SCOPE struct state_vector {
 
 extern SCOPE int
 checkpoint_init(void);
+
+#include "checkpoint/syscall_table.h"
+
 
 extern SCOPE void
 make_checkpoint(const char * ckpt_fn, struct syscall_regs * r);

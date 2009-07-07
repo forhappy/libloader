@@ -1,5 +1,8 @@
 
 #include "syscalls.h"
+
+#ifndef SYSCALL_PRINTER
+
 int SCOPE
 post_access(struct syscall_regs * regs)
 {
@@ -7,4 +10,13 @@ post_access(struct syscall_regs * regs)
 	write_eax(regs);
 	return 0;
 }
+
+#else
+
+void
+output_access(void)
+{
+	
+}
+#endif
 

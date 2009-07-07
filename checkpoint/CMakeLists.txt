@@ -33,5 +33,15 @@ ADD_LIBRARY(checkpoint
 	${HANDLERS}
 	)
 
+ADD_LIBRARY(printer
+	checkpoint.h
+	syscall_table.c
+	syscall_table.h
+	${HANDLERS}
+	)
 
+SET_TARGET_PROPERTIES(
+	printer
+	PROPERTIES COMPILE_FLAGS -DSYSCALL_PRINTER
+	)
 

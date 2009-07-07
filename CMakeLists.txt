@@ -57,8 +57,19 @@ ADD_EXECUTABLE(currf2
 	libwrapper.so
 	)
 
+ADD_EXECUTABLE(printlog
+	${COMMON}
+	printlog.c
+	)
+
 TARGET_LINK_LIBRARIES(currf2
 	checkpoint)
+TARGET_LINK_LIBRARIES(printlog
+	printer)
+SET_TARGET_PROPERTIES(
+	printlog
+	PROPERTIES COMPILE_FLAGS -DSYSCALL_PRINTER
+	)
 
 ADD_CUSTOM_COMMAND(OUTPUT libwrapper.so
 	COMMAND make -C libwrapper

@@ -7,10 +7,13 @@ struct k_timespec {
         long       ts_nsec;
 };
 
+
+#ifndef SYSCALL_PRINTER
+
 int SCOPE
 post_nanosleep(struct syscall_regs * regs)
 {
-	write_syscall_nr(__NR_nanosleep);
+	
 	write_eax(regs);
 	uintptr_t o = regs->ecx;
 	if (o != 0)
@@ -18,4 +21,13 @@ post_nanosleep(struct syscall_regs * regs)
 	
 	return 0;
 }
+
+#else
+
+void
+output_nanosleep(void)
+{
+	
+}
+#endif
 

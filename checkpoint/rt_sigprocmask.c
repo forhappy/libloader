@@ -54,10 +54,13 @@ static inline void sigdelsetmask(k_sigset_t *set, unsigned long mask)
 
 #define sigmask(sig)	(1UL << ((sig) - 1))
 
+
+#ifndef SYSCALL_PRINTER
+
 int SCOPE
 post_rt_sigprocmask(struct syscall_regs * regs)
 {
-	write_syscall_nr(__NR_sigprocmask);
+	
 	write_eax(regs);
 	if (regs->eax == 0) {
 
@@ -101,4 +104,13 @@ post_rt_sigprocmask(struct syscall_regs * regs)
 	}
 	return 0;
 }
+
+#else
+
+void
+output_rt_sigprocmask(void)
+{
+	
+}
+#endif
 

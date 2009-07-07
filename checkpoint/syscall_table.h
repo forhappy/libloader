@@ -10,14 +10,11 @@
 #include <stdint.h>
 #include <unistd.h>
 #include "defs.h"
+#include "checkpoint/checkpoint.h"
 
 __BEGIN_DECLS
 
-#ifndef IN_INJECTOR
-# define SCOPE
-#else
-# define SCOPE ATTR(visibility ("hidden"))
-#endif
+
 
 struct syscall_regs {
 	int32_t eax;
@@ -35,12 +32,25 @@ struct syscall_regs {
 
 
 typedef int (*syscall_handler_t)(struct syscall_regs * r);
+#ifdef SYSCALL_PRINTER
+typedef void (*syscall_output_t)(void);
+#endif
 struct syscall_tabent {
+#ifndef SYSCALL_PRINTER
 	syscall_handler_t pre_handler;
 	syscall_handler_t post_handler;
+#else
+	syscall_output_t output_handler;
+#endif
 };
 
 extern SCOPE struct syscall_tabent syscall_table[];
+
+#ifdef SYSCALL_PRINTER
+# include <stdio.h>
+extern void
+read_logger(void * buffer, int sz);
+#endif
 
 #define NR_SYSCALLS	(327)
 

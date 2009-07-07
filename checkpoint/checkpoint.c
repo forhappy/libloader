@@ -133,6 +133,8 @@ before_syscall(struct syscall_regs * regs)
 		__exit(0);
 	}
 
+	/* write syscall nr */
+	write_syscall_nr(regs->orig_eax);
 	if (syscall_table[regs->orig_eax].pre_handler != NULL)
 		return syscall_table[regs->orig_eax].pre_handler(regs);
 	return 0;

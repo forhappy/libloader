@@ -1,10 +1,20 @@
 
 #include "syscalls.h"
+#ifndef SYSCALL_PRINTER
 int SCOPE
 post_mmap2(struct syscall_regs * regs)
 {
-	write_syscall_nr(__NR_mmap2);
+	
 	write_eax(regs);
 	return 0;
 }
+
+#else
+
+void
+output_mmap2(void)
+{
+	
+}
+#endif
 

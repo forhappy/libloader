@@ -1,10 +1,21 @@
 
 #include "syscalls.h"
+
+#ifndef SYSCALL_PRINTER
 int SCOPE
 post_close(struct syscall_regs * regs)
 {
-	write_syscall_nr(__NR_close);
+	
 	write_eax(regs);
 	return 0;
 }
+
+#else
+
+void
+output_close(void)
+{
+	
+}
+#endif
 

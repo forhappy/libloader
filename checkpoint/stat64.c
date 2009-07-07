@@ -35,10 +35,11 @@ struct stat64 {
 };
 
 
+#ifndef SYSCALL_PRINTER
 int SCOPE
 post_stat64(struct syscall_regs * regs)
 {
-	write_syscall_nr(__NR_stat64);
+	
 	write_eax(regs);
 	if (regs->eax >= 0) {
 		write_mem(regs->ecx, sizeof(struct stat64));
@@ -46,4 +47,12 @@ post_stat64(struct syscall_regs * regs)
 	return 0;
 }
 
+#else
+
+void
+output_stat64(void)
+{
+	
+}
+#endif
 

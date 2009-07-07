@@ -9,14 +9,25 @@ struct old_utsname {
 	char machine[65];
 };
 
+#ifndef SYSCALL_PRINTER
+
 int SCOPE
 post_uname(struct syscall_regs * regs)
 {
-	write_syscall_nr(__NR_uname);
+	
 	write_eax(regs);
 	if (regs->eax >= 0) {
 		write_mem(regs->ebx, sizeof(struct old_utsname));
 	}
 	return 0;
 }
+
+#else
+
+void
+output_uname(void)
+{
+	
+}
+#endif
 

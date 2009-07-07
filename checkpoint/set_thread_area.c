@@ -1,9 +1,12 @@
 
 #include "syscalls.h"
+
+#ifndef SYSCALL_PRINTER
+
 int SCOPE
 post_set_thread_area(struct syscall_regs * regs)
 {
-	write_syscall_nr(__NR_set_thread_area);
+	
 	write_eax(regs);
 	if (regs->eax >= 0) {
 		struct user_desc desc;
@@ -15,4 +18,13 @@ post_set_thread_area(struct syscall_regs * regs)
 	}
 	return 0;
 }
+
+#else
+
+void
+output_set_thread_area(void)
+{
+	
+}
+#endif
 
