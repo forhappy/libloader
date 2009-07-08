@@ -10,6 +10,13 @@
 #include "checkpoint.h"
 #include <stdint.h>
 
+#ifdef SYSCALL_PRINTER
+# include <stdio.h>
+# include <stdlib.h>
+# include "exception.h"
+# include "debug.h"
+#endif
+
 __BEGIN_DECLS
 
 #ifndef SYSCALL_PRINTER

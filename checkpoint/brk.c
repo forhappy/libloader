@@ -6,7 +6,6 @@
 int SCOPE
 post_brk(struct syscall_regs * regs)
 {
-	
 	write_eax(regs);
 	state_vector.brk = regs->eax;
 	return 0;
@@ -17,7 +16,9 @@ post_brk(struct syscall_regs * regs)
 void
 output_brk(void)
 {
-	
+	uint32_t res;
+	read_eax(res);
+	printf("brk:\t0x%x\n", res);
 }
 #endif
 

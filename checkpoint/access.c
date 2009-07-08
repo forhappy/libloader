@@ -6,7 +6,6 @@
 int SCOPE
 post_access(struct syscall_regs * regs)
 {
-	write_syscall_nr(__NR_access);
 	write_eax(regs);
 	return 0;
 }
@@ -16,7 +15,9 @@ post_access(struct syscall_regs * regs)
 void
 output_access(void)
 {
-	
+	int32_t ret;
+	read_eax(ret);
+	printf("access:\t%d\n", ret);
 }
 #endif
 

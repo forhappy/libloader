@@ -127,6 +127,16 @@ checkpoint_init(void);
 
 #include "checkpoint/syscall_table.h"
 
+#ifdef SYSCALL_PRINTER
+# include <stdio.h>
+extern void
+read_logger(void * buffer, int sz);
+
+#define read_eax(x) read_logger(&x, sizeof(x))
+#define skip(n)	read_logger(NULL, n)
+
+#endif
+
 
 extern SCOPE void
 make_checkpoint(const char * ckpt_fn, struct syscall_regs * r);

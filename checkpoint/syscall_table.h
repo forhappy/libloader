@@ -46,12 +46,6 @@ struct syscall_tabent {
 
 extern SCOPE struct syscall_tabent syscall_table[];
 
-#ifdef SYSCALL_PRINTER
-# include <stdio.h>
-extern void
-read_logger(void * buffer, int sz);
-#endif
-
 #define NR_SYSCALLS	(327)
 
 __END_DECLS

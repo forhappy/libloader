@@ -40,7 +40,6 @@ struct stat64 {
 int SCOPE
 post_fstat64(struct syscall_regs * regs)
 {
-	
 	write_eax(regs);
 	if (regs->eax >= 0) {
 		write_mem(regs->ecx, sizeof(struct stat64));
@@ -53,6 +52,10 @@ post_fstat64(struct syscall_regs * regs)
 void
 output_fstat64(void)
 {
-	
+	int32_t ret;
+	read_eax(ret);
+	if (ret >= 0)
+		skip(sizeof(struct stat64));
+	printf("fstat64\t%d\n", ret);
 }
 #endif

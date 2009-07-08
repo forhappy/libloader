@@ -4,7 +4,6 @@
 int SCOPE
 post_fcntl64(struct syscall_regs * regs)
 {
-	
 	write_eax(regs);
 	return 0;
 }
@@ -14,7 +13,9 @@ post_fcntl64(struct syscall_regs * regs)
 void
 output_fcntl64(void)
 {
-	
+	int32_t ret;
+	read_eax(ret);
+	printf("fcntl64:\t%d\n", ret);
 }
 #endif
 
