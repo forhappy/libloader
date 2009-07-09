@@ -16,6 +16,7 @@ SET(HANDLERS
 	set_robust_list.c
 	rt_sigaction.c
 	rt_sigprocmask.c
+	sigprocmask.c
 	ugetrlimit.c
 	write.c
 	nanosleep.c
@@ -23,6 +24,7 @@ SET(HANDLERS
 	ioctl_tty.c
 	fcntl64.c
 	getdents64.c
+	exit_group.c
 	)
 
 ADD_LIBRARY(checkpoint

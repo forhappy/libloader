@@ -49,6 +49,7 @@ define_post_handler(set_tid_address);
 define_post_handler(set_robust_list);
 define_post_handler(rt_sigaction);
 define_post_handler(rt_sigprocmask);
+define_post_handler(sigprocmask);
 define_post_handler(ugetrlimit);
 define_post_handler(write);
 define_post_handler(nanosleep);
@@ -58,6 +59,9 @@ define_post_handler(ioctl);
 
 define_post_handler(fcntl64);
 define_post_handler(getdents64);
+
+define_pre_handler(exit_group);
+define_post_handler(exit_group);
 
 __END_DECLS
 

@@ -53,9 +53,10 @@ void
 output_fstat64(void)
 {
 	int32_t ret;
-	read_eax(ret);
+	ret = read_eax();
 	if (ret >= 0)
 		skip(sizeof(struct stat64));
 	printf("fstat64\t%d\n", ret);
 }
 #endif
+

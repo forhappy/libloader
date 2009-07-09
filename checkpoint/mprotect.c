@@ -16,7 +16,7 @@ post_mprotect(struct syscall_regs * regs)
 void
 output_mprotect(void)
 {
-	
+	printf("mprotect:\t%d\n", read_eax());
 }
 #endif
 

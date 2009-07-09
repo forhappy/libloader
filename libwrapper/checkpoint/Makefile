@@ -4,7 +4,7 @@ VPATH = ../../checkpoint
 
 SYSCALLS = access.c close.c mprotect.c read.c set_robust_list.c sigprocmask.c ugetrlimit.c brk.c fstat64.c \
 	   munmap.c rt_sigaction.c set_thread_area.c stat64.c uname.c mmap2.c open.c rt_sigprocmask.c \
-	   set_tid_address.c write.c nanosleep.c ioctl.c ioctl_tty.c fcntl64.c getdents64.c
+	   set_tid_address.c write.c nanosleep.c ioctl.c ioctl_tty.c fcntl64.c getdents64.c exit_group.c
 
 CHECKPOINT_SRCS = $(SYSCALLS)
 CHECKPOINT_HEADERS = checkpoint.h checkpoint.c syscalls.h syscall_table.h

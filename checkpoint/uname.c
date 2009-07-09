@@ -27,7 +27,10 @@ post_uname(struct syscall_regs * regs)
 void
 output_uname(void)
 {
-	
+	int32_t ret = read_eax();
+	if (ret >= 0)
+		skip(sizeof(struct old_utsname));
+	printf("uname:\t%d\n", ret);
 }
 #endif
 

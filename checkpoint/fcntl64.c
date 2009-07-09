@@ -13,9 +13,7 @@ post_fcntl64(struct syscall_regs * regs)
 void
 output_fcntl64(void)
 {
-	int32_t ret;
-	read_eax(ret);
-	printf("fcntl64:\t%d\n", ret);
+	printf("fcntl64:\t%d\n", read_eax());
 }
 #endif
 

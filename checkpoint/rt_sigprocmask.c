@@ -60,14 +60,13 @@ static inline void sigdelsetmask(k_sigset_t *set, unsigned long mask)
 int SCOPE
 post_rt_sigprocmask(struct syscall_regs * regs)
 {
-	
 	write_eax(regs);
 	if (regs->eax == 0) {
-
 		int how = regs->ebx;
 		int set = regs->ecx;
 		int oset = regs->edx;
 		int sigsetsize = regs->esi;
+		write_obj(sigsetsize);
 		if (sigsetsize != sizeof(k_sigset_t)) {
 			INJ_WARNING("sigsetsize %d != %d\n",
 					sigsetsize, sizeof(k_sigset_t));
@@ -93,6 +92,7 @@ post_rt_sigprocmask(struct syscall_regs * regs)
 			}
 		}
 		
+		write_obj(oset);
 		if (oset) {
 			if (set == 0) {
 				k_sigset_t mask;
@@ -110,7 +110,18 @@ post_rt_sigprocmask(struct syscall_regs * regs)
 void
 output_rt_sigprocmask(void)
 {
-	
+	int32_t ret = read_eax();
+	if (ret == 0) {
+		int sigsetsize;
+		read_obj(sigsetsize);
+		if (sigsetsize == sizeof(k_sigset_t)) {
+			int32_t oset;
+			read_obj(oset);
+			if (oset)
+				skip(sigsetsize);
+		}
+	}
+	printf("rt_sigprocmask:\t%d\n", ret);
 }
 #endif
 

@@ -6,7 +6,6 @@
 int SCOPE
 post_munmap(struct syscall_regs * regs)
 {
-	
 	write_eax(regs);
 	return 0;
 }
@@ -16,7 +15,7 @@ post_munmap(struct syscall_regs * regs)
 void
 output_munmap(void)
 {
-	
+	printf("munmap:\t%d\n", read_eax());
 }
 #endif
 

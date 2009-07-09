@@ -19,7 +19,7 @@ void
 output_getdents64(void)
 {
 	int32_t ret;
-	read_eax(ret);
+	ret = read_eax();
 	if (ret >= 0)
 		skip(ret);
 	

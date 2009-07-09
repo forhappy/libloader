@@ -18,7 +18,10 @@ post_read(struct syscall_regs * regs)
 void
 output_read(void)
 {
-	
+	int32_t ret = read_eax();
+	if (ret > 0)
+		skip(ret);
+	printf("read:\t%d\n", ret);
 }
 #endif
 

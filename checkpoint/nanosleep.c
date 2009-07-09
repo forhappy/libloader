@@ -13,12 +13,11 @@ struct k_timespec {
 int SCOPE
 post_nanosleep(struct syscall_regs * regs)
 {
-	
 	write_eax(regs);
 	uintptr_t o = regs->ecx;
+	write_obj(o);
 	if (o != 0)
 		write_mem(o, sizeof(struct k_timespec));
-	
 	return 0;
 }
 
@@ -27,7 +26,15 @@ post_nanosleep(struct syscall_regs * regs)
 void
 output_nanosleep(void)
 {
-	
+	int32_t res;
+	res = read_eax();
+
+	uintptr_t o;
+	read_obj(o);
+
+	if (o != 0)
+		skip(sizeof(struct k_timespec));
+	printf("nanosleep:\t%d\n", res);
 }
 #endif
 

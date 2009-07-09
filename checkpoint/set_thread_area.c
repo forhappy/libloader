@@ -24,7 +24,7 @@ post_set_thread_area(struct syscall_regs * regs)
 void
 output_set_thread_area(void)
 {
-	
+	printf("set_thread_area:\t%d\n", read_eax());
 }
 #endif
 

@@ -52,7 +52,10 @@ post_stat64(struct syscall_regs * regs)
 void
 output_stat64(void)
 {
-	
+	int32_t ret = read_eax();
+	if (ret >= 0)
+		skip(sizeof(struct stat64));
+	printf("stat64:\t%d\n", ret);
 }
 #endif
 

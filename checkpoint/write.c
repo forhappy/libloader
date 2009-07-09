@@ -5,7 +5,6 @@
 int SCOPE
 post_write(struct syscall_regs * regs)
 {
-	
 	write_eax(regs);
 	return 0;
 }
@@ -15,7 +14,8 @@ post_write(struct syscall_regs * regs)
 void
 output_write(void)
 {
-	
+	int32_t ret = read_eax();
+	printf("write:\t%d\n", ret);
 }
 #endif
 

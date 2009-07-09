@@ -17,7 +17,7 @@ post_set_tid_address(struct syscall_regs * regs)
 void
 output_set_tid_address(void)
 {
-	
+	printf("set_tid_address:\t%d\n", read_eax());
 }
 #endif
 

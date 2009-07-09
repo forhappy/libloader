@@ -15,9 +15,7 @@ post_access(struct syscall_regs * regs)
 void
 output_access(void)
 {
-	int32_t ret;
-	read_eax(ret);
-	printf("access:\t%d\n", ret);
+	printf("access:\t%d\n", read_eax());
 }
 #endif
 

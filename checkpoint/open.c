@@ -7,7 +7,6 @@
 int SCOPE
 post_open(struct syscall_regs * regs)
 {
-	
 	write_eax(regs);
 	return 0;
 }
@@ -17,7 +16,7 @@ post_open(struct syscall_regs * regs)
 void
 output_open(void)
 {
-	
+	printf("open:\t%d\n", read_eax());
 }
 #endif
 

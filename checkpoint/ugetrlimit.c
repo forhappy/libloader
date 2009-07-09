@@ -26,7 +26,10 @@ post_ugetrlimit(struct syscall_regs * regs)
 void
 output_ugetrlimit(void)
 {
-	
+	int32_t ret = read_eax();
+	if (ret == 0)
+		skip(sizeof(struct rlimit));
+	printf("ugetrlimit:\t%d\n", ret);
 }
 #endif
 

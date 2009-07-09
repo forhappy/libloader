@@ -40,6 +40,15 @@ printer_main(void)
 		volatile struct exception exp;
 		TRY_CATCH(exp, MASK_RESOURCE_LOST) {
 			read_logger(&nr, sizeof(nr));
+
+			SYS_TRACE("syscall nr %u\n", nr);
+			if (nr > NR_SYSCALLS)
+				THROW(EXCEPTION_FATAL, "no handler for syscall %u", nr);
+
+			if (syscall_table[nr].output_handler == NULL)
+				THROW(EXCEPTION_FATAL, "no handler for syscall %u", nr);
+			syscall_table[nr].output_handler();
+
 		} CATCH (exp) {
 			case EXCEPTION_NO_ERROR:
 				break;
@@ -51,13 +60,6 @@ printer_main(void)
 				RETHROW(exp);
 		}
 
-		SYS_TRACE("syscall nr %u\n", nr);
-		if (nr > NR_SYSCALLS)
-			THROW(EXCEPTION_FATAL, "no handler for syscall %u", nr);
-
-		if (syscall_table[nr].output_handler == NULL)
-			THROW(EXCEPTION_FATAL, "no handler for syscall %u", nr);
-		syscall_table[nr].output_handler();
 	}
 }
 

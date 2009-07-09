@@ -18,7 +18,7 @@ post_set_robust_list(struct syscall_regs * regs)
 void
 output_set_robust_list(void)
 {
-	
+	printf("set_robust_list:\t%d\n", read_eax());
 }
 #endif
 

@@ -79,7 +79,16 @@ extern int SCOPE logger_fd;
 } while(0)
 
 # define write_eax(regs)	do {	\
-	__write(logger_fd, &regs->eax, sizeof(regs->eax));	\
+	__write(logger_fd, &((regs)->eax), sizeof((regs)->eax));	\
+} while(0)
+
+# define write_int32(x) do { \
+	int32_t d = (x);	\
+	__write(logger_fd, &d, sizeof(d));\
+} while(0)
+
+# define write_obj(x) do { \
+	__write(logger_fd, &(x), sizeof(x));\
 } while(0)
 
 #define GDT_ENTRY_TLS_MIN	6
@@ -132,7 +141,9 @@ checkpoint_init(void);
 extern void
 read_logger(void * buffer, int sz);
 
-#define read_eax(x) read_logger(&x, sizeof(x))
+#define read_obj(x) read_logger(&(x), sizeof(x))
+#define read_eax() ({int32_t eax; read_obj(eax); eax;})
+#define read_regs(r)	read_obj(r)
 #define skip(n)	read_logger(NULL, n)
 
 #endif

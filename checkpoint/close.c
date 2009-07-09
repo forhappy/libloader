@@ -14,9 +14,7 @@ post_close(struct syscall_regs * regs)
 void
 output_close(void)
 {
-	int32_t ret;
-	read_eax(ret);
-	printf("close:\t%d\n", ret);
+	printf("close:\t%d\n", read_eax());
 }
 #endif
 

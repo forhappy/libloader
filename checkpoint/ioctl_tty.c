@@ -31,5 +31,28 @@ post_tty_ioctl(int fd, uint32_t cmd, uint32_t arg)
 	return 0;
 }
 
+#else
+
+void
+output_tty_ioctl(int fd, uint32_t cmd, uint32_t arg)
+{
+	switch (cmd) {
+		case TCGETS:
+			if (arg != 0)
+				skip(sizeof(struct termios));
+			break;
+		case TIOCGWINSZ:
+			if (arg != 0)
+				skip(sizeof(struct winsize));
+			break;
+		default:
+			INJ_WARNING("Unknown tty ioctl cmd 0x%x\n", cmd);
+			THROW(EXCEPTION_FATAL, "unsupport ioctl 0x%x", cmd);
+	}
+
+	printf("\tretval: %d\n", read_eax());
+	return;
+}
+
 #endif
 
