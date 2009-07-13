@@ -27,4 +27,34 @@ post_socket(int family, int type, int protocol, int retval);
 extern void
 output_socket(int family, int type, int protocol, int retval);
 
+extern int SCOPE
+post_bind(int fd, uint32_t umyaddr, int addrlen, int retval);
+
+extern void SCOPE
+output_bind(int fd, uint32_t umyaddr, int addrlen, int retval);
+
+extern int SCOPE
+post_getsockname(int fd, uint32_t usockaddr, uint32_t usockaddr_len, int retval);
+
+extern void SCOPE
+output_getsockname(int fd, uint32_t usockaddr, uint32_t usockaddr_len, int retval);
+
+extern int SCOPE
+post_sendto(int fd, uint32_t buff, uint32_t len, uint32_t flags,
+		uint32_t addr, uint32_t addr_len, int retval);
+
+extern void SCOPE
+output_sendto(int fd, uint32_t buff, uint32_t len, uint32_t flags,
+		uint32_t addr, uint32_t addr_len, int retval);
+
+extern int SCOPE
+post_recvfrom(int fd, uint32_t ubuf, uint32_t size,
+		uint32_t flags, uint32_t addr,
+		uint32_t addr_len, int retval);
+
+extern void SCOPE
+output_recvfrom(int fd, uint32_t ubuf, uint32_t size,
+		uint32_t flags, uint32_t addr,
+		uint32_t addr_len, int retval);
 #endif 
+

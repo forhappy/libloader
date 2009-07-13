@@ -28,6 +28,10 @@ SET(HANDLERS
 	time.c
 	socketcall.c
 	socket.c
+	bind.c
+	getsockname.c
+	sendto.c
+	recvfrom.c
 	)
 
 ADD_LIBRARY(checkpoint

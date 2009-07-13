@@ -34,13 +34,22 @@ post_socketcall(struct syscall_regs * regs)
 	unsigned long a0, a1, a[6];
 	a0 = a[0];
 	a1 = a[1];
+	uint32_t retval = regs->eax;
 
 	__dup_mem(a, args, nargs[call]);
 	write_mem(args, nargs[call]);
 
 	switch (call) {
 		case SYS_SOCKET:
-			return post_socket(a0, a1, a[2], regs->eax);
+			return post_socket(a0, a1, a[2], retval);
+		case SYS_BIND:
+			return post_bind(a0, a1, a[2], retval);
+		case SYS_GETSOCKNAME:
+			return post_getsockname(a0, a1, a[2], retval);
+		case SYS_SENDTO:
+			return post_sendto(a0, a1, a[2], a[3], a[4], a[5], retval);
+		case SYS_RECVFROM:
+			return post_recvfrom(a0, a1, a[2], a[3], a[4], a[5], retval);
 		default:
 			INJ_WARNING("Unknown socket call: %d\n", call);
 			__exit(-1);
@@ -75,6 +84,18 @@ output_socketcall(void)
 	switch (call) {
 		case SYS_SOCKET:
 			output_socket(a0, a1, a[2], retval);
+			return;
+		case SYS_BIND:
+			output_bind(a0, a1, a[2], retval);
+			return;
+		case SYS_GETSOCKNAME:
+			output_getsockname(a0, a1, a[2], retval);
+			return;
+		case SYS_SENDTO:
+			output_sendto(a0, a1, a[2], a[3], a[4], a[5], retval);
+			return;
+		case SYS_RECVFROM:
+			output_recvfrom(a0, a1, a[2], a[3], a[4], a[5], retval);
 			return;
 		default:
 			THROW(EXCEPTION_FATAL, "Unknown socket number: %d", call);
