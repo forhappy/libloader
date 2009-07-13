@@ -32,6 +32,7 @@ SET(HANDLERS
 	getsockname.c
 	sendto.c
 	recvfrom.c
+	recvmsg.c
 	)
 
 ADD_LIBRARY(checkpoint

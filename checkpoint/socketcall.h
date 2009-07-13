@@ -56,5 +56,12 @@ extern void SCOPE
 output_recvfrom(int fd, uint32_t ubuf, uint32_t size,
 		uint32_t flags, uint32_t addr,
 		uint32_t addr_len, int retval);
+
+extern int SCOPE
+post_recvmsg(int fd, uint32_t msg, uint32_t flags, int retval);
+
+extern void SCOPE
+output_recvmsg(int fd, uint32_t msg, uint32_t flags, int retval);
+
 #endif 
 
