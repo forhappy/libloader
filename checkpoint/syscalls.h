@@ -63,6 +63,8 @@ define_post_handler(getdents64);
 define_pre_handler(exit_group);
 define_post_handler(exit_group);
 
+define_post_handler(time);
+
 __END_DECLS
 
 #endif
