@@ -65,6 +65,8 @@ define_post_handler(exit_group);
 
 define_post_handler(time);
 
+define_post_handler(socketcall);
+
 __END_DECLS
 
 #endif

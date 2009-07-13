@@ -26,6 +26,8 @@ SET(HANDLERS
 	getdents64.c
 	exit_group.c
 	time.c
+	socketcall.c
+	socket.c
 	)
 
 ADD_LIBRARY(checkpoint

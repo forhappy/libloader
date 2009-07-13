@@ -144,6 +144,11 @@ read_logger(void * buffer, int sz);
 #define read_obj(x) read_logger(&(x), sizeof(x))
 #define read_eax() ({int32_t eax; read_obj(eax); eax;})
 #define read_regs(r)	read_obj(r)
+
+#define read_mem(d, sz)	do {	\
+	read_logger(d, sz);	\
+} while(0)
+
 #define skip(n)	read_logger(NULL, n)
 
 #endif
