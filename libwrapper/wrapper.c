@@ -36,7 +36,6 @@ SCOPE void
 __before_syscall(struct syscall_regs r)
 {
 	current_syscall = r.eax;
-	r.orig_eax = current_syscall;
 	INJ_TRACE("before syscall %d\n", current_syscall);
 	INJ_TRACE("eip = 0x%x\n", r.eip);
 	before_syscall(&r);

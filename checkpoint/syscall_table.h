@@ -24,8 +24,8 @@ struct syscall_regs {
 	int32_t esi;
 	int32_t edi;
 	int32_t ebp;
-	int32_t orig_eax;
 	int32_t flags;
+	int32_t orig_eax;
 	int32_t eip;
 	int32_t esp;
 };

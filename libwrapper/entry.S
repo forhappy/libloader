@@ -17,7 +17,7 @@ show_help_entry:
 syscall_wrapper_entry:
 	pushl %esp
 	pushl 4(%esp)		/* eip */
-	pushl $0		/* orig_eax */
+	pushl %eax		/* orig_eax */
 	pushf
 	pushl %ebp
 	pushl %edi

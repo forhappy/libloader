@@ -16,9 +16,6 @@ post__llseek(struct syscall_regs * regs)
 		if (presult != 0)
 			write_mem(presult, sizeof(loff_t));
 	}
-	volatile int x = 0;
-	while (x == 0)
-		;
 	return 0;
 }
 
