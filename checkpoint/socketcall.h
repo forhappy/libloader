@@ -69,5 +69,12 @@ post_connect(int fd, uint32_t uservaddr, int addrlen, int retval);
 extern void SCOPE
 output_connect(int fd, uint32_t uservaddr, int addrlen, int retval);
 
+extern int SCOPE
+post_recv(int fd, uint32_t ubuf, uint32_t size, uint32_t flags, int retval);
+
+extern void SCOPE
+output_recv(int fd, uint32_t ubuf, uint32_t size, uint32_t flags, int retval);
+
+
 #endif 
 

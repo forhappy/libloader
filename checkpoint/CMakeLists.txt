@@ -35,6 +35,8 @@ SET(HANDLERS
 	recvmsg.c
 	connect.c
 	_newselect.c
+	recv.c
+	_llseek.c
 	)
 
 ADD_LIBRARY(checkpoint

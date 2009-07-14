@@ -69,6 +69,7 @@ define_post_handler(socketcall);
 
 define_post_handler(_newselect);
 
+define_post_handler(_llseek);
 __END_DECLS
 
 #endif

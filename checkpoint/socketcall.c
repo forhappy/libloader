@@ -19,7 +19,7 @@ static const unsigned char nargs[18]={
 int SCOPE
 post_socketcall(struct syscall_regs * regs)
 {
-	INJ_VERBOSE("in socket_call\n");
+	INJ_TRACE("in socket_call\n");
 
 	int call = regs->ebx;
 	uint32_t args = regs->ecx;
@@ -56,6 +56,8 @@ post_socketcall(struct syscall_regs * regs)
 			return post_recvmsg(a0, a1, a2, retval);
 		case SYS_CONNECT:
 			return post_connect(a0, a1, a2, retval);
+		case SYS_RECV:
+			return post_recv(a0, a1, a2, a[3], retval);
 		default:
 			INJ_WARNING("Unknown socket call: %d\n", call);
 			__exit(-1);
@@ -109,6 +111,9 @@ output_socketcall(void)
 			return;
 		case SYS_CONNECT:
 			output_connect(a0, a1, a2, retval);
+			return;
+		case SYS_RECV:
+			output_recv(a0, a1, a2, a[3], retval);
 			return;
 		default:
 			THROW(EXCEPTION_FATAL, "Unknown socket number: %d", call);
