@@ -83,6 +83,9 @@ INCLUDE(CheckIncludeFiles)
 INCLUDE(CheckFunctionExists)
 INCLUDE(CheckSymbolExists)
 
+SET(LOGGER_DIRECTORY "/tmp"
+	CACHE STRING "logger directory")
+
 CHECK_INCLUDE_FILES(malloc.h HAVE_MALLOC_H)
 CHECK_INCLUDE_FILES(alloca.h HAVE_ALLOCA_H)
 IF (HAVE_ALLOCA_H)

@@ -65,10 +65,10 @@ injector_entry(struct syscall_regs r,
 
 	self_pid = INTERNAL_SYSCALL(getpid, 0);
 
-	snprintf(logger_filename, 64, "/var/lib/currf2/%d.log", self_pid);
+	snprintf(logger_filename, 64, LOGGER_DIRECTORY"/%d.log", self_pid);
 	INJ_TRACE("logger fn: %s\n", logger_filename);
 
-	snprintf(ckpt_filename, 64, "/var/lib/currf2/%d.ckpt", self_pid);
+	snprintf(ckpt_filename, 64, LOGGER_DIRECTORY"/%d.ckpt", self_pid);
 	INJ_TRACE("ckpt fn: %s\n", ckpt_filename);
 
 	int fd = INTERNAL_SYSCALL(open, 3, logger_filename, O_WRONLY|O_APPEND, 0666);

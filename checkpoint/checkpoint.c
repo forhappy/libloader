@@ -97,7 +97,7 @@ logger_init(pid_t pid)
 	int fd;
 	char filename[64];
 	memset(&state_vector, '\0', sizeof(state_vector));
-	snprintf(filename, 64, "/var/lib/currf2/%d.log",
+	snprintf(filename, 64, LOGGER_DIRECTORY"/%d.log",
 			pid);
 	fd = __open(filename, O_WRONLY|O_APPEND|O_CREAT, 0666);
 	if (fd < 0) {

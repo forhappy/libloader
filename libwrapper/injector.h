@@ -13,6 +13,7 @@
 #include <stdint.h>
 #include <asm/unistd.h>
 #include "defs.h"
+#include "config.h"
 
 #ifdef SCOPE
 # undef SCOPE

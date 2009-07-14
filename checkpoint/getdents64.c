@@ -20,6 +20,7 @@ output_getdents64(void)
 {
 	int32_t ret;
 	ret = read_eax();
+	printf("getdents:\t%d\n", ret);
 	if (ret >= 0)
 		skip(ret);
 	
