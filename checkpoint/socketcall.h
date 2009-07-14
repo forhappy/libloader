@@ -63,5 +63,11 @@ post_recvmsg(int fd, uint32_t msg, uint32_t flags, int retval);
 extern void SCOPE
 output_recvmsg(int fd, uint32_t msg, uint32_t flags, int retval);
 
+extern int SCOPE
+post_connect(int fd, uint32_t uservaddr, int addrlen, int retval);
+
+extern void SCOPE
+output_connect(int fd, uint32_t uservaddr, int addrlen, int retval);
+
 #endif 
 

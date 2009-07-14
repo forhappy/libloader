@@ -33,6 +33,8 @@ SET(HANDLERS
 	sendto.c
 	recvfrom.c
 	recvmsg.c
+	connect.c
+	_newselect.c
 	)
 
 ADD_LIBRARY(checkpoint

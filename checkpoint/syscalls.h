@@ -67,6 +67,8 @@ define_post_handler(time);
 
 define_post_handler(socketcall);
 
+define_post_handler(_newselect);
+
 __END_DECLS
 
 #endif

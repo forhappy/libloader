@@ -47,6 +47,7 @@ SCOPE struct syscall_tabent syscall_table[] = {
 	def_syscall_entry(exit_group, pre_exit_group),
 	def_syscall_entry(time, NULL),
 	def_syscall_entry(socketcall, NULL),
+	def_syscall_entry(_newselect, NULL),
 #ifndef SYSCALL_PRINTER
 	[NR_SYSCALLS]	= {NULL, NULL},
 #else

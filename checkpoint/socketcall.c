@@ -31,7 +31,7 @@ post_socketcall(struct syscall_regs * regs)
 
 	write_obj(call);
 	write_eax(regs);
-	unsigned long a0, a1, a[6];
+	unsigned long a0, a1, a2, a[6];
 	uint32_t retval = regs->eax;
 
 	__dup_mem(a, args, nargs[call]);
@@ -39,20 +39,23 @@ post_socketcall(struct syscall_regs * regs)
 
 	a0 = a[0];
 	a1 = a[1];
+	a2 = a[2];
 
 	switch (call) {
 		case SYS_SOCKET:
-			return post_socket(a0, a1, a[2], retval);
+			return post_socket(a0, a1, a2, retval);
 		case SYS_BIND:
-			return post_bind(a0, a1, a[2], retval);
+			return post_bind(a0, a1, a2, retval);
 		case SYS_GETSOCKNAME:
-			return post_getsockname(a0, a1, a[2], retval);
+			return post_getsockname(a0, a1, a2, retval);
 		case SYS_SENDTO:
-			return post_sendto(a0, a1, a[2], a[3], a[4], a[5], retval);
+			return post_sendto(a0, a1, a2, a[3], a[4], a[5], retval);
 		case SYS_RECVFROM:
-			return post_recvfrom(a0, a1, a[2], a[3], a[4], a[5], retval);
+			return post_recvfrom(a0, a1, a2, a[3], a[4], a[5], retval);
 		case SYS_RECVMSG:
-			return post_recvmsg(a0, a1, a[2], retval);
+			return post_recvmsg(a0, a1, a2, retval);
+		case SYS_CONNECT:
+			return post_connect(a0, a1, a2, retval);
 		default:
 			INJ_WARNING("Unknown socket call: %d\n", call);
 			__exit(-1);
@@ -78,30 +81,34 @@ output_socketcall(void)
 		THROW(EXCEPTION_FATAL, "No such socket number: %d\n", call);
 
 	retval = read_eax();
-	unsigned long a0, a1, a[6];
+	unsigned long a0, a1, a2, a[6];
 	read_mem(a, nargs[call]);
 	a0 = a[0];
 	a1 = a[1];
+	a2 = a[2];
 	
 
 	switch (call) {
 		case SYS_SOCKET:
-			output_socket(a0, a1, a[2], retval);
+			output_socket(a0, a1, a2, retval);
 			return;
 		case SYS_BIND:
-			output_bind(a0, a1, a[2], retval);
+			output_bind(a0, a1, a2, retval);
 			return;
 		case SYS_GETSOCKNAME:
-			output_getsockname(a0, a1, a[2], retval);
+			output_getsockname(a0, a1, a2, retval);
 			return;
 		case SYS_SENDTO:
-			output_sendto(a0, a1, a[2], a[3], a[4], a[5], retval);
+			output_sendto(a0, a1, a2, a[3], a[4], a[5], retval);
 			return;
 		case SYS_RECVFROM:
-			output_recvfrom(a0, a1, a[2], a[3], a[4], a[5], retval);
+			output_recvfrom(a0, a1, a2, a[3], a[4], a[5], retval);
 			return;
 		case SYS_RECVMSG:
-			output_recvmsg(a0, a1, a[2], retval);
+			output_recvmsg(a0, a1, a2, retval);
+			return;
+		case SYS_CONNECT:
+			output_connect(a0, a1, a2, retval);
 			return;
 		default:
 			THROW(EXCEPTION_FATAL, "Unknown socket number: %d", call);
