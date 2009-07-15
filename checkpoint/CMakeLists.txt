@@ -37,6 +37,8 @@ SET(HANDLERS
 	_newselect.c
 	recv.c
 	_llseek.c
+	clock_getres.c
+	utime.c
 	)
 
 ADD_LIBRARY(checkpoint

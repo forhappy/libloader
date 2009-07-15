@@ -61,15 +61,15 @@ define_post_handler(fcntl64);
 define_post_handler(getdents64);
 
 define_pre_handler(exit_group);
+
 define_post_handler(exit_group);
-
 define_post_handler(time);
-
 define_post_handler(socketcall);
-
 define_post_handler(_newselect);
-
 define_post_handler(_llseek);
+
+define_post_handler(clock_getres);
+define_post_handler(utime);
 __END_DECLS
 
 #endif

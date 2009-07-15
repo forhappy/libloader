@@ -347,10 +347,10 @@ currf2_main(int argc, char * argv[])
 
 	int err;
 	err = checkpoint_init();
-	CTHROW(err == 0, "chkp init failed: %s\n", strerror(errno));
+	CTHROW(err == 0, "chkp init failed: %s", strerror(errno));
 
 	err = logger_init(child_pid);
-	CTHROW(err == 0, "logger init failed: %s\n", strerror(errno));
+	CTHROW(err == 0, "logger init failed: %s", strerror(errno));
 
 	/* insert a breakpoint at main */
 	uintptr_t main_entry = elf_get_symbol_address(target.h, "main");
