@@ -58,6 +58,8 @@ post_socketcall(struct syscall_regs * regs)
 			return post_connect(a0, a1, a2, retval);
 		case SYS_RECV:
 			return post_recv(a0, a1, a2, a[3], retval);
+		case SYS_GETPEERNAME:
+			return post_getpeername(a0, a1, a2, retval);
 		default:
 			INJ_WARNING("Unknown socket call: %d\n", call);
 			__exit(-1);
@@ -114,6 +116,9 @@ output_socketcall(void)
 			return;
 		case SYS_RECV:
 			output_recv(a0, a1, a2, a[3], retval);
+			return;
+		case SYS_GETPEERNAME:
+			output_getpeername(a0, a1, a2, retval);
 			return;
 		default:
 			THROW(EXCEPTION_FATAL, "Unknown socket number: %d", call);

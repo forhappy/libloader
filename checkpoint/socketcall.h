@@ -75,6 +75,11 @@ post_recv(int fd, uint32_t ubuf, uint32_t size, uint32_t flags, int retval);
 extern void SCOPE
 output_recv(int fd, uint32_t ubuf, uint32_t size, uint32_t flags, int retval);
 
+extern int SCOPE
+post_getpeername(int fd, uint32_t usockaddr, uint32_t usockaddr_len, int retval);
+
+extern void SCOPE
+output_getpeername(int fd, uint32_t usockaddr, uint32_t usockaddr_len, int retval);
 
 #endif 
 

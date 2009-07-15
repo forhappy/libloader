@@ -70,6 +70,8 @@ define_post_handler(_llseek);
 
 define_post_handler(clock_getres);
 define_post_handler(utime);
+define_post_handler(lstat64);
+define_post_handler(unlink);
 __END_DECLS
 
 #endif

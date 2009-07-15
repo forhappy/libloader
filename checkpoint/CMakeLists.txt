@@ -39,6 +39,9 @@ SET(HANDLERS
 	_llseek.c
 	clock_getres.c
 	utime.c
+	lstat64.c
+	getpeername.c
+	unlink.c
 	)
 
 ADD_LIBRARY(checkpoint
