@@ -159,18 +159,16 @@ after_syscall(struct syscall_regs * regs)
 
 #ifdef IN_INJECTOR
 
-struct mem_region {
-	uint32_t start;
-	uint32_t end;
-	uint32_t prot;
-	uint32_t offset;
-	uint32_t fn_len;
-	char fn[0];
-};
-
 static void ATTR(unused)
 do_make_checkpoint(int ckpt_fd, int maps_fd, struct syscall_regs * r)
 {
+	uint32_t f_pos = 0;
+
+	/* write the magic */
+	uint32_t magic = CKPT_MAGIC;
+	__write(ckpt_fd, &magic, sizeof(magic));
+	f_pos += sizeof(magic);
+
 	char * p = readline(maps_fd);
 	while (p != NULL) {
 		void * start, * end;
@@ -203,17 +201,39 @@ do_make_checkpoint(int ckpt_fd, int maps_fd, struct syscall_regs * r)
 		if (l > 0)
 			m.fn_len = strlen(p + l) + 1;
 
-		__write(ckpt_fd, &m, sizeof(m));
+		/* Write the size of m */
+		uint32_t sz_m = sizeof(m);
 		if (l > 0)
-		__write(ckpt_fd, p + l, m.fn_len);
+			sz_m += m.fn_len;
+		__write(ckpt_fd, &sz_m, sizeof(sz_m));
+		f_pos += sizeof(sz_m);
+	
+		m.f_pos = f_pos + sz_m;
 
+		/* Write m */
+		__write(ckpt_fd, &m, sizeof(m));
+		f_pos += sizeof(m);
+		if (l > 0) {
+			__write(ckpt_fd, p + l, m.fn_len);
+			f_pos += m.fn_len;
+		}
+
+		/* Write memory */
 		__write(ckpt_fd, start, end-start);
+		f_pos += end - start;
 
 		p = readline(maps_fd);
 	}
 
+	/* write zero, no more memory regions */
+	uint32_t zero = 0;
+	__write(ckpt_fd, &zero, sizeof(zero));
+
 	/* write state vector */
 	__write(ckpt_fd, &state_vector, sizeof(state_vector));
+
+	/* write registers */
+	__write(ckpt_fd, r, sizeof(*r));
 }
 #endif
 

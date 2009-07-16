@@ -131,6 +131,17 @@ extern SCOPE struct state_vector {
 	k_sigset_t sigmask;
 } state_vector;
 
+
+struct mem_region {
+	uint32_t start;
+	uint32_t end;
+	uint32_t prot;
+	uint32_t offset;
+	uint32_t f_pos;	/* start in ckpt file */
+	uint32_t fn_len;
+	char fn[0];
+};
+
 extern SCOPE int
 checkpoint_init(void);
 
@@ -153,6 +164,7 @@ read_logger(void * buffer, int sz);
 
 #endif
 
+#define CKPT_MAGIC	(0x54504b43)
 
 extern SCOPE void
 make_checkpoint(const char * ckpt_fn, struct syscall_regs * r);

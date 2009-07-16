@@ -62,6 +62,13 @@ ADD_EXECUTABLE(printlog
 	printlog.c
 	)
 
+ADD_EXECUTABLE(gdbloader
+	${COMMON}
+	ckptutils.c
+	gdbloader.c
+	)
+
+
 TARGET_LINK_LIBRARIES(currf2
 	checkpoint)
 TARGET_LINK_LIBRARIES(printlog
