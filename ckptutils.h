@@ -20,6 +20,8 @@ struct ckpt_file {
 	struct syscall_regs regs;
 	int nr_regions;
 	struct mem_region ** regions;
+	char ** cmdline;
+	char * cmdline_buf;
 };
 
 extern struct ckpt_file *

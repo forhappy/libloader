@@ -86,3 +86,7 @@ __entry:
 	addl $20, %esp
 	ret
 
+__debug_entry:
+1:	jmp 1b
+
+

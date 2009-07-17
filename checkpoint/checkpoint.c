@@ -160,7 +160,7 @@ after_syscall(struct syscall_regs * regs)
 #ifdef IN_INJECTOR
 
 static void ATTR(unused)
-do_make_checkpoint(int ckpt_fd, int maps_fd, struct syscall_regs * r)
+do_make_checkpoint(int ckpt_fd, int maps_fd, int cmdline_fd, struct syscall_regs * r)
 {
 	uint32_t f_pos = 0;
 
@@ -169,6 +169,24 @@ do_make_checkpoint(int ckpt_fd, int maps_fd, struct syscall_regs * r)
 	__write(ckpt_fd, &magic, sizeof(magic));
 	f_pos += sizeof(magic);
 
+	/* write cmdline */
+	char cmdline_buf[512];
+	{
+		int sz;
+		do {
+			sz = __read(cmdline_fd, cmdline_buf, 512);
+			f_pos += sz;
+			__write(ckpt_fd, cmdline_buf, sz);
+		} while(sz > 0);
+
+		/* write a zero */
+		uint8_t zero = '\0';
+		__write(ckpt_fd, &zero, sizeof(zero));
+		f_pos += sizeof(zero);
+	}
+
+
+	/* write mem regions */
 	char * p = readline(maps_fd);
 	while (p != NULL) {
 		void * start, * end;
@@ -241,18 +259,24 @@ SCOPE void
 make_checkpoint(const char * ckpt_fn, struct syscall_regs * r)
 {
 #ifdef IN_INJECTOR
-	int maps_fd, ckpt_fd;
+	int maps_fd, cmdline_fd, ckpt_fd;
 	maps_fd = INTERNAL_SYSCALL(open, 2,
 			"/proc/self/maps", O_RDONLY);
-	ASSERT(maps_fd > 0, "open self maps failed: %d\n", maps_fd);
+	ASSERT(maps_fd > 0, "open self maps failed: %d", maps_fd);
+
+	cmdline_fd = INTERNAL_SYSCALL(open, 2,
+			"/proc/self/cmdline", O_RDONLY);
+	ASSERT(cmdline_fd > 0, "open self cmdline failed: %d", cmdline_fd);
+
 	ckpt_fd = INTERNAL_SYSCALL(open, 3,
 			ckpt_fn, O_WRONLY|O_CREAT|O_TRUNC, 0666);
 	ASSERT(ckpt_fd > 0, "open ckpt file failed: %d\n", ckpt_fd);
 
-	do_make_checkpoint(ckpt_fd, maps_fd, r);
+	do_make_checkpoint(ckpt_fd, maps_fd, cmdline_fd, r);
 
 	INTERNAL_SYSCALL(close, 1, ckpt_fd);
 	INTERNAL_SYSCALL(close, 1, maps_fd);
+	INTERNAL_SYSCALL(close, 1, cmdline_fd);
 
 //	__exit(-1);
 	return;

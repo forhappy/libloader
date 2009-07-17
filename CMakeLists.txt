@@ -66,6 +66,7 @@ ADD_EXECUTABLE(gdbloader
 	${COMMON}
 	ckptutils.c
 	gdbloader.c
+	gdbloader_args.c
 	)
 
 
