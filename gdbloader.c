@@ -4,8 +4,6 @@
 #include "ckptutils.h"
 #include "currf2_args.h"
 
-#include 
-
 #include <sys/stat.h>
 
 static struct opts * opts = NULL;
@@ -15,6 +13,7 @@ static pid_t child_pid = -1;
 static void
 gdbloader_main(const char * target_fn)
 {
+	/* check: target_fn should be same as argv[0] */
 	return;
 }
 

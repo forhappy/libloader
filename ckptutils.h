@@ -15,13 +15,12 @@
 
 struct ckpt_file {
 	struct cleanup clup;
-	FILE * fp;
-	struct state_vector state;
-	struct syscall_regs regs;
+	struct state_vector * state;
+	struct syscall_regs * regs;
 	int nr_regions;
 	struct mem_region ** regions;
 	char ** cmdline;
-	char * cmdline_buf;
+	void * ckpt_img;
 };
 
 extern struct ckpt_file *
@@ -29,5 +28,6 @@ load_ckpt_file(char * fn);
 
 void
 close_ckpt_file(struct ckpt_file * f);
+
 #endif
 

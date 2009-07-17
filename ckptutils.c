@@ -5,28 +5,15 @@
 
 #include <errno.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/mman.h>
 
 #include "debug.h"
 #include "exception.h"
 #include "ckptutils.h"
-
-static void
-read_obj(void * obj, int sz_obj, FILE * fp)
-{
-	int err;
-	err = fread(obj, sz_obj, 1, fp);
-	if (err < 1)
-		THROW(EXCEPTION_FATAL, "no more data in file");
-	return;
-}
-
-static uint32_t
-read_uint32(FILE * fp)
-{
-	uint32_t retval;
-	read_obj(&retval, sizeof(retval), fp);
-	return retval;
-}
+#include "checkpoint/checkpoint.h"
 
 void
 ckpt_clup(struct cleanup * clup)
@@ -34,88 +21,29 @@ ckpt_clup(struct cleanup * clup)
 	remove_cleanup(clup);
 	struct ckpt_file * s = container_of(clup, struct ckpt_file,
 			clup);
-	if (s->fp)
-		fclose(s->fp);
-	if (s->nr_regions > 0) {
-		if (s->regions) {
-			for (int i = 0; i < s->nr_regions; i++) {
-				if (s->regions[i] != NULL) {
-					free(s->regions[i]);
-					s->regions[i] = NULL;
-				}
-			}
-			free(s->regions);
-			s->regions = NULL;
-		}
-	}
-	if (s->cmdline_buf != NULL) {
-		free(s->cmdline_buf);
-		s->cmdline_buf = NULL;
-	}
-
-	if (s->cmdline != NULL) {
+	if (s->regions != NULL)
+		free(s->regions);
+	if (s->cmdline != NULL)
 		free(s->cmdline);
-		s->cmdline = NULL;
-	}
+	free(s);
 }
 
-static void
-build_cmdline(struct ckpt_file * s, FILE * fp)
+void *
+build_cmdline(struct ckpt_file * s, void * cmdline)
 {
-	SYS_TRACE("start to read cmdline\n");
-	s->cmdline_buf = calloc(512, 1);
-	int buf_sz = 512;
-	uint32_t buf_end = 0;
+	/* scan cmdline */
+	int len;
 	int nr_items = 0;
-
-	int end = 0;
-	int rewind = 0;
-	uint32_t item = 0;
 	do {
-		/* read 512 bytes */
-		int err;
-		errno = 0;
-		err = fread(s->cmdline_buf + buf_sz - 512, 1, 512, fp);
-		CTHROW(err > 0, "read cmdline failed: %s\n", strerror(errno));
-		buf_end += err;
+		nr_items ++;
+		s->cmdline = realloc(s->cmdline, nr_items * sizeof(char*));
+		s->cmdline[nr_items-1] = cmdline;
+		len = strlen(cmdline);
+		cmdline += len + 1;
+	} while (len != 0);
+	s->cmdline[nr_items-1] = NULL;
 
-		char * p = s->cmdline_buf + buf_sz - 512;
-		/* scan buf */
-		while (p - s->cmdline_buf < buf_end) {
-			if (*p == '\0') {
-				/* we find an item */
-				nr_items ++;
-				s->cmdline = realloc(s->cmdline, sizeof(char*) * nr_items);
-				s->cmdline[nr_items - 1] = (char*)item;
-				/* check previous char */
-				if (*(p-1) == '\0') {
-					rewind = buf_end - (p - s->cmdline_buf) - 1;
-					end = 1;
-					break;
-				}
-				item = (p+1) - s->cmdline_buf;
-			}
-			p++;
-		}
-
-		if (!end) {
-			/* extend buf */
-			buf_sz += 512;
-			s->cmdline_buf = realloc(s->cmdline_buf, buf_sz);
-		}
-	} while(!end);
-
-	/* reset cmdline */
-	for (int i = 0; i < nr_items; i++) {
-		s->cmdline[i] = (uint32_t)s->cmdline[i] + s->cmdline_buf;
-		SYS_TRACE("arg %d: %s\n", i, s->cmdline[i]);
-	}
-	/* set the last item to 0 */
-	s->cmdline[nr_items - 1] = NULL;
-
-	/* rewind fp */
-	fseek(fp, -rewind, SEEK_CUR);
-	return;
+	return cmdline;
 }
 
 struct ckpt_file *
@@ -128,61 +56,53 @@ load_ckpt_file(char * fn)
 	make_cleanup(&s->clup);
 
 	errno = 0;
-	FILE * fp = s->fp = fopen(fn, "rb");
-	ETHROW("open ckpt file %s failed: %s", fn, strerror(errno));
+
+	/* map the ckpt file */
+	int fd;
+	errno = 0;
+	fd = open(fn, O_RDONLY);
+	ETHROW("open %s failed: %s", fn, strerror(errno));
+
+	struct stat st;
+	fstat(fd, &st);
+	ETHROW("fstat failed: %s", strerror(errno));
+
+	void * ckpt_img;
+	ckpt_img = mmap(NULL, st.st_size, PROT_READ,
+			MAP_PRIVATE, fd, 0);
+	ETHROW("mmap failed: %s", strerror(errno));
+	close(fd);
+
+	s->ckpt_img = ckpt_img;
 
 	/* check magic */
-	uint32_t magic;
-	magic = read_uint32(fp);
-	if (magic != CKPT_MAGIC)
+	if (*(uint32_t*)ckpt_img != CKPT_MAGIC)
 		THROW(EXCEPTION_FATAL, "magic mismatch");
 
 	/* build cmdline */
-	build_cmdline(s, fp);
+	void * p;
+	p = build_cmdline(s, ckpt_img + sizeof(CKPT_MAGIC));
 
-	/* first, build memory map */
-	uint32_t sz_m = read_uint32(fp);
-	int nr_regions = 0;
+	/* load mem regions */
+	uint32_t sz_m = 0;
+	s->nr_regions = 0;
+	sz_m = *(uint32_t *)p;
+	p += sizeof(sz_m);
 	while (sz_m != 0) {
-		nr_regions ++;
-		SYS_TRACE("read a mem region %d, sz=%d\n", nr_regions, sz_m);
-
-		/* extend the regions array */
-		s->regions = realloc(s->regions, nr_regions * sizeof(*s->regions));
-		assert(s->regions != NULL);
-
-		/* alloc mr */
-		struct mem_region * mr;
-		mr = calloc(sz_m, 1);
-		assert(mr != NULL);
-		s->regions[nr_regions - 1] = mr;
-
-		/* fill mr */
-		read_obj(mr, sz_m, fp);
-		SYS_TRACE("mr %d:\n", nr_regions - 1);
-		SYS_TRACE("\tstart : 0x%x\n", mr->start);
-		SYS_TRACE("\tend   : 0x%x\n", mr->end);
-		SYS_TRACE("\tprot  : 0x%x\n", mr->prot);
-		SYS_TRACE("\toffset: 0x%x\n", mr->offset);
-		SYS_TRACE("\tf_pos : 0x%x\n", mr->f_pos);
-		SYS_TRACE("\tfn_len: %d\n", mr->fn_len);
-		if (mr->fn_len != 0)
-			SYS_TRACE("\tfn    :%s\n", mr->fn);
-
-		/* skip real memory */
-		fseek(fp, mr->end - mr->start, SEEK_CUR);
-
-		/* read another sz */
-		sz_m = read_uint32(fp);
+		s->nr_regions ++;
+		s->regions = realloc(s->regions,
+				s->nr_regions * sizeof(*s->regions));
+		struct mem_region * mr = p;
+		s->regions[s->nr_regions - 1] = mr;
+		p += sz_m;
+		p += mr->end - mr->start;
+		sz_m = *(uint32_t *)p;
+		p += sizeof(sz_m);
 	}
-	s->nr_regions = nr_regions;
 
-	/* load state vector */
-	read_obj(&s->state, sizeof(s->state), fp);
+	s->state = p;
+	s->regs = p + sizeof(*s->state);
 
-	/* load regs */
-	read_obj(&s->regs, sizeof(s->regs), fp);
-	SYS_TRACE("eip=0x%x\n", s->regs.eip);
 	return s;
 }
 
