@@ -70,9 +70,9 @@ build_cmdline(struct ckpt_file * s, FILE * fp)
 
 	int end = 0;
 	int rewind = 0;
+	uint32_t item = 0;
 	do {
 		/* read 512 bytes */
-		uint32_t item = 0;
 		int err;
 		errno = 0;
 		err = fread(s->cmdline_buf + buf_sz - 512, 1, 512, fp);
@@ -108,7 +108,7 @@ build_cmdline(struct ckpt_file * s, FILE * fp)
 	/* reset cmdline */
 	for (int i = 0; i < nr_items; i++) {
 		s->cmdline[i] = (uint32_t)s->cmdline[i] + s->cmdline_buf;
-		printf("%s\n", s->cmdline[i]);
+		SYS_TRACE("arg %d: %s\n", i, s->cmdline[i]);
 	}
 	/* set the last item to 0 */
 	s->cmdline[nr_items - 1] = NULL;

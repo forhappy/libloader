@@ -10,6 +10,7 @@ struct opts {
 	char * entry;
 	char * old_vsyscall;
 	char * state_vect;
+	char * ckpt_fn;	/* for gdbloader only */
 	uint32_t inj_bias;
 	int cmd_idx;
 };

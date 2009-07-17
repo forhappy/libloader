@@ -11,7 +11,7 @@ const char *argp_program_bug_address = "<pi3orama@gmail.com>";
 static char doc[] =
 	"gdbloader: load checkpoint made by currf2, then spin, make gdb can attach to it";
 static char args_doc[] =
-	"CKPT-FILE LOG-FILE TARGET-EXECUTABLE [TARGET OPTIONS]";
+	"CKPT-FILE TARGET-EXECUTABLE";
 
 static struct argp_option options[] = {
 	{"injectso",	'j', "filename",	0, "Set the system wrapper so file name, "
@@ -29,6 +29,7 @@ static struct opts opts = {
 	.inj_bias	= 0x3000,
 	.entry		= "__debug_entry",
 	.state_vect		= "state_vector",
+	.ckpt_fn	= NULL,
 };
 
 static error_t
@@ -49,8 +50,11 @@ parse_opt(int key, char *arg, struct argp_state *state)
 			opts.entry = arg;
 			return 0;
 		case ARGP_KEY_ARG:
-			/* target args */
-			found_target = 1;
+			/* ckpt fn arg */
+			if (opts.ckpt_fn == NULL) {
+				opts.ckpt_fn = arg;
+				return 0;
+			}
 			return ARGP_ERR_UNKNOWN;
 		case ARGP_KEY_ARGS:
 			/* consume all args */
@@ -74,7 +78,8 @@ parse_args(int argc, char * argv[])
 {
 	int idx;
 	int err;
-	err = argp_parse(&argp, argc, argv, ARGP_IN_ORDER, &idx, NULL);
+	err = argp_parse(&argp, argc, argv,
+			ARGP_IN_ORDER, &idx, NULL);
 	opts.cmd_idx = idx;
 	return &opts;
 }
