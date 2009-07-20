@@ -61,7 +61,7 @@ wait_and_check(void)
 		THROW(EXCEPTION_FATAL, "Child process %d has stopped or been killed (%d)", old_pid,
 				si.si_code);
 	}
-	TRACE(SYSTEM, "code=%d, status=%d\n",si.si_code, si.si_status);
+	SILENT(SYSTEM, "code=%d, status=%d\n",si.si_code, si.si_status);
 	return si.si_status;
 }
 
@@ -96,6 +96,16 @@ ptrace_execve(const char * filename,
 
 	wait_and_check();
 
+	/*
+	 * ptrace(2):
+	 * ...
+	 * PTRACE_O_TRACESYSGOOD:
+	 * When delivering syscall traps, set bit 7 in the signal number (i.e.,
+	 * deliver (SIGTRAP | 0x80) This makes it easy for the tracer to tell the
+	 * difference between normal traps and those caused by a syscall.
+	 * (PTRACE_O_TRACESYSGOOD may not work on all architectures.)
+	 * ...
+	 * */
 	err = ptrace(PTRACE_SETOPTIONS, child_pid, 0, PTRACE_O_TRACESYSGOOD);
 	CTHROW(err != -1, "ptrace_setoptions failed: %s", strerror(errno));
 	return child_pid;
@@ -392,7 +402,7 @@ ptrace_push(const void * data, int len, bool_t save_esp)
 #ifdef ptrace_syscall
 #undef ptrace_syscall
 #endif
-uint32_t ptrace_syscall(int no, int nr, ...)
+int ptrace_syscall(int no, int nr, ...)
 {
 #define SYSCALL_INSTR {'\xcd', '\x80'}
 	uint8_t syscall_instr[] = SYSCALL_INSTR;
@@ -418,7 +428,7 @@ uint32_t ptrace_syscall(int no, int nr, ...)
 			xcase(4, edi);
 			xcase(5, ebp);
 			default:
-				THROW(EXCEPTION_FATAL, "syscall args number too large");
+				THROW(EXCEPTION_FATAL, "too many syscall args");
 		}
 	}
 #undef xcase
@@ -448,7 +458,7 @@ uint32_t ptrace_syscall(int no, int nr, ...)
 
 	TRACE(PTRACE, "retrieve retval\n");
 	/* retrieve retval */
-	uint32_t retval = ptrace(PTRACE_PEEKUSER, child_pid,
+	int32_t retval = ptrace(PTRACE_PEEKUSER, child_pid,
 			offsetof(struct user_regs_struct, eax), NULL);
 
 	/* restore register */

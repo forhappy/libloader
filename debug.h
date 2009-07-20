@@ -70,6 +70,7 @@ extern enum debug_level get_comp_level(enum debug_component comp);
 #define DEBUG_SET_COMP_LEVEL(mask, level) do { set_comp_level(mask, level); } while(0)
 
 /* XXX */
+#define SILENT(comp, str...) do { } while(0)
 /* Below definition won't distrub the debug level, because 
  * they are all func-like macro */
 #define TRACE(comp, str...) DEBUG_MSG(TRACE, comp, str)

@@ -61,7 +61,7 @@ ptrace_push(const void * data, int len, bool_t save_esp);
 
 #define syscallno(x) __NR_##x
 
-uint32_t
+int
 ptrace_syscall(int no, int nr, ...);
 
 #define ptrace_syscall(x, nr...)	ptrace_syscall(syscallno(x), nr)

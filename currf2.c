@@ -168,7 +168,8 @@ map_injector(void)
 			"load phdr of injector file %s failed", injector.fn);
 
 	/* open the file */
-	uint32_t fn_pos = ptrace_push(injector.fn, strlen(injector.fn), TRUE);
+	/* +1 for the last '\0' */
+	uint32_t fn_pos = ptrace_push(injector.fn, strlen(injector.fn) + 1, TRUE);
 	int fd = ptrace_syscall(open, 3, fn_pos, O_RDONLY, 0);
 	CTHROW(fd >= 0, "open injector from client code failed, return %d", fd);
 	SYS_TRACE("open injector for child, fd=%d\n", fd);
