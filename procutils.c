@@ -13,17 +13,18 @@ static FILE *
 open_proc_file(pid_t pid)
 {
 	FILE * fp;
-	char filename[64];
-	memset(filename, '\0', sizeof(filename));
-	snprintf(filename, 64, "/proc/%d/maps", pid);
-	fp = fopen(filename, "r");
+	char fn[64];
+	memset(fn, '\0', sizeof(fn));
+	snprintf(fn, 64, "/proc/%d/maps", pid);
+	fp = fopen(fn, "r");
 	assert_throw(fp != NULL, "open map file failed");
 	return fp;
 }
 
 static void
 iterate_lines(pid_t pid,
-		bool_t (*checker)(uintptr_t start, uintptr_t end, char * name))
+		bool_t (*checker)(uintptr_t start, uintptr_t end,
+			uint32_t prot, uint32_t offset, char * name))
 {
 	FILE * fp;
 	fp = open_proc_file(pid);
@@ -37,10 +38,25 @@ iterate_lines(pid_t pid,
 		if ((pline[strlen(pline) - 1]) == '\n')
 			pline[strlen(pline) - 1] = '\0';
 
-		sscanf(pline, "%lx-%lx %*4[-rwxp] %*x %*2d:%*2d %*d %n",
-				&start, &end, &l);
+		char prots[5];
+		uint32_t offset;
+		uint32_t prot = 0;
+		
+		sscanf(pline, "%lx-%lx %4[-rwxp] %x %*2d:%*2d %*d %n",
+				&start, &end, prots, &offset, &l);
 		assert_throw(errno == 0, "sscanf failed: string is \"%s\"", pline);
-		if (checker(start, end, pline + l)) {
+
+		if (prots[0] == 'r')
+			prot |= PROT_READ;
+		if (prots[1] == 'w')
+			prot |= PROT_WRITE;
+		if (prots[2] == 'x')
+			prot |= PROT_EXEC;
+		/* prots[3] is 's' or 'p', but we don't care 's', make all
+		 * pages 'p'. */
+
+		/* if checker returns TRUE, stop iterate */
+		if (checker(start, end, prot, offset, pline + l)) {
 			free(pline);
 			pline = NULL;
 			fclose(fp);
@@ -60,7 +76,9 @@ proc_get_filename(pid_t pid, uintptr_t addr,
 		char * buffer, int len)
 {
 	buffer[0] = '\0';
-	bool_t checker(uintptr_t start, uintptr_t end, char * name) {
+	bool_t checker(uintptr_t start, uintptr_t end,
+			uint32_t prot, uint32_t offset, char * name)
+	{
 		if ((start <= addr) && (end > addr)) {
 			/* hit! */
 			strncpy(buffer, name, len > 256 ? 256 : len);
@@ -83,9 +101,9 @@ proc_fill_entry(struct proc_entry * entry,
 	/* first, fix the filename */
 	if (entry->bits & PE_FILE) {
 		char fullname[256];
-		if (entry->filename[0] != '[') {
+		if (entry->fn[0] != '[') {
 			int fd;
-			fd = open(entry->filename, O_RDONLY);
+			fd = open(entry->fn, O_RDONLY);
 			assert_throw(fd >= 0, "Open file failed");
 			void * addr = NULL;
 			addr = mmap(NULL, 4096, PROT_READ, MAP_PRIVATE, fd, 0);
@@ -97,11 +115,13 @@ proc_fill_entry(struct proc_entry * entry,
 			perr = proc_get_filename(getpid(), (uintptr_t)addr, fullname, 256);
 			munmap(addr, 4096);
 			assert_throw(perr != NULL, "can't get the full name of the file");
-			strncpy(&(entry->filename[0]), fullname, 256);
+			strncpy(&(entry->fn[0]), fullname, 256);
 		}
 	}
 
-	bool_t checker(uintptr_t start, uintptr_t end, char * name) {
+	bool_t checker(uintptr_t start, uintptr_t end,
+			uint32_t prot, uint32_t offset, char * name)
+	{
 		bool_t match = TRUE;
 		if (entry->bits & PE_START) {
 			if (start != entry->start)
@@ -120,16 +140,18 @@ proc_fill_entry(struct proc_entry * entry,
 		}
 
 		if (entry->bits & PE_FILE) {
-			if (strncmp(name, entry->filename,
-						strlen(entry->filename)) != 0)
+			if (strncmp(name, entry->fn,
+						strlen(entry->fn)) != 0)
 				match = FALSE;
 		}
 
 		if (match) {
 			entry->start = start;
 			entry->end = end;
-			strncpy(entry->filename, name, 256);
+			strncpy(entry->fn, name, 256);
 			entry->bits = 0xffffffffUL;
+			entry->prot = prot;
+			entry->offset = offset;
 			return TRUE;
 		}
 		return FALSE;
@@ -140,6 +162,38 @@ proc_fill_entry(struct proc_entry * entry,
 			"cannot find a matche entry in proc file");
 }
 
+
+bool_t
+proc_find_in_range(struct proc_entry * entry,
+		pid_t pid, uintptr_t start, uintptr_t end)
+{
+	entry->bits = 0UL;
+	bool_t checker(uintptr_t s, uintptr_t e,
+			uint32_t prot, uint32_t offset, char * name)
+	{
+		if ((e <= start) || (s >= end)) {
+			/* not overlap, continue iterate */
+			return FALSE;
+		}
+
+		/* fill entry */
+		entry->start = s;
+		entry->end = e;
+		strncpy(entry->fn, name, 256);
+		entry->bits = 0xffffffffUL;
+		entry->prot = prot;
+		entry->offset = offset;
+		/* stop iterate */
+		return TRUE;
+	}
+	iterate_lines(pid, checker);
+	if (entry->bits != 0xffffffffUL) {
+		/* not found */
+		return FALSE; 
+	}
+	return TRUE;
+}
+
 const char *
 proc_get_file(pid_t pid, uintptr_t addr,
 		char * buffer, int len)
@@ -148,20 +202,20 @@ proc_get_file(pid_t pid, uintptr_t addr,
 	entry.addr = addr;
 	entry.bits = PE_ADDR;
 	proc_fill_entry(&entry, pid);
-	strncpy(buffer, entry.filename, len > 256 ? 256 : len);
+	strncpy(buffer, entry.fn, len > 256 ? 256 : len);
 	return buffer;
 }
 
 void
-proc_get_range(pid_t pid, const char * filename,
+proc_get_range(pid_t pid, const char * fn,
 		uintptr_t * pstart, uintptr_t * pend)
 {
-	assert(filename != NULL);
+	assert(fn != NULL);
 	assert(pstart != NULL);
 	assert(pend != NULL);
 
 	struct proc_entry entry;
-	strncpy(entry.filename, filename, 256);
+	strncpy(entry.fn, fn, 256);
 	entry.bits = PE_FILE;
 	proc_fill_entry(&entry, pid);
 	*pstart = entry.start;
@@ -172,9 +226,9 @@ proc_get_range(pid_t pid, const char * filename,
 #ifdef TEST_PROCUTILS
 int main()
 {
-	char filename[128];
+	char fn[128];
 	DEBUG_INIT(NULL);
-	printf("%s\n", proc_get_file(getpid(), (unsigned long)(&main), filename, 128));
+	printf("%s\n", proc_get_file(getpid(), (unsigned long)(&main), fn, 128));
 
 	uintptr_t s, e;
 	proc_get_range(getpid(), "./test_proc", &s, &e);

@@ -22,8 +22,12 @@ struct proc_entry {
 	uint32_t start;
 	uint32_t end;
 	uint32_t addr;
-	char filename[256];
+	char fn[256];
 	uint32_t bits;
+
+	/* other info */
+	uint32_t prot;
+	uint32_t offset;
 };
 
 extern void
@@ -38,6 +42,9 @@ extern void
 proc_get_range(pid_t pid, const char * filename,
 		uintptr_t * pstart, uintptr_t * pend);
 
+extern bool_t
+proc_find_in_range(struct proc_entry * entry,
+		pid_t pid, uintptr_t start, uintptr_t end);
 __END_DECLS
 
 #endif

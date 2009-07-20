@@ -41,6 +41,14 @@ SET(UTILS
 	utils.h
 	)
 
+ADD_LIBRARY(common
+	${COMMON}
+	${PTRACE}
+	${PROC}
+	${ELF}
+	ckptutils.c
+	)
+
 ADD_EXECUTABLE(target
 	target.c
 )
@@ -48,32 +56,31 @@ ADD_EXECUTABLE(target
 ADD_SUBDIRECTORY(checkpoint)
 
 ADD_EXECUTABLE(currf2
-	${COMMON}
-	${PTRACE}
-	${PROC}
-	${ELF}
 	currf2.c
 	currf2_args.c
 	libwrapper.so
 	)
 
 ADD_EXECUTABLE(printlog
-	${COMMON}
 	printlog.c
 	)
 
 ADD_EXECUTABLE(gdbloader
-	${COMMON}
-	ckptutils.c
 	gdbloader.c
 	gdbloader_args.c
 	)
 
+TARGET_LINK_LIBRARIES(gdbloader
+	common)
 
 TARGET_LINK_LIBRARIES(currf2
-	checkpoint)
+	checkpoint
+	common)
+
 TARGET_LINK_LIBRARIES(printlog
+	common
 	printer)
+
 SET_TARGET_PROPERTIES(
 	printlog
 	PROPERTIES COMPILE_FLAGS -DSYSCALL_PRINTER

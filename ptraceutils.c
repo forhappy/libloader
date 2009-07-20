@@ -216,7 +216,6 @@ ptrace_updmem(const void * src, uintptr_t addr, int len)
 void
 ptrace_kill(void)
 {
-	FORCE(PTRACE, "kill target process %d\n", child_pid);
 	ptrace_cleanup(&pt_clup_s);
 }
 

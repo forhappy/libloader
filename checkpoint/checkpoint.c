@@ -216,13 +216,16 @@ do_make_checkpoint(int ckpt_fd, int maps_fd, int cmdline_fd, struct syscall_regs
 			m.prot |= PROT_EXEC;
 		m.offset = offset;
 		m.fn_len = 0;
+		/* even if no fn, we write a '\0' info ckpt */
 		if (l > 0)
 			m.fn_len = strlen(p + l) + 1;
+		else
+			m.fn_len = 1;
 
 		/* Write the size of m */
 		uint32_t sz_m = sizeof(m);
-		if (l > 0)
-			sz_m += m.fn_len;
+		sz_m += m.fn_len;
+
 		__write(ckpt_fd, &sz_m, sizeof(sz_m));
 		f_pos += sizeof(sz_m);
 	
@@ -233,9 +236,12 @@ do_make_checkpoint(int ckpt_fd, int maps_fd, int cmdline_fd, struct syscall_regs
 		f_pos += sizeof(m);
 		if (l > 0) {
 			__write(ckpt_fd, p + l, m.fn_len);
-			f_pos += m.fn_len;
+		} else {
+			char z = '\0';
+			__write(ckpt_fd, &z, 1);
 		}
 
+		f_pos += m.fn_len;
 		/* Write memory */
 		__write(ckpt_fd, start, end-start);
 		f_pos += end - start;
@@ -248,6 +254,9 @@ do_make_checkpoint(int ckpt_fd, int maps_fd, int cmdline_fd, struct syscall_regs
 	__write(ckpt_fd, &zero, sizeof(zero));
 
 	/* write state vector */
+	/* before we write the vector, we call brk, to make sure each
+	 * ckpt file contain heap info */
+	state_vector.brk = INTERNAL_SYSCALL(brk, 1, 0);
 	__write(ckpt_fd, &state_vector, sizeof(state_vector));
 
 	/* write registers */

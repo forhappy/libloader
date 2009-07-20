@@ -21,10 +21,12 @@ ckpt_clup(struct cleanup * clup)
 	remove_cleanup(clup);
 	struct ckpt_file * s = container_of(clup, struct ckpt_file,
 			clup);
-	if (s->regions != NULL)
+	if (s->regions != NULL) {
 		free(s->regions);
-	if (s->cmdline != NULL)
+	}
+	if (s->cmdline != NULL) {
 		free(s->cmdline);
+	}
 	free(s);
 }
 

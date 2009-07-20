@@ -305,6 +305,7 @@ currf2_main(int argc, char * argv[])
 	injector.m = load_file(injector.fn);
 	injector.h = elf_init(injector.m, opts->inj_bias);
 
+	/* execve child */
 	child_pid = ptrace_execve(target.fn, argv + opts->cmd_idx);
 
 	/* dump stack */
