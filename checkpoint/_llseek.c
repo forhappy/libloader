@@ -7,7 +7,7 @@ typedef __kernel_loff_t		loff_t;
 #ifndef SYSCALL_PRINTER
 
 int SCOPE
-post__llseek(struct syscall_regs * regs)
+post__llseek(const struct syscall_regs * regs)
 {
 	write_eax(regs);
 	uint32_t presult = regs->esi;

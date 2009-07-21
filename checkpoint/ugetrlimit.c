@@ -11,7 +11,7 @@ struct rlimit {
 
 #ifndef SYSCALL_PRINTER
 int SCOPE
-post_ugetrlimit(struct syscall_regs * regs)
+post_ugetrlimit(const struct syscall_regs * regs)
 {
 	
 	write_eax(regs);

@@ -11,7 +11,7 @@ struct k_timespec {
 #ifndef SYSCALL_PRINTER
 
 int SCOPE
-post_clock_getres(struct syscall_regs * regs)
+post_clock_getres(const struct syscall_regs * regs)
 {
 	write_eax(regs);
 	if (regs->eax >= 0) {

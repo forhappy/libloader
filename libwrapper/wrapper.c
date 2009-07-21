@@ -12,9 +12,11 @@
 #include "injector_utils.h"
 #include "injector_debug.h"
 
+extern void __vsyscall();
 
 static char help_string[] = "This is help string\n";
 pid_t SCOPE self_pid = 0;
+static int replay = 0;
 
 SCOPE void
 show_help(void)
@@ -28,27 +30,65 @@ show_help(void)
 }
 
 
-static uint32_t current_syscall = 0;
 SCOPE char logger_filename[64] = "";
 SCOPE char ckpt_filename[64] = "";
 
 SCOPE void
-__before_syscall(struct syscall_regs r)
+__before_syscall(const struct syscall_regs * r)
 {
-	current_syscall = r.eax;
-	INJ_TRACE("before syscall %d\n", current_syscall);
-	INJ_TRACE("eip = 0x%x\n", r.eip);
-	before_syscall(&r);
+	INJ_TRACE("eip = 0x%x\n", r->eip);
+	before_syscall(r);
 	return;
 }
 
 SCOPE void
-__after_syscall(struct syscall_regs r)
+__after_syscall(const struct syscall_regs * r)
 {
-	r.orig_eax = current_syscall;
-	INJ_TRACE("after syscall %d\n", current_syscall);
-	after_syscall(&r);
+	after_syscall(r);
 	return;
+}
+
+SCOPE void
+wrapped_syscall(const struct syscall_regs r)
+{
+	if (!replay) {
+		__before_syscall(&r);
+		/* before we call real vsyscall, we must restore register
+		 * state */
+		uint32_t retval;
+		asm volatile(
+				"pushl %%eax\n"
+				"pushl %%ebx\n"
+				"pushl %%ecx\n"
+				"pushl %%edx\n"
+				"pushl %%esi\n"
+				"pushl %%edi\n"
+				"pushl %%ebp\n"
+				"movl %P1, %%eax\n"
+				"movl %P2, %%ebx\n"
+				"movl %P3, %%ecx\n"
+				"movl %P4, %%edx\n"
+				"movl %P5, %%esi\n"
+				"movl %P6, %%edi\n"
+				"movl %P7, %%ebp\n"
+				"call __vsyscall\n"
+				"popl %%ebp\n"
+				"popl %%edi\n"
+				"popl %%esi\n"
+				"popl %%edx\n"
+				"popl %%ecx\n"
+				"popl %%ebx\n"
+				"addl $0x4, %%esp\n"	/* eax */
+				"movl %%eax, %P1\n"
+				: "=a" (retval)
+				: "m" (r.eax), "m" (r.ebx), "m" (r.ecx), 
+				"m" (r.edx), "m" (r.esi), "m" (r.edi),
+				"m" (r.ebp));
+		__after_syscall(&r);
+		/* in the assembly code, we have modify the 'eax'. */
+	} else {
+		while(1);
+	}
 }
 
 

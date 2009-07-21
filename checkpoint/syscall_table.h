@@ -31,7 +31,7 @@ struct syscall_regs {
 };
 
 
-typedef int (*syscall_handler_t)(struct syscall_regs * r);
+typedef int (*syscall_handler_t)(const const struct syscall_regs * r);
 #ifdef SYSCALL_PRINTER
 typedef void (*syscall_output_t)(void);
 #endif

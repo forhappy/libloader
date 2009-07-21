@@ -4,14 +4,14 @@
 #ifndef SYSCALL_PRINTER
 
 int SCOPE
-pre_exit_group(struct syscall_regs * regs)
+pre_exit_group(const struct syscall_regs * regs)
 {
 	/* placeholder */
 	return 0;
 }
 
 int SCOPE
-post_exit_group(struct syscall_regs * regs)
+post_exit_group(const struct syscall_regs * regs)
 {
 	/* placeholder */
 	return 0;

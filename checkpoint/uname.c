@@ -12,7 +12,7 @@ struct old_utsname {
 #ifndef SYSCALL_PRINTER
 
 int SCOPE
-post_uname(struct syscall_regs * regs)
+post_uname(const struct syscall_regs * regs)
 {
 	
 	write_eax(regs);

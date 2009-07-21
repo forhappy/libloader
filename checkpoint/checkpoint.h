@@ -177,10 +177,10 @@ extern SCOPE int
 logger_close(void);
 
 extern SCOPE int
-before_syscall(struct syscall_regs * regs);
+before_syscall(const struct syscall_regs * regs);
 
 extern SCOPE int
-after_syscall(struct syscall_regs * regs);
+after_syscall(const struct syscall_regs * regs);
 
 extern SCOPE char *
 readline(int fd);

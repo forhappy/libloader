@@ -4,7 +4,7 @@
 #ifndef SYSCALL_PRINTER
 
 int SCOPE
-post_set_thread_area(struct syscall_regs * regs)
+post_set_thread_area(const struct syscall_regs * regs)
 {
 	
 	write_eax(regs);

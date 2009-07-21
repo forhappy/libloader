@@ -4,7 +4,7 @@
 #ifndef SYSCALL_PRINTER
 
 int SCOPE
-post_unlink(struct syscall_regs * regs)
+post_unlink(const struct syscall_regs * regs)
 {
 	write_eax(regs);
 	return 0;

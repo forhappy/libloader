@@ -17,7 +17,7 @@ static const unsigned char nargs[18]={
 #ifndef SYSCALL_PRINTER
 
 int SCOPE
-post_socketcall(struct syscall_regs * regs)
+post_socketcall(const struct syscall_regs * regs)
 {
 	INJ_TRACE("in socket_call\n");
 

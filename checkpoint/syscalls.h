@@ -21,10 +21,10 @@ __BEGIN_DECLS
 
 #ifndef SYSCALL_PRINTER
 #define define_pre_handler(name)	\
-	extern SCOPE int pre_##name(struct syscall_regs * regs)
+	extern SCOPE int pre_##name(const struct syscall_regs * regs)
 
 #define define_post_handler(name)	\
-	extern SCOPE int post_##name(struct syscall_regs * regs)
+	extern SCOPE int post_##name(const struct syscall_regs * regs)
 #else
 #define define_pre_handler(name)
 #define define_post_handler(name)	\

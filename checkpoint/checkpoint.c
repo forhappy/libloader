@@ -127,7 +127,7 @@ checkpoint(void)
 }
 
 SCOPE int
-before_syscall(struct syscall_regs * regs)
+before_syscall(const struct syscall_regs * regs)
 {
 	if (regs->orig_eax >= NR_SYSCALLS) {
 		__printf("before: no such syscall: %d\n", regs->orig_eax);
@@ -142,7 +142,7 @@ before_syscall(struct syscall_regs * regs)
 }
 
 SCOPE int
-after_syscall(struct syscall_regs * regs)
+after_syscall(const struct syscall_regs * regs)
 {
 	if (regs->orig_eax >= NR_SYSCALLS) {
 		__printf("no such syscall: %d\n", regs->orig_eax);

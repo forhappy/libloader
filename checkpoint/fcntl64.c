@@ -2,7 +2,7 @@
 #include "syscalls.h"
 #ifndef SYSCALL_PRINTER
 int SCOPE
-post_fcntl64(struct syscall_regs * regs)
+post_fcntl64(const struct syscall_regs * regs)
 {
 	write_eax(regs);
 	return 0;

@@ -26,31 +26,9 @@ syscall_wrapper_entry:
 	pushl %ecx
 	pushl %ebx
 	pushl %eax
-	call __before_syscall
-	popl %eax
-	popl %ebx
-	popl %ecx
-	popl %edx
-	popl %esi
-	popl %edi
-	popl %ebp
-	popf
-	addl $0xC, %esp
 
-	call __vsyscall
-	
-	pushl %esp
-	pushl 4(%esp)		/* eip */
-	pushl $0		/* orig_eax */
-	pushf
-	pushl %ebp
-	pushl %edi
-	pushl %esi
-	pushl %edx
-	pushl %ecx
-	pushl %ebx
-	pushl %eax
-	call __after_syscall
+	call wrapped_syscall
+
 	popl %eax
 	popl %ebx
 	popl %ecx

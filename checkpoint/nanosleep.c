@@ -11,7 +11,7 @@ struct k_timespec {
 #ifndef SYSCALL_PRINTER
 
 int SCOPE
-post_nanosleep(struct syscall_regs * regs)
+post_nanosleep(const struct syscall_regs * regs)
 {
 	write_eax(regs);
 	uintptr_t o = regs->ecx;

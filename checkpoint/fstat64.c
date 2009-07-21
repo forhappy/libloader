@@ -38,7 +38,7 @@ struct stat64 {
 #ifndef SYSCALL_PRINTER
 
 int SCOPE
-post_fstat64(struct syscall_regs * regs)
+post_fstat64(const struct syscall_regs * regs)
 {
 	write_eax(regs);
 	if (regs->eax >= 0) {

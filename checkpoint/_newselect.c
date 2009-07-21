@@ -10,7 +10,7 @@
 #ifndef SYSCALL_PRINTER
 
 int SCOPE
-post__newselect(struct syscall_regs * regs)
+post__newselect(const struct syscall_regs * regs)
 {
 	write_eax(regs);
 	int n = regs->ebx;

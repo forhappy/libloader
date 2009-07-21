@@ -9,7 +9,7 @@ typedef __kernel_time_t		time_t;
 
 
 int SCOPE
-post_time(struct syscall_regs * regs)
+post_time(const struct syscall_regs * regs)
 {
 	write_eax(regs);
 	write_obj(regs->ebx);

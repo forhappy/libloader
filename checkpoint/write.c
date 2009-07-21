@@ -3,7 +3,7 @@
 #ifndef SYSCALL_PRINTER
 
 int SCOPE
-post_write(struct syscall_regs * regs)
+post_write(const struct syscall_regs * regs)
 {
 	write_eax(regs);
 	return 0;

@@ -7,7 +7,7 @@
 #include "syscalls.h"
 
 SCOPE int
-dummy(struct syscall_regs * regs)
+dummy(const struct syscall_regs * regs)
 {
 	return 0;
 }

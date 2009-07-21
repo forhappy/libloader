@@ -5,7 +5,7 @@
 #ifndef SYSCALL_PRINTER
 
 int SCOPE
-pre_ioctl(struct syscall_regs * regs)
+pre_ioctl(const struct syscall_regs * regs)
 {
 	write_regs(regs);
 	INJ_TRACE("ioctl: fd=%d, cmd=0x%x, arg=0x%x\n",
@@ -25,7 +25,7 @@ pre_ioctl(struct syscall_regs * regs)
 }
 
 int SCOPE
-post_ioctl(struct syscall_regs * regs)
+post_ioctl(const struct syscall_regs * regs)
 {
 	INJ_TRACE("ioctl: fd=%d, cmd=0x%x, arg=0x%x\n",
 			regs->ebx, regs->ecx, regs->edx);

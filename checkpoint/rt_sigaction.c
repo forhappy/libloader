@@ -2,7 +2,7 @@
 #include "syscalls.h"
 #ifndef SYSCALL_PRINTER
 int SCOPE
-post_rt_sigaction(struct syscall_regs * regs)
+post_rt_sigaction(const struct syscall_regs * regs)
 {
 	write_eax(regs);
 	if (regs->eax == 0) {
