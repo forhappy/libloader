@@ -124,6 +124,7 @@ struct k_sigaction {
 extern SCOPE struct state_vector {
 	int dummy;
 	uint32_t brk;
+	pid_t pid;
 	uint32_t clear_child_tid;
 	uint32_t robust_list;
 	struct user_desc thread_area[GDT_ENTRY_TLS_ENTRIES];

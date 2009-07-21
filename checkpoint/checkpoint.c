@@ -257,6 +257,8 @@ do_make_checkpoint(int ckpt_fd, int maps_fd, int cmdline_fd, struct syscall_regs
 	/* before we write the vector, we call brk, to make sure each
 	 * ckpt file contain heap info */
 	state_vector.brk = INTERNAL_SYSCALL(brk, 1, 0);
+	/* and we still need to save the pid */
+	state_vector.pid = INTERNAL_SYSCALL(getpid, 0);
 	__write(ckpt_fd, &state_vector, sizeof(state_vector));
 
 	/* write registers */

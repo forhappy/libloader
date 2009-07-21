@@ -52,7 +52,6 @@ __after_syscall(struct syscall_regs r)
 }
 
 
-
 SCOPE void
 injector_entry(struct syscall_regs r,
 		uint32_t old_vdso_ventry, uint32_t old_vdso_vhdr, uint32_t main_addr)

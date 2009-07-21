@@ -4,7 +4,9 @@
 #include "ckptutils.h"
 #include "currf2_args.h"
 #include "procutils.h"
+#include "elfutils.h"
 #include "ptraceutils.h"
+#include "utils.h"
 
 #include <sys/stat.h>
 #include <sys/mman.h>
@@ -18,7 +20,6 @@ static pid_t child_pid = -1;
 static void
 inject_memory(void)
 {
-
 	/* for each mem region in ckpt file */
 	for (int i = 0; i < cf->nr_regions; i++) {
 		struct mem_region * r = cf->regions[i];
@@ -165,8 +166,41 @@ gdbloader_main(const char * target_fn)
 	SYS_TRACE("restore heap to 0x%x\n", heap_end);
 	inject_memory();
 
+	/* then, we retrive the inject so file, enter from
+	 * __debug_entry. we need to push:
+	 * nothing.
+	 * process can retrive all from state vector.
+	 * */
+	/* NOTICE: the state_vector should be saved in the ckpt memory,
+	 * we needn't restore them in ptrace process. let the inject so
+	 * to do it. */
+
+	/* from the opts get the so-file bias */
+	uint32_t inj_bias = opts->inj_bias;
+	/* use procutils to get the file */
+	struct proc_entry e;
+	e.start = inj_bias;
+	e.bits = PE_START; 
+	proc_fill_entry(&e, child_pid);
+	SYS_TRACE("inject so is %s\n", e.fn);
+
+	/* use elfutils to retrive the symbol */
+	void * img = load_file(e.fn);
+	struct elf_handler * inj_so = elf_init(img, inj_bias);
+
+	uintptr_t debug_entry = elf_get_symbol_address(inj_so,
+			opts->entry);
+	SYS_TRACE("symbol %s at 0x%x\n", opts->entry, debug_entry);
+
+	elf_cleanup(inj_so);
+	free(img);
+
+	/* move eip and detach, let the target process to run */
+	ptrace_goto(debug_entry);
+	/* detach in gdbloader_main */
 	return;
 }
+	
 
 int
 main(int argc, char * argv[])
@@ -208,11 +242,10 @@ main(int argc, char * argv[])
 		cf = load_ckpt_file(opts->ckpt_fn);
 		gdbloader_main(target_fn);
 		close_ckpt_file(cf);
+		ptrace_detach(TRUE);
 	} CATCH (exp) {
 		case EXCEPTION_NO_ERROR:
 			SYS_VERBOSE("successfully finish\n");
-			if (child_pid != -1)
-				ptrace_kill();
 			break;
 		default:
 			if (child_pid != -1)
