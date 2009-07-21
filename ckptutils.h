@@ -16,7 +16,7 @@
 struct ckpt_file {
 	struct cleanup clup;
 	struct state_vector * state;
-	struct syscall_regs * regs;
+	struct user_regs_struct * regs;
 	int nr_regions;
 	struct mem_region ** regions;
 	char ** cmdline;

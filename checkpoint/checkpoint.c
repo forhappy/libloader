@@ -4,6 +4,7 @@
  */
 
 #include "checkpoint.h"
+#include <linux/user.h>
 #include <sys/mman.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -262,7 +263,29 @@ do_make_checkpoint(int ckpt_fd, int maps_fd, int cmdline_fd, struct syscall_regs
 	__write(ckpt_fd, &state_vector, sizeof(state_vector));
 
 	/* write registers */
-	__write(ckpt_fd, r, sizeof(*r));
+	/* we need a user_regs_struct */
+	struct user_regs_struct s;
+	s.ebx = r->ebx;
+	s.ecx = r->ecx;
+	s.edx = r->edx;
+	s.esi = r->esi;
+	s.edi = r->edi;
+	s.ebp = r->ebp;
+	s.eax = r->eax;
+	s.orig_eax = r->orig_eax;
+	s.eip = r->eip;
+	s.eflags = r->flags;
+	s.esp = r->esp;
+	/* 6 seg regs */
+#define loadsr(d, r) asm volatile("movl %%" #r ", %%eax" : "=a" (d))
+	loadsr(s.cs, cs);
+	loadsr(s.ds, ds);
+	loadsr(s.es, es);
+	loadsr(s.fs, fs);
+	loadsr(s.gs, gs);
+	loadsr(s.ss, ss);
+#undef loadsr
+	__write(ckpt_fd, &s, sizeof(s));
 }
 #endif
 

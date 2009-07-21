@@ -20,10 +20,12 @@ static pid_t child_pid = -1;
 static void
 inject_memory(void)
 {
+	struct mem_region * stack_r = NULL;
+
 	/* for each mem region in ckpt file */
 	for (int i = 0; i < cf->nr_regions; i++) {
 		struct mem_region * r = cf->regions[i];
-		
+
 		SYS_TRACE("range %d: 0x%x--0x%x (0x%x:0x%x): %s\n",
 				i, r->start, r->end, r->prot, r->offset, r->fn);
 
@@ -100,49 +102,61 @@ inject_memory(void)
 					(strcmp(e.fn, r->fn) != 0))
 				THROW(EXCEPTION_FATAL, "!@##@$!@");
 		} else {
-				SYS_TRACE("\tdesired region is unmapped\n");
-				/* from the ckpt, find the file and do the map */
-				uint32_t map_addr = r->start;
-				uint32_t size = r->end - r->start;
-				uint32_t prot = r->prot;
-				uint32_t flags = MAP_FIXED | MAP_EXECUTABLE | MAP_PRIVATE;
-				if ((r->fn_len <= 1) || (r->fn[0] == '\0')) {
-					/* this is not a file map */
-					uint32_t ret_addr;
-					flags |= MAP_ANONYMOUS;
-					SYS_TRACE("\tdo the anonymouse map\n");
-					ret_addr = ptrace_syscall(mmap2, 6,
-							map_addr, size, prot,
-							flags, 0, 0);
-					CTHROW(map_addr == ret_addr, "mmap2 failed, return 0x%x, not 0x%x",
-							ret_addr, map_addr);
-				} else {
-					/* this is a file map */
-					uint32_t fn_pos;
-					/* push the filename */
-					fn_pos = ptrace_push(r->fn, strlen(r->fn) + 1, TRUE);
+			SYS_TRACE("\tdesired region is unmapped\n");
+			/* from the ckpt, find the file and do the map */
+			uint32_t map_addr = r->start;
+			uint32_t size = r->end - r->start;
+			uint32_t prot = r->prot;
+			uint32_t flags = MAP_FIXED | MAP_EXECUTABLE | MAP_PRIVATE;
+			if ((r->fn_len <= 1) || (r->fn[0] == '\0')) {
+				/* this is not a file map */
+				uint32_t ret_addr;
+				flags |= MAP_ANONYMOUS;
+				SYS_TRACE("\tdo the anonymouse map\n");
+				ret_addr = ptrace_syscall(mmap2, 6,
+						map_addr, size, prot,
+						flags, 0, 0);
+				CTHROW(map_addr == ret_addr, "mmap2 failed, return 0x%x, not 0x%x",
+						ret_addr, map_addr);
+			} else {
+				/* this is a file map */
+				uint32_t fn_pos;
+				/* push the filename */
+				fn_pos = ptrace_push(r->fn, strlen(r->fn) + 1, TRUE);
 
-					int fd = ptrace_syscall(open, 3, fn_pos, O_RDONLY, 0);
-					CTHROW(fd >= 0, "open file %s failed: %d", r->fn, fd);
+				int fd = ptrace_syscall(open, 3, fn_pos, O_RDONLY, 0);
+				CTHROW(fd >= 0, "open file %s failed: %d", r->fn, fd);
 
-					SYS_TRACE("\tdo the map\n");
-					uint32_t off = r->offset;
-					uint32_t ret_addr = ptrace_syscall(mmap2, 6,
-							map_addr, size, prot,
-							flags, fd, off >> PAGE_SHIFT);
-					CTHROW(ret_addr == map_addr, "mmap2 file %s failed: return 0x%x",
-							r->fn, ret_addr);
+				SYS_TRACE("\tdo the map\n");
+				uint32_t off = r->offset;
+				uint32_t ret_addr = ptrace_syscall(mmap2, 6,
+						map_addr, size, prot,
+						flags, fd, off >> PAGE_SHIFT);
+				CTHROW(ret_addr == map_addr, "mmap2 file %s failed: return 0x%x",
+						r->fn, ret_addr);
 
-					ptrace_syscall(close, 1, fd);
-				}
+				ptrace_syscall(close, 1, fd);
+			}
 		}
 
 		/* now the memory region has been built up, we then poke
 		 * memory into it */
-		ptrace_updmem(r->f_pos + cf->ckpt_img,
-				r->start,
-				r->end - r->start);
+		/* don't update stack here. although in most case the stack
+		 * is the last region we meet, there are some special situations.
+		 * for example in compat memlayout. the stack may be polluted by pervious
+		 * ptrace_push operation. */
+		if (strcmp(r->fn, "[stack]") == 0)
+			stack_r = r;
+		else
+			ptrace_updmem(r->f_pos + cf->ckpt_img,
+					r->start,
+					r->end - r->start);
 	}
+
+	/* we poke stack at last */
+	ptrace_updmem(stack_r->f_pos + cf->ckpt_img,
+			stack_r->start,
+			stack_r->end - stack_r->start);
 }
 
 static void
@@ -170,6 +184,7 @@ gdbloader_main(const char * target_fn)
 	 * __debug_entry. we need to push:
 	 * nothing.
 	 * process can retrive all from state vector.
+	 * and we cannot use stack now
 	 * */
 	/* NOTICE: the state_vector should be saved in the ckpt memory,
 	 * we needn't restore them in ptrace process. let the inject so
@@ -195,8 +210,13 @@ gdbloader_main(const char * target_fn)
 	elf_cleanup(inj_so);
 	free(img);
 
+	/* we have to restore at least esp, or else we cannot use stack */
+	ptrace_pokeuser(*cf->regs);
+
 	/* move eip and detach, let the target process to run */
 	ptrace_goto(debug_entry);
+
+
 	/* detach in gdbloader_main */
 	return;
 }
