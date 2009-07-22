@@ -131,5 +131,18 @@ injector_entry(struct syscall_regs r,
 	INJ_TRACE("eax=%d\n", r.eax);
 }
 
+
+
+SCOPE void
+debug_entry(void)
+{
+	/* this function never return */
+	INJ_WARNING("come here2...\n");
+	/* from state_vector, restore state */
+	INJ_WARNING("brk=0x%x\n", state_vector.brk);
+	INJ_WARNING("%s\n", logger_filename);
+	while(1);
+}
+
 // vim:ts=4:sw=4
 

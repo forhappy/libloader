@@ -153,6 +153,7 @@ inject_memory(void)
 					r->end - r->start);
 	}
 
+	CTHROW(stack_r != NULL, "no \"[stack]\" found");
 	/* we poke stack at last */
 	ptrace_updmem(stack_r->f_pos + cf->ckpt_img,
 			stack_r->start,
@@ -215,7 +216,6 @@ gdbloader_main(const char * target_fn)
 
 	/* move eip and detach, let the target process to run */
 	ptrace_goto(debug_entry);
-
 
 	/* detach in gdbloader_main */
 	return;

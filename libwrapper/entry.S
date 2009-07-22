@@ -65,6 +65,7 @@ __entry:
 	ret
 
 __debug_entry:
+	call debug_entry
 1:	jmp 1b
 
 
