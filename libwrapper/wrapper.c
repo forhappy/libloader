@@ -16,6 +16,7 @@ extern void __vsyscall();
 
 static char help_string[] = "This is help string\n";
 pid_t SCOPE self_pid = 0;
+
 static int replay = 0;
 
 SCOPE void
@@ -131,16 +132,48 @@ injector_entry(struct syscall_regs r,
 	INJ_TRACE("eax=%d\n", r.eax);
 }
 
+static void
+restore_state(void)
+{
+	/* brk */
+	/* brk should have been reset in gdbloader. */
+	uint32_t addr;
+	addr = INTERNAL_SYSCALL(brk, 1, state_vector.brk);
+	ASSERT(addr == state_vector.brk, "brk failed");
 
+	/* clear_child_tid */
+	/* always success */
+	INTERNAL_SYSCALL(set_tid_address, 1, state_vector.clear_child_tid);
+
+	/* robust_list */
+	INTERNAL_SYSCALL(set_robust_list, 2, state_vector.robust_list,
+			sizeof(struct robust_list_head));
+
+	/* thread_areas */
+	for (int i = 0; i < GDT_ENTRY_TLS_ENTRIES; i++) {
+		if (state_vector.thread_area[i].entry_number != -1) {
+			/* this slot is setted */
+			INTERNAL_SYSCALL(set_thread_area, 1,
+					&state_vector.thread_area[i]);
+		}
+	}
+
+	/* sigaction */
+	/* don't restore sigaction now */
+
+	/* sigmask */
+	/* don't restore sigmask now */
+}
 
 SCOPE void
 debug_entry(void)
 {
 	/* this function never return */
-	INJ_WARNING("come here2...\n");
+	INJ_FORCE("come into target code...\n");
 	/* from state_vector, restore state */
-	INJ_WARNING("brk=0x%x\n", state_vector.brk);
-	INJ_WARNING("%s\n", logger_filename);
+	restore_state();
+	/* set replay to 1 */
+	replay = 1;
 	while(1);
 }
 

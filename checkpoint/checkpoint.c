@@ -98,6 +98,12 @@ logger_init(pid_t pid)
 	int fd;
 	char filename[64];
 	memset(&state_vector, '\0', sizeof(state_vector));
+
+	/* for each thread_area, set its entry_number to -1, to indicate
+	 * which slot is not used */
+	for (int i = 0; i < GDT_ENTRY_TLS_ENTRIES; i++)
+		state_vector.thread_area[i].entry_number = -1;
+
 	snprintf(filename, 64, LOGGER_DIRECTORY"/%d.log",
 			pid);
 	fd = __open(filename, O_WRONLY|O_APPEND|O_CREAT, 0666);

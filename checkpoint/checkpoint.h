@@ -121,6 +121,16 @@ struct k_sigaction {
 	k_sigset_t sa_mask;		/* mask last for extensibility */
 };
 
+struct robust_list {
+	struct robust_list *next;
+};
+
+struct robust_list_head {
+	struct robust_list list;
+	long futex_offset;
+	struct robust_list *list_op_pending;
+};
+
 extern SCOPE struct state_vector {
 	int dummy;
 	uint32_t brk;

@@ -88,7 +88,7 @@ extern SCOPE void message_out(int prefix, enum debug_level, enum debug_component
 
 #define ASSERT(c, str...)					\
 	do { 									\
-		if (!c) {							\
+		if (!(c)) {							\
 			INJ_FATAL("assertion failed\n");\
 			INJ_FATAL(str);					\
 			__exit(-1);						\
