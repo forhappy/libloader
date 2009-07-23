@@ -211,13 +211,27 @@ gdbloader_main(const char * target_fn)
 	elf_cleanup(inj_so);
 	free(img);
 
-	/* we have to restore at least esp, or else we cannot use stack */
-	ptrace_pokeuser(*cf->regs);
+	/* we have to restore register here... */
+	SYS_FORCE("eip=0x%x\n", cf->state->regs.eip);
+	ptrace_pokeuser(cf->state->regs);
+	SYS_TRACE("eax=0x%x\n", cf->state->regs.eax);
+	SYS_TRACE("ebx=0x%x\n", cf->state->regs.ebx);
+	SYS_TRACE("ecx=0x%x\n", cf->state->regs.ecx);
+	SYS_TRACE("edx=0x%x\n", cf->state->regs.edx);
+	SYS_TRACE("esi=0x%x\n", cf->state->regs.esi);
+	SYS_TRACE("edi=0x%x\n", cf->state->regs.edi);
+	SYS_TRACE("ebp=0x%x\n", cf->state->regs.ebp);
+	SYS_TRACE("esp=0x%x\n", cf->state->regs.esp);
+	SYS_TRACE("gs=0x%x\n", cf->state->regs.gs);
+	SYS_TRACE("es=0x%x\n", cf->state->regs.es);
+
+	/* we push eip at the top of the new stack */
+	ptrace_push(&cf->state->regs.eip, sizeof(uint32_t), FALSE);
 
 	/* move eip and detach, let the target process to run */
 	ptrace_goto(debug_entry);
 
-	/* detach in gdbloader_main */
+	/* detach in main */
 	return;
 }
 	

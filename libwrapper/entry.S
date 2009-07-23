@@ -65,7 +65,24 @@ __entry:
 	ret
 
 __debug_entry:
+	/* here, we should have reset all registers, and push eip at
+	   the top of the stack */
+	/* according to the gcc register saving protocal, caller
+	   need to save only 3 registers. however I forget which 3.  */
+
+	pushl %edi
+	pushl %esi
+	pushl %edx
+	pushl %ecx
+	pushl %ebx
+	pushl %eax
 	call debug_entry
-1:	jmp 1b
+	popl %eax
+	popl %ebx
+	popl %ecx
+	popl %edx
+	popl %esi
+	popl %edi
+	ret
 
 

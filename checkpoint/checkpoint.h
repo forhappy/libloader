@@ -9,6 +9,7 @@
 #include <sys/cdefs.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <linux/user.h>
 #include "defs.h"
 
 #ifndef IN_INJECTOR
@@ -140,6 +141,10 @@ extern SCOPE struct state_vector {
 	struct user_desc thread_area[GDT_ENTRY_TLS_ENTRIES];
 	struct k_sigaction sigactions[K_NSIG];
 	k_sigset_t sigmask;
+	/* add user regs into state_vector, this is for only
+	 * checkpoints use */
+	struct user_regs_struct regs;
+	int end;
 } state_vector;
 
 

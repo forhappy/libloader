@@ -35,25 +35,10 @@ SCOPE char logger_filename[64] = "";
 SCOPE char ckpt_filename[64] = "";
 
 SCOPE void
-__before_syscall(const struct syscall_regs * r)
-{
-	INJ_TRACE("eip = 0x%x\n", r->eip);
-	before_syscall(r);
-	return;
-}
-
-SCOPE void
-__after_syscall(const struct syscall_regs * r)
-{
-	after_syscall(r);
-	return;
-}
-
-SCOPE void
 wrapped_syscall(const struct syscall_regs r)
 {
 	if (!replay) {
-		__before_syscall(&r);
+		before_syscall(&r);
 		/* before we call real vsyscall, we must restore register
 		 * state */
 		uint32_t retval;
@@ -85,9 +70,10 @@ wrapped_syscall(const struct syscall_regs r)
 				: "m" (r.eax), "m" (r.ebx), "m" (r.ecx), 
 				"m" (r.edx), "m" (r.esi), "m" (r.edi),
 				"m" (r.ebp));
-		__after_syscall(&r);
+		after_syscall(&r);
 		/* in the assembly code, we have modify the 'eax'. */
 	} else {
+		INJ_TRACE("syscall, eax=%d\n", r.eax);
 		while(1);
 	}
 }
@@ -174,8 +160,33 @@ debug_entry(void)
 	restore_state();
 	/* set replay to 1 */
 	replay = 1;
-	while(1);
+
+	/* open logger */
+	int fd = INTERNAL_SYSCALL(open, 3, logger_filename,
+			O_RDONLY, 0666);
+	INJ_TRACE("logger fd = %d\n", fd);
+	ASSERT(fd > 0, "open logger failed: %d\n", fd);
+
+	/* dup the fd to 1023 */
+	int err = INTERNAL_SYSCALL(dup2, 2, fd, 1023);
+	ASSERT(err == 1023, "dup2 failed: %d\n", err);
+	INJ_TRACE("logger fd dupped to 1023\n");
+
+	err = INTERNAL_SYSCALL(close, 1, fd);
+	ASSERT(err == 0, "close fd %d failed: %d\n", fd, err);
+	INJ_TRACE("close %d\n", fd);
+
+	logger_fd = 1023;
+
+	/* most of registers should have been restored in loader.
+	 * gs is special, poke gs only restore thread.gs in kernel's code,
+	 * we have to restore the real gs manually. */
+	asm volatile(
+		"movw %%ax, %%gs\n"
+		:
+		: "a" (state_vector.regs.gs));
 }
+
 
 // vim:ts=4:sw=4
 

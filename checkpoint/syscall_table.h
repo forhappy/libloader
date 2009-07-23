@@ -14,8 +14,6 @@
 
 __BEGIN_DECLS
 
-
-
 struct syscall_regs {
 	int32_t eax;
 	int32_t ebx;
@@ -29,7 +27,6 @@ struct syscall_regs {
 	int32_t eip;
 	int32_t esp;
 };
-
 
 typedef int (*syscall_handler_t)(const const struct syscall_regs * r);
 #ifdef SYSCALL_PRINTER

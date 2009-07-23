@@ -85,6 +85,10 @@ load_ckpt_file(char * fn)
 	void * p;
 	p = build_cmdline(s, ckpt_img + sizeof(CKPT_MAGIC));
 
+	/* set the state */
+	s->state = p;
+	p += sizeof(*(s->state));
+
 	/* load mem regions */
 	uint32_t sz_m = 0;
 	s->nr_regions = 0;
@@ -101,10 +105,6 @@ load_ckpt_file(char * fn)
 		sz_m = *(uint32_t *)p;
 		p += sizeof(sz_m);
 	}
-
-	s->state = p;
-	s->regs = p + sizeof(*s->state);
-
 	return s;
 }
 

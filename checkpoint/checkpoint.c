@@ -192,6 +192,47 @@ do_make_checkpoint(int ckpt_fd, int maps_fd, int cmdline_fd, struct syscall_regs
 		f_pos += sizeof(zero);
 	}
 
+	/* before we write mem regions, we first set all fields in state_vector, so
+	 * when we reload this ckpt, registers is valid in target, not only in the
+	 * loader.
+	 * */
+
+	/* write registers */
+	/* we need a user_regs_struct */
+	/* use the regs in state_vector, this is used
+	 * only in ckpt */
+	struct user_regs_struct * s = &state_vector.regs;
+	s->ebx = r->ebx;
+	s->ecx = r->ecx;
+	s->edx = r->edx;
+	s->esi = r->esi;
+	s->edi = r->edi;
+	s->ebp = r->ebp;
+	s->eax = r->eax;
+	s->orig_eax = r->orig_eax;
+	s->eip = r->eip;
+	s->eflags = r->flags;
+	s->esp = r->esp;
+	/* 6 seg regs */
+#define loadsr(d, r) asm volatile("movl %%" #r ", %%eax" : "=a" (d))
+	loadsr(s->cs, cs);
+	loadsr(s->ds, ds);
+	loadsr(s->es, es);
+	loadsr(s->fs, fs);
+	loadsr(s->gs, gs);
+	loadsr(s->ss, ss);
+#undef loadsr
+
+	/* write state vector */
+	/* before we write the vector, we call brk, to make sure each
+	 * ckpt file contain heap info */
+	state_vector.brk = INTERNAL_SYSCALL(brk, 1, 0);
+	/* and we still need to save the pid */
+	state_vector.pid = INTERNAL_SYSCALL(getpid, 0);
+	
+	/* we write state_vector again for the loader, before mem regions */
+	__write(ckpt_fd, &state_vector, sizeof(state_vector));
+	f_pos += sizeof(state_vector);
 
 	/* write mem regions */
 	char * p = readline(maps_fd);
@@ -235,7 +276,7 @@ do_make_checkpoint(int ckpt_fd, int maps_fd, int cmdline_fd, struct syscall_regs
 
 		__write(ckpt_fd, &sz_m, sizeof(sz_m));
 		f_pos += sizeof(sz_m);
-	
+
 		m.f_pos = f_pos + sz_m;
 
 		/* Write m */
@@ -260,38 +301,6 @@ do_make_checkpoint(int ckpt_fd, int maps_fd, int cmdline_fd, struct syscall_regs
 	uint32_t zero = 0;
 	__write(ckpt_fd, &zero, sizeof(zero));
 
-	/* write state vector */
-	/* before we write the vector, we call brk, to make sure each
-	 * ckpt file contain heap info */
-	state_vector.brk = INTERNAL_SYSCALL(brk, 1, 0);
-	/* and we still need to save the pid */
-	state_vector.pid = INTERNAL_SYSCALL(getpid, 0);
-	__write(ckpt_fd, &state_vector, sizeof(state_vector));
-
-	/* write registers */
-	/* we need a user_regs_struct */
-	struct user_regs_struct s;
-	s.ebx = r->ebx;
-	s.ecx = r->ecx;
-	s.edx = r->edx;
-	s.esi = r->esi;
-	s.edi = r->edi;
-	s.ebp = r->ebp;
-	s.eax = r->eax;
-	s.orig_eax = r->orig_eax;
-	s.eip = r->eip;
-	s.eflags = r->flags;
-	s.esp = r->esp;
-	/* 6 seg regs */
-#define loadsr(d, r) asm volatile("movl %%" #r ", %%eax" : "=a" (d))
-	loadsr(s.cs, cs);
-	loadsr(s.ds, ds);
-	loadsr(s.es, es);
-	loadsr(s.fs, fs);
-	loadsr(s.gs, gs);
-	loadsr(s.ss, ss);
-#undef loadsr
-	__write(ckpt_fd, &s, sizeof(s));
 }
 #endif
 
