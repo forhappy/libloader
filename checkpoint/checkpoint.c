@@ -178,7 +178,7 @@ replay_syscall(const struct syscall_regs * regs)
 
 	/* read from logger, check */
 	uint32_t nr = read_uint32();
-	ASSERT(nr == regs->orig_eax, "logger mismatch: new syscall should be %d, but actually %d",
+	ASSERT(nr == regs->orig_eax, "logger mismatch: new syscall should be %d, but actually %d\n",
 				nr, regs->orig_eax);
 	
 	if (syscall_table[regs->orig_eax].replay_handler != NULL) {
