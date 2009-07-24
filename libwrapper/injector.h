@@ -95,14 +95,14 @@ asm (".L__X'%ebx = 1\n\t"
 	, "0" (arg1), "m" (_xv), "c" (arg2), "d" (arg3), "S" (arg4), "D" (arg5)
 
 
-#define INTERNAL_SYSCALL_0_5(name, enter_kernal, nr, args...) \
+#define INTERNAL_SYSCALL_0_5(name, enter_kernel, nr, args...) \
 	({								\
 	 	register int32_t retval;				\
 	 	EXTRAVAR_##nr						\
 		asm volatile (						\
 			LOADARGS_##nr					\
 			"movl %1, %%eax\n"				\
-			enter_kernal					\
+			enter_kernel					\
 			RESTOREARGS_##nr				\
 			: "=a" (retval)					\
 			: "i" (__NR_##name)		\
@@ -110,7 +110,7 @@ asm (".L__X'%ebx = 1\n\t"
 	 	retval;							\
 	 })
 
-#define __INTERNAL_SYSCALL_6(name, enter_kernal, arg1, arg2, arg3, arg4, arg5, arg6)	\
+#define __INTERNAL_SYSCALL_6(name, enter_kernel, arg1, arg2, arg3, arg4, arg5, arg6)	\
 	     ({								\
 	      	register int32_t retval;				\
 		int32_t _xv1, _xv2;					\
@@ -119,9 +119,10 @@ asm (".L__X'%ebx = 1\n\t"
 			"movl %%ebx, %3\n"				\
 			"movl %2, %%ebx\n"				\
 			"movl %1, %%eax\n"				\
-			"xchgl %8, %%ebp\n"				\
-			enter_kernal					\
-			"xchgl %%ebp, %8\n"				\
+			"pushl %%ebp\n"					\
+			"movl %8, %%ebp\n"				\
+			enter_kernel					\
+			"popl %%ebp\n"					\
 			"movl %3, %%ebx\n"				\
 			: "=a" (retval)					\
 			: "i" (__NR_##name),		\
