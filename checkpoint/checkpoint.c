@@ -178,7 +178,7 @@ replay_syscall(const struct syscall_regs * regs)
 
 	/* read from logger, check */
 	uint32_t nr = read_uint32();
-	ASSERT(nr == regs->orig_eax, "logger mismatch: new syscall should be %d, but actually %d\n",
+	ASSERT(nr == regs->orig_eax, "logger mismatch: new syscall should be 0x%x, but actually %d\n",
 				nr, regs->orig_eax);
 	
 	if (syscall_table[regs->orig_eax].replay_handler != NULL) {
@@ -248,6 +248,8 @@ do_make_checkpoint(int ckpt_fd, int maps_fd, int cmdline_fd, struct syscall_regs
 	loadsr(s->gs, gs);
 	loadsr(s->ss, ss);
 #undef loadsr
+
+	INJ_FATAL("esp in ckpt: 0x%x\n", s->esp);
 
 	/* write state vector */
 	/* before we write the vector, we call brk, to make sure each

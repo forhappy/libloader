@@ -74,13 +74,23 @@ extern int SCOPE logger_fd;
 
 # define read_obj(x) do {	\
 	int err;	\
-	err = __read(logger_fd, &x, sizeof(x));\
+	err = __read(logger_fd, &(x), sizeof(x));\
 	ASSERT(err == sizeof(x), "read failed: %d != %d\n", err, sizeof(x));\
 } while(0)
-
-# define read_mem(dst, sz)	do {	\
-	__read(logger_fd, (void*)(dst), (sz));	\
+#if 0
+# define read_mem(dst, sz)	do {\
+	int ret = 0;\
+	INJ_FATAL("dst=0x%x, sz=%d\n", (dst), (sz));\
+	ret = __read(logger_fd, (void*)(dst), (sz));	\
 } while(0)
+#endif
+
+# define read_mem(dst, sz)	do {\
+	int ___ret = 0;\
+	___ret = __read(logger_fd, (void*)(dst), (sz));	\
+	ASSERT(___ret == sz, "read_mem failed: ___ret=%d, sz=%d\n", ___ret, sz);\
+} while(0)
+
 
 #endif	/* IN_INJECTOR */
 

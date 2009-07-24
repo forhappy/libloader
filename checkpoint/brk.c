@@ -14,7 +14,16 @@ post_brk(const struct syscall_regs * regs)
 int SCOPE
 replay_brk(const struct syscall_regs * regs)
 {
-	return read_int32();
+	int32_t eax = read_int32();
+	/* here we rerun brk */
+#ifdef IN_INJECTOR
+	uint32_t err;
+	err = INTERNAL_SYSCALL(brk, 1,
+			regs->ebx);
+	ASSERT((uint32_t)eax == err, "brk inconsiste: retval=0x%x, should be 0x%x\n",
+			err, eax);
+#endif
+	return eax;
 }
 #else
 

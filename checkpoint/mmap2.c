@@ -13,6 +13,7 @@ int SCOPE
 post_mmap2(const struct syscall_regs * regs)
 {
 	write_eax(regs);
+#if 0
 	/* we have to check mmap, if it is a file map and successed,
 	 * we must save its content, for replay use. */
 
@@ -27,9 +28,12 @@ post_mmap2(const struct syscall_regs * regs)
 		if (!(flags & MAP_ANONYMOUS)) {
 			/* its a filemap, write memory */
 			write_obj(len);
+			/* no, don't write memory. */
+			/* most of the time, file mapping is readonly */
 			write_mem(addr, len);
 		}
 	}
+#endif
 	return 0;
 }
 
@@ -38,18 +42,9 @@ replay_mmap2(const struct syscall_regs * regs)
 {
 	uint32_t eax;
 	eax = read_uint32();
-	INJ_WARNING("XXXX, eax=0x%x\n", eax);
-	INJ_WARNING("XXXX, ebx=0x%x\n", regs->ebx);
-	INJ_WARNING("XXXX, ecx=0x%x\n", regs->ecx);
-	INJ_WARNING("XXXX, edx=0x%x\n", regs->edx);
-	INJ_WARNING("XXXX, esi=0x%x\n", regs->esi);
-	INJ_WARNING("XXXX, edi=0x%x\n", regs->edi);
-	INJ_WARNING("XXXX, ebp=0x%x\n", regs->ebp);
-
 	/* eax is result */
 
 	if (!((eax & ~PAGE_MASK) || (eax > TASK_SIZE))) {
-		INJ_WARNING("Try...\n");
 		/* we must do the mmap for target */
 #ifdef IN_INJECTOR
 		uint32_t addr = eax;
@@ -58,6 +53,23 @@ replay_mmap2(const struct syscall_regs * regs)
 		uint32_t flags = regs->esi;
 		uint32_t fd = regs->edi;
 		uint32_t pgoff = regs->ebp;
+
+
+		uint32_t ret;
+		/* it is a anon map */
+		ret = INTERNAL_SYSCALL(mmap2, 6,
+				addr, len, prot,
+				flags | MAP_FIXED, fd, pgoff);
+		ASSERT(ret == eax, "");
+
+#if 0
+
+		/* DON'T INJECT MEMORY NOW */
+
+		uint32_t lflags = read_uint32();
+		ASSERT(lflags == flags, "lflags=0x%x, flags=0x%x\n",
+				lflags, flags);
+
 		/* check if it is a file map */
 		if ((flags & MAP_ANONYMOUS)) {
 			uint32_t ret;
@@ -69,19 +81,30 @@ replay_mmap2(const struct syscall_regs * regs)
 		} else {
 			/* it is a file map. the file shoule have
 			 * been opened... */
+
+			/* read len */
+			int32_t llen;
+			llen = read_uint32();
+			ASSERT(len == llen, "len=%d, llen=%d\n", len, llen);
+
 			/* we must unset 'shared' flag */
 			flags &= (~(MAP_SHARED));
 			flags |= MAP_PRIVATE;
 			flags |= MAP_FIXED;
 			uint32_t ret;
+			/* enable write */
 			ret = INTERNAL_SYSCALL(mmap2, 6,
-					addr, len, prot,
+					addr, len, prot | PROT_WRITE,
 					flags, fd, pgoff);
-			ASSERT(ret == eax, "");
+			ASSERT(ret == eax, "\n");
 
-			/* the inject memory */
+			/* then inject memory */
+			INJ_WARNING("len=0x%x, ret=0x%x, eax=0x%x\n", len, ret, eax);
+			INJ_WARNING("0x%x\n", *(uint32_t*)(ret));
+
 			read_mem(ret, len);
 		}
+#endif
 #endif
 	}
 	return eax;
@@ -95,6 +118,7 @@ output_mmap2(void)
 {
 	int32_t addr = read_eax();
 	printf("mmap2:\t0x%x\n", addr);
+#if 0
 	if (!((addr & ~PAGE_MASK) || (addr > TASK_SIZE))) {
 		uint32_t flags;
 		read_obj(flags);
@@ -104,7 +128,7 @@ output_mmap2(void)
 			skip(len);
 		}
 	}
-	
+#endif	
 }
 #endif
 

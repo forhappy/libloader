@@ -158,7 +158,26 @@ SCOPE void
 debug_entry(void)
 {
 	/* this function never return */
-	INJ_FORCE("come into target code...\n");
+	uint32_t xxesp;
+	uint32_t xxeax;
+	uint32_t xxebx;
+	uint32_t xxecx;
+	uint32_t xxedx;
+	uint32_t xxesi;
+	uint32_t xxedi;
+	uint32_t xxebp;
+	asm volatile ("movl %%esp, %P0\n"
+			"movl %%ebp, %P1\n"
+			: "=m" (xxesp), "=a" (xxeax), 
+			  "=c" (xxecx), "=d" (xxedx), "=S" (xxesi),
+			  "=D" (xxedi), "=m" (xxebp));
+	INJ_FORCE("come into target code..., esp=0x%x\n", xxesp);
+	INJ_FORCE("come into target code..., ebp=0x%x\n", xxebp);
+	INJ_FORCE("come into target code..., eax=0x%x\n", xxeax);
+	INJ_FORCE("come into target code..., ecx=0x%x\n", xxecx);
+	INJ_FORCE("come into target code..., edx=0x%x\n", xxedx);
+	INJ_FORCE("come into target code..., esi=0x%x\n", xxesi);
+	INJ_FORCE("come into target code..., edi=0x%x\n", xxedi);
 	/* from state_vector, restore state */
 	restore_state();
 	/* set replay to 1 */
@@ -188,6 +207,10 @@ debug_entry(void)
 		"movw %%ax, %%gs\n"
 		:
 		: "a" (state_vector.regs.gs));
+
+	/* spin */
+	volatile int xxx = 0;
+	while (xxx == 0);
 }
 
 
