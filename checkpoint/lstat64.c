@@ -51,6 +51,16 @@ post_lstat64(const struct syscall_regs * regs)
 	return 0;
 }
 
+int SCOPE
+replay_lstat64(const struct syscall_regs * regs)
+{
+	int32_t eax = read_int32();
+	if (eax >= 0) {
+		read_mem(regs->ecx, sizeof(struct stat64));
+	}
+	return eax;
+}
+
 #else
 
 void

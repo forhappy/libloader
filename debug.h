@@ -179,6 +179,10 @@ extern void show_mem_info();
 #define show_mem_info()	do {} while(0)
 #endif
 
+#ifndef ASSERT
+# define ASSERT(c, str...) assert((c))
+#endif
+
 __END_DECLS
 
 

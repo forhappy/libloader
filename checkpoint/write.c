@@ -9,6 +9,12 @@ post_write(const struct syscall_regs * regs)
 	return 0;
 }
 
+int SCOPE
+replay_write(const struct syscall_regs * regs)
+{
+	return read_int32();
+}
+
 #else
 
 void

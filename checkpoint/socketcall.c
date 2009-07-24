@@ -4,6 +4,13 @@
 
 #include "socketcall.h"
 
+/* memcmp */
+#ifdef IN_INJECTOR
+# include "string_32.h"
+#else
+# define __builtin_memcmp
+#endif
+
 /* Argument list sizes for sys_socketcall */
 #define AL(x) ((x) * sizeof(unsigned long))
 static const unsigned char nargs[18]={
@@ -68,6 +75,54 @@ post_socketcall(const struct syscall_regs * regs)
 	__exit(-1);
 	return 0;
 }
+
+int SCOPE
+replay_socketcall(const struct syscall_regs * regs)
+{
+	int call = read_int32();
+	int eax = read_int32();
+	ASSERT(call == regs->ebx, "");
+	uint32_t args = regs->ecx;
+
+	unsigned long a0, a1, a2, a[6];
+
+	uint32_t retval = eax;
+	read_mem(a, nargs[call]);
+	ASSERT(memcmp(a, (void*)args, nargs[call]) == 0, "!@!@#\n");
+
+	a0 = a[0];
+	a1 = a[1];
+	a2 = a[2];
+
+	switch (call) {
+		case SYS_SOCKET:
+			return replay_socket(a0, a1, a2, retval);
+		case SYS_BIND:
+			return replay_bind(a0, a1, a2, retval);
+		case SYS_GETSOCKNAME:
+			return replay_getsockname(a0, a1, a2, retval);
+		case SYS_SENDTO:
+			return replay_sendto(a0, a1, a2, a[3], a[4], a[5], retval);
+		case SYS_RECVFROM:
+			return replay_recvfrom(a0, a1, a2, a[3], a[4], a[5], retval);
+		case SYS_RECVMSG:
+			return replay_recvmsg(a0, a1, a2, retval);
+		case SYS_CONNECT:
+			return replay_connect(a0, a1, a2, retval);
+		case SYS_RECV:
+			return replay_recv(a0, a1, a2, a[3], retval);
+		case SYS_GETPEERNAME:
+			return replay_getpeername(a0, a1, a2, retval);
+		default:
+			INJ_WARNING("Unknown socket call: %d\n", call);
+			__exit(-1);
+	}
+
+	__exit(-1);
+	return eax;
+}
+
+
 
 #else
 

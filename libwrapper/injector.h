@@ -110,7 +110,7 @@ asm (".L__X'%ebx = 1\n\t"
 	 	retval;							\
 	 })
 
-#define INTERNAL_SYSCALL_6(name, enter_kernal, arg1, arg2, arg3, arg4, arg5, arg6)	\
+#define __INTERNAL_SYSCALL_6(name, enter_kernal, arg1, arg2, arg3, arg4, arg5, arg6)	\
 	     ({								\
 	      	register int32_t retval;				\
 		int32_t _xv1, _xv2;					\
@@ -140,6 +140,7 @@ asm (".L__X'%ebx = 1\n\t"
 #define INTERNAL_SYSCALL_3(name, args...)	INTERNAL_SYSCALL_0_5(name, "call __vsyscall\n", 3, args)
 #define INTERNAL_SYSCALL_4(name, args...)	INTERNAL_SYSCALL_0_5(name, "call __vsyscall\n", 4, args)
 #define INTERNAL_SYSCALL_5(name, args...)	INTERNAL_SYSCALL_0_5(name, "call __vsyscall\n", 5, args)
+#define INTERNAL_SYSCALL_6(name, args...)	__INTERNAL_SYSCALL_6(name, "call __vsyscall\n", args)
 
 
 #define INTERNAL_SYSCALL_int80(name, nr, args...)	\
@@ -151,7 +152,7 @@ asm (".L__X'%ebx = 1\n\t"
 #define INTERNAL_SYSCALL_int80_3(name, args...)	INTERNAL_SYSCALL_0_5(name, "int $0x80\n", 3, args)
 #define INTERNAL_SYSCALL_int80_4(name, args...)	INTERNAL_SYSCALL_0_5(name, "int $0x80\n", 4, args)
 #define INTERNAL_SYSCALL_int80_5(name, args...)	INTERNAL_SYSCALL_0_5(name, "int $0x80\n", 5, args)
-#define INTERNAL_SYSCALL_int80_6(name, args...)	INTERNAL_SYSCALL_6(name, "int $0x80\n", args)
+#define INTERNAL_SYSCALL_int80_6(name, args...)	__INTERNAL_SYSCALL_6(name, "int $0x80\n", args)
 
 extern SCOPE int self_pid;
 extern SCOPE char logger_filename[];

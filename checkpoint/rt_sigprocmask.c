@@ -1,5 +1,8 @@
 
 #include "syscalls.h"
+#ifdef IN_INJECTOR
+# include "injector.h"
+#endif
 
 
 #define SIG_BLOCK          0	/* for blocking signals */
@@ -105,6 +108,26 @@ post_rt_sigprocmask(const struct syscall_regs * regs)
 	return 0;
 }
 
+int SCOPE
+replay_rt_sigprocmask(const struct syscall_regs * regs)
+{
+	int32_t ret = read_int32();
+	if (ret == 0) {
+		int sigsetsize = read_int32();
+		ASSERT(sigsetsize == regs->esi, "");
+		if (sigsetsize == sizeof(k_sigset_t)) {
+			int oset = read_int32();
+			ASSERT(oset == regs->edx, "");
+			if (oset)
+				read_mem(oset, sigsetsize);
+		}
+#ifdef IN_INJECTOR
+		INTERNAL_SYSCALL(sigprocmask, 3,
+				regs->ebx, regs->ecx, regs->edx);
+#endif
+	}
+	return ret;
+}
 #else
 
 void

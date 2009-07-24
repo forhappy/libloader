@@ -13,6 +13,17 @@ post_getdents64(const struct syscall_regs * regs)
 	return 0;
 }
 
+int SCOPE
+replay_getdents64(const struct syscall_regs * regs)
+{
+	int eax = read_int32();
+	if (eax >= 0) {
+		read_mem(regs->ecx, eax);
+	}
+	return eax;
+}
+
+
 #else
 
 void

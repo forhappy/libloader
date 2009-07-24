@@ -11,9 +11,13 @@
 
 
 #ifndef IN_INJECTOR
-#include <stdio.h>
-#include <stdlib.h>
+# include <stdio.h>
+# include <stdlib.h>
+#else
+# include "injector_debug.h"
 #endif
+
+
 
 SCOPE struct state_vector state_vector = {
 	.dummy	= 0,
@@ -157,6 +161,28 @@ after_syscall(const struct syscall_regs * regs)
 
 	if (syscall_table[regs->orig_eax].post_handler != NULL) {
 		return syscall_table[regs->orig_eax].post_handler(regs);
+	} else {
+		__printf("no such syscall post-handler: %d\n", regs->orig_eax);
+		__exit(0);
+	}
+	return 0;
+}
+
+SCOPE uint32_t
+replay_syscall(const struct syscall_regs * regs)
+{
+	if (regs->orig_eax >= NR_SYSCALLS) {
+		__printf("no such syscall: %d\n", regs->orig_eax);
+		__exit(0);
+	}
+
+	/* read from logger, check */
+	uint32_t nr = read_uint32();
+	ASSERT(nr == regs->orig_eax, "logger mismatch: new syscall should be %d, but actually %d",
+				nr, regs->orig_eax);
+	
+	if (syscall_table[regs->orig_eax].replay_handler != NULL) {
+		return (uint32_t)(syscall_table[regs->orig_eax].replay_handler(regs));
 	} else {
 		__printf("no such syscall post-handler: %d\n", regs->orig_eax);
 		__exit(0);

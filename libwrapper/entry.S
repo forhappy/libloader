@@ -69,6 +69,8 @@ __debug_entry:
 	   the top of the stack */
 	/* according to the gcc register saving protocal, caller
 	   need to save only 3 registers. however I forget which 3.  */
+	/* gs is special, at least in 2.6.25.15, ptrace cannot reset gs
+	   for the target. debug_dntry should do this */
 
 	pushl %edi
 	pushl %esi

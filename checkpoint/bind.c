@@ -8,6 +8,13 @@ post_bind(int fd, uint32_t umyaddr, int addrlen, int retval)
 	return 0;
 }
 
+int SCOPE
+replay_bind(int fd, uint32_t umyaddr, int addrlen, int retval)
+{
+	return retval;
+}
+
+
 #else
 
 void SCOPE

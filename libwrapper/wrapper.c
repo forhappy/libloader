@@ -74,7 +74,10 @@ wrapped_syscall(const struct syscall_regs r)
 		/* in the assembly code, we have modify the 'eax'. */
 	} else {
 		INJ_TRACE("syscall, eax=%d\n", r.eax);
-		while(1);
+		uint32_t retval;
+		retval = replay_syscall(&r);
+		/* here we force to reset the eax */
+		(((volatile struct syscall_regs *)&r)->eax) = retval;
 	}
 }
 

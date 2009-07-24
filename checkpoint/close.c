@@ -9,6 +9,13 @@ post_close(const struct syscall_regs * regs)
 	return 0;
 }
 
+int SCOPE
+replay_close(const struct syscall_regs * regs)
+{
+	return read_int32();
+}
+
+
 #else
 
 void

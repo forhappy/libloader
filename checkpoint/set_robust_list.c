@@ -13,6 +13,22 @@ post_set_robust_list(const struct syscall_regs * regs)
 	return 0;
 }
 
+int SCOPE
+replay_set_robust_list(const struct syscall_regs * regs)
+{
+	int32_t eax = read_int32();
+	if (eax >= 0) {
+#ifdef IN_INJECTOR
+		int32_t ret;
+		ret = INTERNAL_SYSCALL(set_robust_list, 2,
+				regs->ebx, regs->ecx);
+		ASSERT(ret == eax, "!@!@#\n");
+#endif
+	}
+	return eax;
+}
+
+
 #else
 
 void

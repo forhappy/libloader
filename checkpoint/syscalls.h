@@ -24,7 +24,8 @@ __BEGIN_DECLS
 	extern SCOPE int pre_##name(const struct syscall_regs * regs)
 
 #define define_post_handler(name)	\
-	extern SCOPE int post_##name(const struct syscall_regs * regs)
+	extern SCOPE int post_##name(const struct syscall_regs * regs);	\
+	extern SCOPE int replay_##name(const struct syscall_regs * regs)
 #else
 #define define_pre_handler(name)
 #define define_post_handler(name)	\

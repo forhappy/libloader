@@ -19,6 +19,22 @@ post_set_thread_area(const struct syscall_regs * regs)
 	return 0;
 }
 
+int SCOPE
+replay_set_thread_area(const struct syscall_regs * regs)
+{
+	int32_t eax = read_int32();
+	if (eax >= 0) {
+		read_mem(regs->ebx, sizeof(struct user_desc));
+#ifdef IN_INJECTOR
+		int32_t ret;
+		ret = INTERNAL_SYSCALL(set_thread_area, 1,
+				regs->ebx);
+		ASSERT(ret == eax, "!@#@\n");
+#endif
+	}
+	return eax;
+}
+
 #else
 
 void

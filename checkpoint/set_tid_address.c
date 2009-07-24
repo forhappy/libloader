@@ -12,6 +12,19 @@ post_set_tid_address(const struct syscall_regs * regs)
 	return 0;
 }
 
+int SCOPE
+replay_set_tid_address(const struct syscall_regs * regs)
+{
+	int32_t eax = read_int32();
+	if (eax >= 0) {
+#ifdef IN_INJECTOR
+		INTERNAL_SYSCALL(set_tid_address, 1,
+				regs->ebx);
+#endif
+	}
+	return eax;
+}
+
 #else
 
 void

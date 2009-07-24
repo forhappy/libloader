@@ -8,6 +8,13 @@ post_connect(int fd, uint32_t uservaddr, int addrlen, int retval)
 	return 0;
 }
 
+int SCOPE
+replay_connect(int fd, uint32_t uservaddr, int addrlen, int retval)
+{
+	return retval;
+}
+
+
 #else
 
 void SCOPE

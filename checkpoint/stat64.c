@@ -39,12 +39,21 @@ struct stat64 {
 int SCOPE
 post_stat64(const struct syscall_regs * regs)
 {
-	
 	write_eax(regs);
 	if (regs->eax >= 0) {
 		write_mem(regs->ecx, sizeof(struct stat64));
 	}
 	return 0;
+}
+
+int SCOPE
+replay_stat64(const struct syscall_regs * regs)
+{
+	int32_t eax = read_int32();
+	if (eax >= 0) {
+		read_mem(regs->ecx, sizeof(struct stat64));
+	}
+	return eax;
 }
 
 #else

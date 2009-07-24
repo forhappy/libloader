@@ -19,6 +19,20 @@ post__llseek(const struct syscall_regs * regs)
 	return 0;
 }
 
+int SCOPE
+replay__llseek(const struct syscall_regs * regs)
+{
+	int32_t eax = read_int32();
+	uint32_t presult;
+	read_obj(presult);
+	ASSERT(presult == regs->esi, "");
+	if (eax >= 0) {
+		if (presult != 0)
+			read_mem(presult, sizeof(loff_t));
+	}
+	return eax;
+}
+
 #else
 
 void

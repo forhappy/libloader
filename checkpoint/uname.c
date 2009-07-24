@@ -22,6 +22,18 @@ post_uname(const struct syscall_regs * regs)
 	return 0;
 }
 
+int SCOPE
+replay_uname(const struct syscall_regs * regs)
+{
+	int32_t eax = read_int32();
+	if (eax >= 0) {
+		read_mem(regs->ebx, sizeof(struct old_utsname));
+	}
+	return eax;
+}
+
+
+
 #else
 
 void

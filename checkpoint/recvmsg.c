@@ -50,6 +50,37 @@ post_recvmsg(int fd, uint32_t msg, uint32_t flags, int retval)
 	return 0;
 }
 
+int SCOPE
+replay_recvmsg(int fd, uint32_t msg, uint32_t flags, int retval)
+{
+	/* don't check retval, save everything */
+
+	struct msghdr hdr;
+
+	read_mem(msg, sizeof(struct msghdr));
+	hdr.msg_name = 0;
+	__dup_mem(&hdr, msg, sizeof(hdr));
+
+	if (hdr.msg_name != 0)
+		read_mem(hdr.msg_name, hdr.msg_namelen);
+
+	/* iovs */
+	struct iovec * vecs;
+	int iov_len = hdr.msg_iovlen;
+#ifdef IN_INJECTOR
+	vecs = (void*)hdr.msg_iov;
+#else
+	vecs = alloca(SZ_IOVS);
+	__dup_mem(vecs, hdr.msg_iov, SZ_IOVS);
+#endif
+	read_mem(hdr.msg_iov, SZ_IOVS);
+	/* for each iov, save the data */
+	for (int i = 0; i < iov_len; i++)
+		read_mem(vecs[i].iov_base, vecs[i].iov_len);
+	return retval;
+}
+
+
 #else
 
 void SCOPE

@@ -23,24 +23,33 @@
 
 extern SCOPE int
 post_socket(int family, int type, int protocol, int retval);
+extern SCOPE int
+replay_socket(int family, int type, int protocol, int retval);
 
 extern void
 output_socket(int family, int type, int protocol, int retval);
 
 extern int SCOPE
 post_bind(int fd, uint32_t umyaddr, int addrlen, int retval);
+extern int SCOPE
+replay_bind(int fd, uint32_t umyaddr, int addrlen, int retval);
 
 extern void SCOPE
 output_bind(int fd, uint32_t umyaddr, int addrlen, int retval);
 
 extern int SCOPE
 post_getsockname(int fd, uint32_t usockaddr, uint32_t usockaddr_len, int retval);
+extern int SCOPE
+replay_getsockname(int fd, uint32_t usockaddr, uint32_t usockaddr_len, int retval);
 
 extern void SCOPE
 output_getsockname(int fd, uint32_t usockaddr, uint32_t usockaddr_len, int retval);
 
 extern int SCOPE
 post_sendto(int fd, uint32_t buff, uint32_t len, uint32_t flags,
+		uint32_t addr, uint32_t addr_len, int retval);
+extern int SCOPE
+replay_sendto(int fd, uint32_t buff, uint32_t len, uint32_t flags,
 		uint32_t addr, uint32_t addr_len, int retval);
 
 extern void SCOPE
@@ -51,6 +60,10 @@ extern int SCOPE
 post_recvfrom(int fd, uint32_t ubuf, uint32_t size,
 		uint32_t flags, uint32_t addr,
 		uint32_t addr_len, int retval);
+extern int SCOPE
+replay_recvfrom(int fd, uint32_t ubuf, uint32_t size,
+		uint32_t flags, uint32_t addr,
+		uint32_t addr_len, int retval);
 
 extern void SCOPE
 output_recvfrom(int fd, uint32_t ubuf, uint32_t size,
@@ -59,24 +72,32 @@ output_recvfrom(int fd, uint32_t ubuf, uint32_t size,
 
 extern int SCOPE
 post_recvmsg(int fd, uint32_t msg, uint32_t flags, int retval);
+extern int SCOPE
+replay_recvmsg(int fd, uint32_t msg, uint32_t flags, int retval);
 
 extern void SCOPE
 output_recvmsg(int fd, uint32_t msg, uint32_t flags, int retval);
 
 extern int SCOPE
 post_connect(int fd, uint32_t uservaddr, int addrlen, int retval);
+extern int SCOPE
+replay_connect(int fd, uint32_t uservaddr, int addrlen, int retval);
 
 extern void SCOPE
 output_connect(int fd, uint32_t uservaddr, int addrlen, int retval);
 
 extern int SCOPE
 post_recv(int fd, uint32_t ubuf, uint32_t size, uint32_t flags, int retval);
+extern int SCOPE
+replay_recv(int fd, uint32_t ubuf, uint32_t size, uint32_t flags, int retval);
 
 extern void SCOPE
 output_recv(int fd, uint32_t ubuf, uint32_t size, uint32_t flags, int retval);
 
 extern int SCOPE
 post_getpeername(int fd, uint32_t usockaddr, uint32_t usockaddr_len, int retval);
+extern int SCOPE
+replay_getpeername(int fd, uint32_t usockaddr, uint32_t usockaddr_len, int retval);
 
 extern void SCOPE
 output_getpeername(int fd, uint32_t usockaddr, uint32_t usockaddr_len, int retval);

@@ -15,6 +15,20 @@ post_getsockname(int fd, uint32_t usockaddr, uint32_t usockaddr_len, int retval)
 	return 0;
 }
 
+int SCOPE
+replay_getsockname(int fd, uint32_t usockaddr, uint32_t usockaddr_len, int retval)
+{
+	if (retval < 0)
+		return retval;
+
+	read_mem(usockaddr_len, sizeof(uint32_t));
+	uint32_t len;
+	__dup_mem(&len, usockaddr_len, sizeof(len));
+	read_mem(usockaddr, len);
+	return retval;
+}
+
+
 #else
 
 void SCOPE

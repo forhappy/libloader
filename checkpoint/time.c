@@ -18,6 +18,17 @@ post_time(const struct syscall_regs * regs)
 	return 0;
 }
 
+int SCOPE
+replay_time(const struct syscall_regs * regs)
+{
+	int32_t eax = read_int32();
+	int32_t ebx = read_int32();
+	ASSERT(ebx == regs->ebx, "");
+	if (ebx != 0)
+		read_mem(ebx, sizeof(time_t));
+	return eax;
+}
+
 #else
 
 void

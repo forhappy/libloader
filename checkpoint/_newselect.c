@@ -35,6 +35,36 @@ post__newselect(const struct syscall_regs * regs)
 	return 0;
 }
 
+int SCOPE
+replay__newselect(const struct syscall_regs * regs)
+{
+	int32_t eax = read_int32();
+	int n;
+	uint32_t inp;
+	uint32_t outp;
+	uint32_t exp;
+
+	read_obj(n);
+	read_obj(inp);
+	read_obj(outp);
+	read_obj(exp);
+
+	ASSERT(n == regs->ebx, "");
+	ASSERT(inp == regs->ecx, "");
+	ASSERT(outp == regs->edx, "");
+	ASSERT(exp == regs->esi, "");
+	if (eax > 0) {
+		int fd_bytes = FDS_BYTES(n);
+		if (inp != 0)
+			read_mem(inp, fd_bytes);
+		if (outp != 0)
+			read_mem(outp, fd_bytes);
+		if (exp != 0)
+			read_mem(exp, fd_bytes);
+	}
+	return eax;
+}
+
 #else
 
 void

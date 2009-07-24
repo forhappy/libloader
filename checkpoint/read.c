@@ -13,6 +13,16 @@ post_read(const struct syscall_regs * regs)
 	return 0;
 }
 
+int SCOPE
+replay_read(const struct syscall_regs * regs)
+{
+	int32_t eax = read_int32();	
+	if (eax > 0)
+		read_mem(regs->ecx, eax);
+	return eax;
+}
+
+
 #else
 
 void

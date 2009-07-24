@@ -11,6 +11,11 @@ post_brk(const struct syscall_regs * regs)
 	return 0;
 }
 
+int SCOPE
+replay_brk(const struct syscall_regs * regs)
+{
+	return read_int32();
+}
 #else
 
 void

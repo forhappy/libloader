@@ -33,6 +33,7 @@ post_sigprocmask(const struct syscall_regs * regs)
 		int how = regs->ebx;
 		uintptr_t set = regs->ecx;
 		uintptr_t oset = regs->edx;
+		write_obj(oset);
 		if (set) {
 			uint32_t new_set;
 			__dup_mem(&new_set, set, sizeof(new_set));
@@ -56,7 +57,6 @@ post_sigprocmask(const struct syscall_regs * regs)
 			}
 		}
 
-		write_obj(oset);
 		if (oset) {
 			if (set == 0) {
 				uint32_t set;
@@ -67,6 +67,26 @@ post_sigprocmask(const struct syscall_regs * regs)
 		}
 	}
 	return 0;
+}
+
+int SCOPE
+replay_sigprocmask(const struct syscall_regs * regs)
+{
+	int32_t eax = read_int32();
+	if (eax >= 0) {
+		uintptr_t oset = read_uint32();
+		ASSERT(regs->edx == oset, "");
+		if (oset != 0) {
+			read_mem(oset, sizeof(uint32_t));
+		}
+#ifdef IN_INJECTOR
+		int32_t ret;
+		ret = INTERNAL_SYSCALL(sigprocmask, 3,
+				regs->ebx, regs->ecx, regs->edx);
+		ASSERT(ret == eax, "!@#!@#\n");
+#endif
+	}
+	return eax;
 }
 
 #else

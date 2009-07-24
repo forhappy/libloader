@@ -25,6 +25,29 @@ post_recvfrom(int fd, uint32_t ubuf, uint32_t size,
 	return 0;
 }
 
+int SCOPE
+replay_recvfrom(int fd, uint32_t ubuf, uint32_t size,
+		uint32_t flags, uint32_t addr,
+		uint32_t addr_len, int retval)
+{
+	read_mem(ubuf, size);
+	if (retval >= 0) {
+		if (addr != 0) {
+			if (addr_len == 0) {
+				INJ_WARNING("that shouldn't happen\n");
+				__exit(-1);
+			}
+
+			read_mem(addr_len, sizeof(uint32_t));
+			uint32_t l;
+			__dup_mem(&l, addr_len, sizeof(l));
+			read_mem(addr, l);
+		}
+	}
+	return retval;
+}
+
+
 #else
 
 void SCOPE

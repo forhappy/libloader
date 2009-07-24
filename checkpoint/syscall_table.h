@@ -36,6 +36,7 @@ struct syscall_tabent {
 #ifndef SYSCALL_PRINTER
 	syscall_handler_t pre_handler;
 	syscall_handler_t post_handler;
+	syscall_handler_t replay_handler;
 #else
 	syscall_output_t output_handler;
 #endif

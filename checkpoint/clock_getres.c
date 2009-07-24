@@ -21,6 +21,17 @@ post_clock_getres(const struct syscall_regs * regs)
 	return 0;
 }
 
+int SCOPE
+replay_clock_getres(const struct syscall_regs * regs)
+{
+	int32_t eax;
+	eax = read_int32();
+	if (eax >= 0) {
+		read_mem(regs->ecx, sizeof(struct k_timespec));
+	}
+	return eax;
+}
+
 #else
 
 void

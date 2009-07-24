@@ -320,6 +320,9 @@ pre_tty_ioctl(int fd, uint32_t cmd, uint32_t arg);
 extern SCOPE int
 post_tty_ioctl(int fd, uint32_t cmd, uint32_t arg);
 
+extern SCOPE int
+replay_tty_ioctl(int fd, uint32_t cmd, uint32_t arg);
+
 extern SCOPE void
 output_tty_ioctl(int fd, uint32_t cmd, uint32_t arg);
 

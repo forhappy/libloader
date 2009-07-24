@@ -11,6 +11,14 @@ post_open(const struct syscall_regs * regs)
 	return 0;
 }
 
+int SCOPE
+replay_open(const struct syscall_regs * regs)
+{
+	return read_int32();
+}
+
+
+
 #else
 
 void

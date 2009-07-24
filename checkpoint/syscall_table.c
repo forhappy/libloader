@@ -14,7 +14,7 @@ dummy(const struct syscall_regs * regs)
 
 #ifndef SYSCALL_PRINTER
 # define def_syscall_entry(name, pre)	\
-	[__NR_##name] = {pre, &post_##name}
+	[__NR_##name] = {pre, &post_##name, &replay_##name}
 #else
 # define def_syscall_entry(name, pre)	\
 	[__NR_##name] = {&output_##name}
@@ -54,7 +54,7 @@ SCOPE struct syscall_tabent syscall_table[] = {
 	def_syscall_entry(lstat64, NULL),
 	def_syscall_entry(unlink, NULL),
 #ifndef SYSCALL_PRINTER
-	[NR_SYSCALLS]	= {NULL, NULL},
+	[NR_SYSCALLS]	= {NULL, NULL, NULL},
 #else
 	[NR_SYSCALLS]	= {NULL},
 #endif

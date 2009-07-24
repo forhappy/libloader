@@ -8,6 +8,13 @@ post_socket(int family, int type, int protocol, int retval)
 	return 0;
 }
 
+int SCOPE
+replay_socket(int family, int type, int protocol, int retval)
+{
+	return retval;
+}
+
+
 #else
 
 void SCOPE

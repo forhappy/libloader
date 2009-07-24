@@ -1,5 +1,8 @@
 
 #include "syscalls.h"
+#ifdef IN_INJECTOR
+# include "injector.h"
+#endif
 
 #ifndef SYSCALL_PRINTER
 
@@ -14,6 +17,15 @@ int SCOPE
 post_exit_group(const struct syscall_regs * regs)
 {
 	/* placeholder */
+	return 0;
+}
+
+int SCOPE
+replay_exit_group(const struct syscall_regs * regs)
+{
+#ifdef IN_INJECTOR
+	INTERNAL_SYSCALL(exit_group, 1, regs->eax);
+#endif
 	return 0;
 }
 

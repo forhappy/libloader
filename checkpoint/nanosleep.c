@@ -21,6 +21,18 @@ post_nanosleep(const struct syscall_regs * regs)
 	return 0;
 }
 
+int SCOPE
+replay_nanosleep(const struct syscall_regs * regs)
+{
+	int32_t eax = read_int32();
+	uintptr_t o = regs->ecx;
+	read_obj(o);
+	if (o != 0)
+		read_mem(o, sizeof(struct k_timespec));
+	return eax;
+}
+
+
 #else
 
 void

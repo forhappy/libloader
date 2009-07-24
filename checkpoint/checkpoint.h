@@ -37,6 +37,10 @@ __BEGIN_DECLS
 # define __exit(x) THROW(EXCEPTION_FATAL, "checkpoint exit")
 # define __dup_mem(d, s, sz) ptrace_dupmem(d, s, sz)
 
+/* temporarily define read_obj */
+# define read_obj(x)	do {memset(&x, '\0', sizeof(x));} while(0)
+# define read_mem(dst, sz)	do {memset((void*)dst, '\0', sz);} while(0)
+
 extern int SCOPE logger_fd;
 
 # define write_mem(addr, sz) do {	\
@@ -65,6 +69,17 @@ extern int SCOPE logger_fd;
 
 # define write_mem(addr, sz) do {	\
 	__write(logger_fd, addr, sz);	\
+} while(0)
+
+
+# define read_obj(x) do {	\
+	int err;	\
+	err = __read(logger_fd, &x, sizeof(x));\
+	ASSERT(err == sizeof(x), "read failed: %d != %d\n", err, sizeof(x));\
+} while(0)
+
+# define read_mem(dst, sz)	do {	\
+	__read(logger_fd, (void*)(dst), (sz));	\
 } while(0)
 
 #endif	/* IN_INJECTOR */
@@ -168,9 +183,16 @@ checkpoint_init(void);
 extern void
 read_logger(void * buffer, int sz);
 
+#ifdef read_obj
+# undef read_obj
+#endif
+
 #define read_obj(x) read_logger(&(x), sizeof(x))
-#define read_eax() ({int32_t eax; read_obj(eax); eax;})
 #define read_regs(r)	read_obj(r)
+
+#ifdef read_mem
+# undef read_mem
+#endif
 
 #define read_mem(d, sz)	do {	\
 	read_logger(d, sz);	\
@@ -181,6 +203,12 @@ read_logger(void * buffer, int sz);
 #endif
 
 #define CKPT_MAGIC	(0x54504b43)
+
+#ifdef read_obj
+# define read_eax() ({int32_t eax; read_obj(eax); eax;})
+# define read_int32() ({int32_t v; read_obj(v); v;})
+# define read_uint32() ({uint32_t v; read_obj(v); v;})
+#endif
 
 extern SCOPE void
 make_checkpoint(const char * ckpt_fn, struct syscall_regs * r);
@@ -196,6 +224,9 @@ before_syscall(const struct syscall_regs * regs);
 
 extern SCOPE int
 after_syscall(const struct syscall_regs * regs);
+
+SCOPE uint32_t
+replay_syscall(const struct syscall_regs * regs);
 
 extern SCOPE char *
 readline(int fd);
