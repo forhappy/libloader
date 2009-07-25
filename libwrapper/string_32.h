@@ -115,7 +115,6 @@ static __always_inline void * __constant_memcpy(void * to, const void * from, si
 
 void *memmove(void * dest,const void * src, size_t n);
 
-#define memcmp __builtin_memcmp
 
 extern void *memchr(const void * cs,int c,size_t count);
 
@@ -160,6 +159,9 @@ return (s);
 /* Added by Gertjan van Wingerde to make minix and sysv module work */
 extern SCOPE size_t
 strnlen(const char *s, size_t count);
+
+extern SCOPE int
+memcmp (const void *A1, const void *A2, size_t SIZE);
 
 
 /* end of additional stuff */

@@ -214,16 +214,16 @@ gdbloader_main(const char * target_fn)
 	/* we have to restore register here... */
 	SYS_FORCE("eip=0x%x\n", cf->state->regs.eip);
 	ptrace_pokeuser(cf->state->regs);
-	SYS_FATAL("eax=0x%x\n", cf->state->regs.eax);
-	SYS_FATAL("ebx=0x%x\n", cf->state->regs.ebx);
-	SYS_FATAL("ecx=0x%x\n", cf->state->regs.ecx);
-	SYS_FATAL("edx=0x%x\n", cf->state->regs.edx);
-	SYS_FATAL("esi=0x%x\n", cf->state->regs.esi);
-	SYS_FATAL("edi=0x%x\n", cf->state->regs.edi);
-	SYS_FATAL("ebp=0x%x\n", cf->state->regs.ebp);
-	SYS_FATAL("esp=0x%x\n", cf->state->regs.esp);
-	SYS_FATAL("gs=0x%x\n", cf->state->regs.gs);
-	SYS_FATAL("es=0x%x\n", cf->state->regs.es);
+	SYS_TRACE("eax=0x%x\n", cf->state->regs.eax);
+	SYS_TRACE("ebx=0x%x\n", cf->state->regs.ebx);
+	SYS_TRACE("ecx=0x%x\n", cf->state->regs.ecx);
+	SYS_TRACE("edx=0x%x\n", cf->state->regs.edx);
+	SYS_TRACE("esi=0x%x\n", cf->state->regs.esi);
+	SYS_TRACE("edi=0x%x\n", cf->state->regs.edi);
+	SYS_TRACE("ebp=0x%x\n", cf->state->regs.ebp);
+	SYS_TRACE("esp=0x%x\n", cf->state->regs.esp);
+	SYS_TRACE("gs=0x%x\n", cf->state->regs.gs);
+	SYS_TRACE("es=0x%x\n", cf->state->regs.es);
 
 	/* we push eip at the top of the new stack */
 	ptrace_push(&cf->state->regs.eip, sizeof(uint32_t), FALSE);

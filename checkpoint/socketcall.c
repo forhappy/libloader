@@ -8,7 +8,7 @@
 #ifdef IN_INJECTOR
 # include "string_32.h"
 #else
-# define __builtin_memcmp
+# define memcmp __builtin_memcmp
 #endif
 
 /* Argument list sizes for sys_socketcall */
@@ -88,11 +88,13 @@ replay_socketcall(const struct syscall_regs * regs)
 
 	uint32_t retval = eax;
 	read_mem(a, nargs[call]);
+	INJ_TRACE("socketcall 0x%x\n", call);
 	ASSERT(memcmp(a, (void*)args, nargs[call]) == 0, "!@!@#\n");
 
 	a0 = a[0];
 	a1 = a[1];
 	a2 = a[2];
+
 
 	switch (call) {
 		case SYS_SOCKET:
