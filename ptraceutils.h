@@ -16,7 +16,7 @@
 __BEGIN_DECLS
 
 extern pid_t
-ptrace_execve(const char * filename, char ** argv);
+ptrace_execve(const char * filename, char ** argv, char ** environ);
 
 extern void
 ptrace_dupmem(void * dst, uintptr_t addr, int len);

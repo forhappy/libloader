@@ -170,7 +170,7 @@ gdbloader_main(const char * target_fn)
 	}
 
 	/* execve child */
-	child_pid = ptrace_execve(target_fn, cf->cmdline);
+	child_pid = ptrace_execve(target_fn, cf->cmdline, cf->environ);
 
 	/* inject memory */
 	/* before we inject memory, we need to restore heap */

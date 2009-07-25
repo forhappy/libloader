@@ -54,6 +54,9 @@ ADD_EXECUTABLE(target
 	target.c
 )
 
+ADD_EXECUTABLE(testloader
+	testloader.c)
+
 ADD_SUBDIRECTORY(checkpoint)
 
 ADD_EXECUTABLE(currf2

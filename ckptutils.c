@@ -15,7 +15,7 @@
 #include "ckptutils.h"
 #include "checkpoint/checkpoint.h"
 
-void
+static void
 ckpt_clup(struct cleanup * clup)
 {
 	remove_cleanup(clup);
@@ -27,25 +27,40 @@ ckpt_clup(struct cleanup * clup)
 	if (s->cmdline != NULL) {
 		free(s->cmdline);
 	}
+	if (s->environ != NULL) {
+		free(s->environ);
+	}
 	free(s);
 }
 
-void *
-build_cmdline(struct ckpt_file * s, void * cmdline)
+static char *
+build_strlst(char *** array, char * ptr)
 {
-	/* scan cmdline */
 	int len;
 	int nr_items = 0;
+
 	do {
 		nr_items ++;
-		s->cmdline = realloc(s->cmdline, nr_items * sizeof(char*));
-		s->cmdline[nr_items-1] = cmdline;
-		len = strlen(cmdline);
-		cmdline += len + 1;
+		*array = realloc(*array, nr_items * sizeof(char*));
+		(*array)[nr_items - 1] = ptr;
+		len = strlen(ptr);
+		ptr += len + 1;
 	} while (len != 0);
-	s->cmdline[nr_items-1] = NULL;
+	/* set the last item to NULL */
+	(*array)[nr_items - 1] = NULL;
+	return ptr;
+}
 
-	return cmdline;
+static void *
+build_cmd_env(struct ckpt_file * s, void * cmdline)
+{
+
+	char * ptr = cmdline;
+
+	ptr = build_strlst(&(s->cmdline), ptr);
+	ptr = build_strlst(&(s->environ), ptr);
+
+	return ptr;
 }
 
 struct ckpt_file *
@@ -83,7 +98,7 @@ load_ckpt_file(char * fn)
 
 	/* build cmdline */
 	void * p;
-	p = build_cmdline(s, ckpt_img + sizeof(CKPT_MAGIC));
+	p = build_cmd_env(s, ckpt_img + sizeof(CKPT_MAGIC));
 
 	/* set the state */
 	s->state = p;

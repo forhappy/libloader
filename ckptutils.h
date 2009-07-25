@@ -19,6 +19,7 @@ struct ckpt_file {
 	int nr_regions;
 	struct mem_region ** regions;
 	char ** cmdline;
+	char ** environ;
 	void * ckpt_img;
 };
 

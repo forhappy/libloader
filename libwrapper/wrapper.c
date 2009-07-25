@@ -209,8 +209,8 @@ debug_entry(void)
 		: "a" (state_vector.regs.gs));
 
 	/* spin */
-	volatile int xxx = 0;
-	while (xxx == 0);
+//	volatile int xxx = 0;
+//	while (xxx == 0);
 }
 
 

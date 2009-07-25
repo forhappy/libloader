@@ -307,7 +307,7 @@ currf2_main(int argc, char * argv[])
 	injector.h = elf_init(injector.m, opts->inj_bias);
 
 	/* execve child */
-	child_pid = ptrace_execve(target.fn, argv + opts->cmd_idx);
+	child_pid = ptrace_execve(target.fn, argv + opts->cmd_idx, environ);
 
 	/* dump stack */
 	struct user_regs_struct r;

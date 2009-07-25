@@ -193,7 +193,8 @@ replay_syscall(const struct syscall_regs * regs)
 #ifdef IN_INJECTOR
 
 static void ATTR(unused)
-do_make_checkpoint(int ckpt_fd, int maps_fd, int cmdline_fd, struct syscall_regs * r)
+do_make_checkpoint(int ckpt_fd, int maps_fd, int cmdline_fd, int environ_fd,
+		struct syscall_regs * r)
 {
 	uint32_t f_pos = 0;
 
@@ -203,13 +204,13 @@ do_make_checkpoint(int ckpt_fd, int maps_fd, int cmdline_fd, struct syscall_regs
 	f_pos += sizeof(magic);
 
 	/* write cmdline */
-	char cmdline_buf[512];
+	char str_buf[512];
 	{
 		int sz;
 		do {
-			sz = __read(cmdline_fd, cmdline_buf, 512);
+			sz = __read(cmdline_fd, str_buf, 512);
 			f_pos += sz;
-			__write(ckpt_fd, cmdline_buf, sz);
+			__write(ckpt_fd, str_buf, sz);
 		} while(sz > 0);
 
 		/* write a zero */
@@ -217,6 +218,23 @@ do_make_checkpoint(int ckpt_fd, int maps_fd, int cmdline_fd, struct syscall_regs
 		__write(ckpt_fd, &zero, sizeof(zero));
 		f_pos += sizeof(zero);
 	}
+
+	/* write environ */
+	{
+		int sz;
+		do {
+			sz = __read(environ_fd, str_buf, 512);
+			f_pos += sz;
+			__write(ckpt_fd, str_buf, sz);
+		} while(sz > 0);
+
+		/* write a zero */
+		uint8_t zero = '\0';
+		__write(ckpt_fd, &zero, sizeof(zero));
+		f_pos += sizeof(zero);
+	}
+
+
 
 	/* before we write mem regions, we first set all fields in state_vector, so
 	 * when we reload this ckpt, registers is valid in target, not only in the
@@ -336,7 +354,7 @@ SCOPE void
 make_checkpoint(const char * ckpt_fn, struct syscall_regs * r)
 {
 #ifdef IN_INJECTOR
-	int maps_fd, cmdline_fd, ckpt_fd;
+	int maps_fd, cmdline_fd, ckpt_fd, environ_fd;
 	maps_fd = INTERNAL_SYSCALL(open, 2,
 			"/proc/self/maps", O_RDONLY);
 	ASSERT(maps_fd > 0, "open self maps failed: %d", maps_fd);
@@ -345,15 +363,20 @@ make_checkpoint(const char * ckpt_fn, struct syscall_regs * r)
 			"/proc/self/cmdline", O_RDONLY);
 	ASSERT(cmdline_fd > 0, "open self cmdline failed: %d", cmdline_fd);
 
+	environ_fd = INTERNAL_SYSCALL(open, 2,
+			"/proc/self/environ", O_RDONLY);
+	ASSERT(environ_fd > 0, "open self environ failed: %d", environ_fd);
+
 	ckpt_fd = INTERNAL_SYSCALL(open, 3,
 			ckpt_fn, O_WRONLY|O_CREAT|O_TRUNC, 0666);
 	ASSERT(ckpt_fd > 0, "open ckpt file failed: %d\n", ckpt_fd);
 
-	do_make_checkpoint(ckpt_fd, maps_fd, cmdline_fd, r);
+	do_make_checkpoint(ckpt_fd, maps_fd, cmdline_fd, environ_fd, r);
 
 	INTERNAL_SYSCALL(close, 1, ckpt_fd);
 	INTERNAL_SYSCALL(close, 1, maps_fd);
 	INTERNAL_SYSCALL(close, 1, cmdline_fd);
+	INTERNAL_SYSCALL(close, 1, environ_fd);
 
 //	__exit(-1);
 	return;

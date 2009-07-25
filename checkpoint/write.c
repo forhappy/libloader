@@ -12,7 +12,13 @@ post_write(const struct syscall_regs * regs)
 int SCOPE
 replay_write(const struct syscall_regs * regs)
 {
-	return read_int32();
+	int32_t eax = read_int32();
+#ifdef IN_INJECTOR
+	if ((regs->ebx == 1) || (regs->ebx == 2))
+		INTERNAL_SYSCALL(write, 3,
+				regs->ebx, regs->ecx, regs->edx);
+#endif
+	return eax;
 }
 
 #else
