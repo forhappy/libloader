@@ -114,7 +114,14 @@ injector_entry(struct syscall_regs r,
 
 	logger_fd = 1023;
 
+	/* :NOTICE: */
+	/* We MUST adjust esp here. when loader call injector, it pushs
+	 * 3 int32_t onto stack, so the esp in 'r' cannot be used directly.
+	 */
+	r.esp += 12;
 	make_checkpoint(ckpt_filename, &r);
+	r.esp -= 12;
+
 	err = INTERNAL_SYSCALL(ftruncate, 2, logger_fd, 0);
 	ASSERT(err == 0, "ftruncate failed: %d\n", err);
 	INJ_TRACE("main ip=0x%x:0x%x\n", main_addr, r.eip);
@@ -158,6 +165,7 @@ SCOPE void
 debug_entry(void)
 {
 	/* this function never return */
+#if 0
 	uint32_t xxesp;
 	uint32_t xxeax;
 	uint32_t xxebx;
@@ -178,6 +186,7 @@ debug_entry(void)
 	INJ_FORCE("come into target code..., edx=0x%x\n", xxedx);
 	INJ_FORCE("come into target code..., esi=0x%x\n", xxesi);
 	INJ_FORCE("come into target code..., edi=0x%x\n", xxedi);
+#endif
 	/* from state_vector, restore state */
 	restore_state();
 	/* set replay to 1 */

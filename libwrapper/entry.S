@@ -41,6 +41,9 @@ syscall_wrapper_entry:
 	ret
 
 __entry:
+	/* before go int __entry, loader should have been pushed 3 things:
+	   (from high addr to low addr (the order of push)) should be:
+	   main_entry, old_vdso_ehdr, old_vdso_entry. */
 	pushl %esp
 	pushl 12(%esp)		/* eip */
 	pushl $0		/* orig_eax */
@@ -71,7 +74,7 @@ __debug_entry:
 	   need to save only 3 registers. however I forget which 3.  */
 	/* gs is special, at least in 2.6.25.15, ptrace cannot reset gs
 	   for the target. debug_dntry should do this */
-
+	pushf
 	pushl %edi
 	pushl %esi
 	pushl %edx
@@ -85,6 +88,7 @@ __debug_entry:
 	popl %edx
 	popl %esi
 	popl %edi
+	popf
 	ret
 
 

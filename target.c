@@ -8,8 +8,8 @@ static int global_data = 0;
 
 int main(int argc, char * argv[])
 {
-	volatile int x = 0;
-	while (x == 0);
+//	volatile int x = 0;
+//	while (x == 0);
 
 	printf("argv[0] is \"%s\", at %p\n", argv[0], &argv[0]);
 	/* check for breakpoint */
