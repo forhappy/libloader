@@ -28,9 +28,9 @@ int main(int argc, char * argv[])
 //		c = getchar();
 //		volatile int x = 1;
 //		while(x == 1);
-		sleep(1);
+//		sleep(1);
 		printf("%d, %c, global_data=%d\n", i++, c, global_data);
-		if (i == 3)
+		if (i == 1784705)
 			break;
 	}
 	return 0;

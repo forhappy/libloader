@@ -54,6 +54,9 @@ ADD_EXECUTABLE(target
 	target.c
 )
 
+SET_TARGET_PROPERTIES(target
+	PROPERTIES COMPILE_FLAGS "-g")
+
 #ADD_EXECUTABLE(testloader
 #	testloader.c)
 
