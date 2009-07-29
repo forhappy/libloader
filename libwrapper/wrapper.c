@@ -19,6 +19,8 @@ pid_t SCOPE self_pid = 0;
 
 static int replay = 0;
 
+static int logger_threshold = 10 << 20;	/* 10MB */
+
 SCOPE void
 show_help(void)
 {
@@ -72,6 +74,24 @@ wrapped_syscall(const struct syscall_regs r)
 				"m" (r.ebp));
 		after_syscall(&r);
 		/* in the assembly code, we have modify the 'eax'. */
+
+		/* check the logger sz */
+		INJ_TRACE("logger_sz = %d\n", logger_sz);
+		if (logger_sz > logger_threshold) {
+			int err;
+
+			/* we need to remake ckpt */
+			make_checkpoint(ckpt_filename, (struct syscall_regs *)(&r));
+
+			/* truncate logger file */
+			err = INTERNAL_SYSCALL(ftruncate, 2, logger_fd, 0);
+			ASSERT(err == 0, "ftruncate failed: %d\n", err);
+
+			/* reset logger_sz */
+			/* logger_sz have been reset in do_make_checkpoint */
+			/* logger_sz = 0; */
+		}
+
 	} else {
 		INJ_TRACE("syscall, eax=%d\n", r.eax);
 		uint32_t retval;
@@ -79,19 +99,22 @@ wrapped_syscall(const struct syscall_regs r)
 		/* here we force to reset the eax */
 		(((volatile struct syscall_regs *)&r)->eax) = retval;
 	}
-
-	INJ_TRACE("logger_sz = %d\n", logger_sz);
 }
 
 
 SCOPE void
 injector_entry(struct syscall_regs r,
-		uint32_t old_vdso_ventry, uint32_t old_vdso_vhdr, uint32_t main_addr)
+		uint32_t old_vdso_ventry, int threshold,
+		uint32_t main_addr)
 {
 	int err;
 
 	INJ_TRACE("Here! we come to injector!!!\n");
-	INJ_TRACE("0x%x, 0x%x, 0x%x\n", old_vdso_vhdr, old_vdso_ventry, main_addr);
+	INJ_TRACE("%d, 0x%x, 0x%x\n", threshold, old_vdso_ventry, main_addr);
+
+	ASSERT(threshold >= 4096, "logger threshold %d is strange\n", threshold);
+
+	logger_threshold = threshold;
 
 	self_pid = INTERNAL_SYSCALL(getpid, 0);
 
@@ -166,29 +189,6 @@ restore_state(void)
 SCOPE void
 debug_entry(void)
 {
-	/* this function never return */
-#if 0
-	uint32_t xxesp;
-	uint32_t xxeax;
-	uint32_t xxebx;
-	uint32_t xxecx;
-	uint32_t xxedx;
-	uint32_t xxesi;
-	uint32_t xxedi;
-	uint32_t xxebp;
-	asm volatile ("movl %%esp, %P0\n"
-			"movl %%ebp, %P1\n"
-			: "=m" (xxesp), "=a" (xxeax), 
-			  "=c" (xxecx), "=d" (xxedx), "=S" (xxesi),
-			  "=D" (xxedi), "=m" (xxebp));
-	INJ_FORCE("come into target code..., esp=0x%x\n", xxesp);
-	INJ_FORCE("come into target code..., ebp=0x%x\n", xxebp);
-	INJ_FORCE("come into target code..., eax=0x%x\n", xxeax);
-	INJ_FORCE("come into target code..., ecx=0x%x\n", xxecx);
-	INJ_FORCE("come into target code..., edx=0x%x\n", xxedx);
-	INJ_FORCE("come into target code..., esi=0x%x\n", xxesi);
-	INJ_FORCE("come into target code..., edi=0x%x\n", xxedi);
-#endif
 	/* from state_vector, restore state */
 	restore_state();
 	/* set replay to 1 */

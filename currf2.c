@@ -72,7 +72,6 @@ static void * stack_image = NULL;
 static uint32_t * pvdso_entry = NULL;
 static uint32_t * pvdso_ehdr = NULL;
 static uint32_t old_vdso_entry = 0;
-static uint32_t old_vdso_ehdr = 0;
 
 static void main_clup(struct cleanup * cleanup)
 {
@@ -154,7 +153,6 @@ find_vdso(void)
 	CTHROW(pvdso_ehdr != NULL, "cannot find vdso ehdr");
 	SYS_VERBOSE("vdso mapped at 0x%x, entry=0x%x\n",
 			*pvdso_ehdr, *pvdso_entry);
-	old_vdso_ehdr = *pvdso_ehdr;
 	old_vdso_entry = *pvdso_entry;
 }
 
@@ -395,8 +393,8 @@ currf2_main(int argc, char * argv[])
 	ptrace_push(&main_entry, sizeof(uint32_t), FALSE);
 
 
-	/* 2nd arg: old ehdr */
-	ptrace_push(&old_vdso_ehdr, sizeof(uint32_t), FALSE);
+	/* 2nd arg: logger_threshold */
+	ptrace_push(&(opts->logger_threshold), sizeof(uint32_t), FALSE);
 	/* 1st arg: old sysinfo addr */
 	ptrace_push(&old_vdso_entry, sizeof(uint32_t), FALSE);
 

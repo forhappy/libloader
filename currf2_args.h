@@ -12,6 +12,7 @@ struct opts {
 	char * state_vect;
 	char * ckpt_fn;	/* for gdbloader only */
 	uint32_t inj_bias;
+	int logger_threshold;
 	int cmd_idx;
 };
 

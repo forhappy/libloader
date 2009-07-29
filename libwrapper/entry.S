@@ -43,7 +43,7 @@ syscall_wrapper_entry:
 __entry:
 	/* before go int __entry, loader should have been pushed 3 things:
 	   (from high addr to low addr (the order of push)) should be:
-	   main_entry, old_vdso_ehdr, old_vdso_entry. */
+	   main_entry, logger_threshold, old_vdso_entry. */
 	pushl %esp
 	pushl 12(%esp)		/* eip */
 	pushl $0		/* orig_eax */

@@ -21,6 +21,7 @@ static struct argp_option options[] = {
 	{"entry",		'E', "entry",		0, "entry, \'__entry\' by default"},
 	{"vsyscall",	'e', "vsyscall",	0, "symbol which hold syscall, \'__vsyscall\' by default"},
 	{"statevect",	'v', "statevect",	0, "state_vect's symbol, \'state_vector\' by default"},
+	{"loggersize",	's', "size",		0, "logger size threshold, 10MB by default, at least 4kB"},
 	{NULL},
 };
 
@@ -31,6 +32,7 @@ static struct opts opts = {
 	.entry		= "__entry",
 	.old_vsyscall	= "__vsyscall",
 	.state_vect		= "state_vector",
+	.logger_threshold	= 10 << 20,
 };
 
 static error_t
@@ -38,6 +40,27 @@ parse_opt(int key, char *arg, struct argp_state *state)
 {
 	static int found_target = 0;
 	switch (key) {
+		case 's':
+			{
+				char * t, s;
+				errno = 0;
+				int sz = strtoul(arg, &t, 10);
+
+				s = toupper(*t);
+				if (s == 'K')
+					sz *= 1024;
+				if (s == 'M')
+					sz *= (1 << 20);
+
+				if ((sz < 4096) || (errno != 0)) {
+					printf("logger size parse error: at least 4kB\n");
+					argp_usage(state);
+					return EINVAL;
+				}
+
+				opts.logger_threshold = sz;
+			}
+			return 0;
 		case 'j':
 			opts.inj_so = arg;
 			return 0;
