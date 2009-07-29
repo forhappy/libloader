@@ -27,6 +27,7 @@ SCOPE struct state_vector state_vector = {
 };
 
 int SCOPE logger_fd = 0;
+uint32_t SCOPE logger_sz = 0;
 
 SCOPE char *
 readline(int fd)
@@ -353,6 +354,9 @@ do_make_checkpoint(int ckpt_fd, int maps_fd, int cmdline_fd, int environ_fd,
 	/* write zero, no more memory regions */
 	uint32_t zero = 0;
 	__write(ckpt_fd, &zero, sizeof(zero));
+
+	/* reset logger_sz */
+	logger_sz = 0;
 
 }
 #endif

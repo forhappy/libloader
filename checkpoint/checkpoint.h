@@ -55,6 +55,10 @@ extern int SCOPE logger_fd;
 		free(p);		\
 } while(0)
 
+# define __write_logger(__addr, __sz) do {	\
+	__write(logger_fd, (__addr), (__sz));	\
+} while(0)
+
 #else	/* IN_INJECTOR */
 # define __open(args...)	INTERNAL_SYSCALL(open, 3, args)
 # define __close(args)		INTERNAL_SYSCALL(close, 1, args)
@@ -66,9 +70,16 @@ extern int SCOPE logger_fd;
 # define __dup_mem(d, s, sz)	memcpy(d, (void*)s, sz)
 
 extern int SCOPE logger_fd;
+/* size of logger file */
+extern uint32_t SCOPE logger_sz;
+
+# define __write_logger(__addr, __sz) do {	\
+	logger_sz += (__sz);			\
+	__write(logger_fd, (__addr), (__sz));	\
+} while(0)
 
 # define write_mem(addr, sz) do {	\
-	__write(logger_fd, addr, sz);	\
+	__write_logger(addr, sz);	\
 } while(0)
 
 
@@ -96,25 +107,25 @@ extern int SCOPE logger_fd;
 
 # define write_syscall_nr(nr)	do {	\
 	uint32_t x_nr;	\
-	x_nr = nr;	\
-	__write(logger_fd, &x_nr, sizeof(x_nr));	\
+	x_nr = (nr);	\
+	__write_logger(&(x_nr), sizeof(x_nr));	\
 } while(0)
 
 # define write_regs(regs)	do {	\
-	__write(logger_fd, regs, sizeof(*regs));	\
+	__write_logger((regs), sizeof(*(regs)));	\
 } while(0)
 
 # define write_eax(regs)	do {	\
-	__write(logger_fd, &((regs)->eax), sizeof((regs)->eax));	\
+	__write_logger(&((regs)->eax), sizeof((regs)->eax));	\
 } while(0)
 
 # define write_int32(x) do { \
 	int32_t d = (x);	\
-	__write(logger_fd, &d, sizeof(d));\
+	__write_logger(&d, sizeof(d));\
 } while(0)
 
 # define write_obj(x) do { \
-	__write(logger_fd, &(x), sizeof(x));\
+	__write_logger(&(x), sizeof(x));\
 } while(0)
 
 #define GDT_ENTRY_TLS_MIN	6

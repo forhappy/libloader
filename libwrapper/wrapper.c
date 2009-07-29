@@ -79,6 +79,8 @@ wrapped_syscall(const struct syscall_regs r)
 		/* here we force to reset the eax */
 		(((volatile struct syscall_regs *)&r)->eax) = retval;
 	}
+
+	INJ_TRACE("logger_sz = %d\n", logger_sz);
 }
 
 
