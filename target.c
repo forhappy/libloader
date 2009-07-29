@@ -23,13 +23,15 @@ int main(int argc, char * argv[])
 	printf("argc=%d, argv[0]=%s\n",
 			argc, argv[0]);
 	int i = 1;
+//	FILE * fp = fopen("/dev/null", "w");
 	while(1) {
 		int c = 'x';
 //		c = getchar();
 //		volatile int x = 1;
 //		while(x == 1);
 //		sleep(1);
-		printf("%d, %c, global_data=%d\n", i++, c, global_data);
+		fprintf(stdout, "%d, %c, global_data=%d\n", i++, c, global_data);
+		fflush(stdout);
 		if (i == 1784705)
 			break;
 	}

@@ -81,7 +81,13 @@ wrapped_syscall(const struct syscall_regs r)
 			int err;
 
 			/* we need to remake ckpt */
+			INJ_WARNING("make ckpt: eip=0x%x\n", r.eip);
+			/* we still need to adjust esp:
+			 * when we come here, r.esp hold an 'ret' address for
+			 * coming 'ret'. */
+			((struct syscall_regs*)(&r))->esp += 4;
 			make_checkpoint(ckpt_filename, (struct syscall_regs *)(&r));
+			((struct syscall_regs*)(&r))->esp -= 4;
 
 			/* truncate logger file */
 			err = INTERNAL_SYSCALL(ftruncate, 2, logger_fd, 0);
