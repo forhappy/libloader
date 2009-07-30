@@ -212,6 +212,7 @@ gdbloader_main(const char * target_fn)
 	free(img);
 
 	/* we have to restore register here... */
+	SYS_FORCE("pid=%d\n", child_pid);
 	SYS_FORCE("eip=0x%x\n", cf->state->regs.eip);
 	ptrace_pokeuser(cf->state->regs);
 	SYS_TRACE("eax=0x%x\n", cf->state->regs.eax);

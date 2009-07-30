@@ -17,8 +17,6 @@
 # include "injector_debug.h"
 #endif
 
-
-
 SCOPE struct state_vector state_vector = {
 	.dummy	= 0,
 	.brk	= 0,
@@ -299,7 +297,6 @@ do_make_checkpoint(int ckpt_fd, int maps_fd, int cmdline_fd, int environ_fd,
 	/* readline -1 means reset */
 	readline(-1);
 	char * p = readline(maps_fd);
-	INJ_WARNING("p=%s\n", p);
 	while (p != NULL) {
 		void * start, * end;
 		int l = -1;

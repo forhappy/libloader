@@ -190,6 +190,12 @@ restore_state(void)
 
 	/* sigmask */
 	/* don't restore sigmask now */
+
+#define SIG_BLOCK          1	/* for blocking signals */
+#define SIG_UNBLOCK        2	/* for unblocking signals */
+#define SIG_SETMASK        3	/* for setting the signal mask */
+	INTERNAL_SYSCALL(rt_sigprocmask, 4,
+			SIG_SETMASK, &state_vector.sigmask, NULL, sizeof(state_vector.sigmask));
 }
 
 SCOPE void

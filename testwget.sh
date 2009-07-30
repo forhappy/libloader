@@ -4,9 +4,9 @@ if [ ! -d /tmp/currf2 ]; then
 fi
 
 rm -f /tmp/currf2/*
-rm -f ./index.html*
+rm -f ./index.html* ./file
 
-./currf2 /usr/bin/wget cluster0
+./currf2 /usr/bin/wget http://cluster0
 
 ./gdbloader /tmp/currf2/*.ckpt /usr/bin/wget
 

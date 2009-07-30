@@ -54,8 +54,13 @@ ADD_EXECUTABLE(target
 	target.c
 )
 
-SET_TARGET_PROPERTIES(target
+ADD_EXECUTABLE(testerrno
+	testerrno.c)
+
+SET_TARGET_PROPERTIES(target testerrno
 	PROPERTIES COMPILE_FLAGS "-g")
+
+TARGET_LINK_LIBRARIES(testerrno "-lpthread")
 
 #ADD_EXECUTABLE(testloader
 #	testloader.c)
