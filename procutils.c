@@ -94,7 +94,11 @@ proc_get_filename(pid_t pid, uintptr_t addr,
 	return buffer;
 }
 
-void
+/* 
+ * this function retrive the 1st (lowest) entry satisfy
+ * entry's equirements
+ */
+int
 proc_fill_entry(struct proc_entry * entry,
 		pid_t pid)
 {
@@ -158,8 +162,9 @@ proc_fill_entry(struct proc_entry * entry,
 	}
 
 	iterate_lines(pid, checker);
-	assert_throw(entry->bits == 0xfffffffful,
-			"cannot find a matche entry in proc file");
+	if (entry->bits != 0xffffffffUL)
+		return -1;
+	return 0;
 }
 
 
@@ -198,10 +203,12 @@ const char *
 proc_get_file(pid_t pid, uintptr_t addr,
 		char * buffer, int len)
 {
+	int err;
 	struct proc_entry entry;
 	entry.addr = addr;
 	entry.bits = PE_ADDR;
-	proc_fill_entry(&entry, pid);
+	err = proc_fill_entry(&entry, pid);
+	CTHROW(err == 0, "no file mapped at 0x%x--0x%x", addr, addr + len);
 	strncpy(buffer, entry.fn, len > 256 ? 256 : len);
 	return buffer;
 }
@@ -210,6 +217,8 @@ void
 proc_get_range(pid_t pid, const char * fn,
 		uintptr_t * pstart, uintptr_t * pend)
 {
+	int err;
+
 	assert(fn != NULL);
 	assert(pstart != NULL);
 	assert(pend != NULL);
@@ -217,7 +226,8 @@ proc_get_range(pid_t pid, const char * fn,
 	struct proc_entry entry;
 	strncpy(entry.fn, fn, 256);
 	entry.bits = PE_FILE;
-	proc_fill_entry(&entry, pid);
+	err = proc_fill_entry(&entry, pid);
+	CTHROW(err == 0, "file %s not found\n", fn);
 	*pstart = entry.start;
 	*pend = entry.end;
 	return;

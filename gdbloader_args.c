@@ -7,7 +7,7 @@
 
 
 const char *argp_program_version = "gdbloader-0.0";
-const char *argp_program_bug_address = "<pi3orama@gmail.com>";
+const char *argp_program_bug_address = "<wangnan06@ict.ac.cn>";
 static char doc[] =
 	"gdbloader: load checkpoint made by currf2, then spin, make gdb can attach to it";
 static char args_doc[] =
@@ -20,6 +20,8 @@ static struct argp_option options[] = {
 	{"syswrapper",	'w', "wrapsym",		0, "System call wrapper symbol, syscall_wrapper_entry by default"},
 	{"debugentry",	'E', "entry",		0, "debug_entry, \'__debug_entry\' by default"},
 	{"statevect",	'v', "statevect",	0, "state_vect's symbol, \'state_vector\' by default"},
+	{"pthreadso",	't', "pthreadso",	0, "desired libpthread.so file name, \'/lib/libpthread.so.0\' by default"},
+	{"fixpthread",	'f', NULL,			0, "fix libpthreaed tid and pid"},
 	{NULL},
 };
 
@@ -29,6 +31,8 @@ static struct opts opts = {
 	.inj_bias	= 0x3000,
 	.entry		= "__debug_entry",
 	.state_vect		= "state_vector",
+	.pthread_so_fn	= "/lib/libpthread.so.0",
+	.fix_pthread_tid = 0,
 	.ckpt_fn	= NULL,
 };
 
@@ -37,6 +41,12 @@ parse_opt(int key, char *arg, struct argp_state *state)
 {
 	static int found_target = 0;
 	switch (key) {
+		case 'f':
+			opts.fix_pthread_tid = 1;
+			return 0;
+		case 't':
+			opts.pthread_so_fn = arg;
+			return 0;
 		case 'j':
 			opts.inj_so = arg;
 			return 0;

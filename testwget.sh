@@ -6,8 +6,8 @@ fi
 rm -f /tmp/currf2/*
 rm -f ./index.html* ./file
 
-./currf2 /usr/bin/wget http://cluster0
+./currf2 /usr/bin/wget http://localhost -O /dev/null
 
-./gdbloader /tmp/currf2/*.ckpt /usr/bin/wget
+./gdbloader -f /tmp/currf2/*.ckpt /usr/bin/wget
 
 

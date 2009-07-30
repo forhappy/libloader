@@ -7,7 +7,7 @@
 
 
 const char *argp_program_version = "currf2-0.0";
-const char *argp_program_bug_address = "<pi3orama@gmail.com>";
+const char *argp_program_bug_address = "<wangnan06@ict.ac.cn>";
 static char doc[] =
 	"currf2: continuous log/replay";
 static char args_doc[] =

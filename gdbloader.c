@@ -161,6 +161,35 @@ inject_memory(void)
 }
 
 static void
+fix_libpthread(uint32_t * sym_stack_used, uint32_t * sym_stack_user)
+{
+	int err;
+	struct proc_entry pe;
+	memset(&pe, 0, sizeof(pe));
+	strncpy(pe.fn, opts->pthread_so_fn, 256);
+	pe.bits = PE_FILE;
+	err = proc_fill_entry(&pe, child_pid);
+	
+	/* if err != 0, then there is no libpthread. */
+	if (err != 0) {
+		SYS_TRACE("no %s found, needn't fix libpthread\n", opts->pthread_so_fn);
+		return;
+	}
+
+	SYS_TRACE("find %s mapped ");
+
+	/* find symbol __stack_user and stack_used */
+	void * img = load_file(pe.fn);
+	struct elf_handler * lp_so = elf_init(img, pe.start);
+
+	*sym_stack_user = elf_get_symbol_address(lp_so, "__stack_user");
+	*sym_stack_used = elf_get_symbol_address(lp_so, "stack_used");
+
+	elf_cleanup(lp_so);
+	free(img);
+}
+
+static void
 gdbloader_main(const char * target_fn)
 {
 	/* check: target_fn should be same as argv[0] */
@@ -179,6 +208,7 @@ gdbloader_main(const char * target_fn)
 	CTHROW(heap_end == cf->state->brk, "restore heap failed: %d",
 			heap_end);
 	SYS_TRACE("restore heap to 0x%x\n", heap_end);
+
 	inject_memory();
 
 	/* then, we retrive the inject so file, enter from
@@ -228,6 +258,37 @@ gdbloader_main(const char * target_fn)
 
 	/* we push eip at the top of the new stack */
 	ptrace_push(&cf->state->regs.eip, sizeof(uint32_t), FALSE);
+
+	/* fix libpthread problem:
+	 *
+	 * when gdb attaches to target, if it find libpthread, gdb
+	 * will try to use libthread_db to retrive thread-local info.
+	 * some data, like `errno', is TLS and need those info.
+	 *
+	 * When gdb do the work, it use ptrace to peek memory from target image.
+	 * so gdb will see the original thread info, the tid is different from
+	 * current pid, therefore gdb will think there are at least 2 threads and
+	 * then it will try to attach to the 'old' one and definitely fail. When this
+	 * failure occure, gdb print a warning message.
+	 *
+	 * We have 2 ways to solve this problem:
+	 *
+	 * 1. add a syscall into kernel's code, change its pid. it is simple.
+	 * 2. change the image when gdb attach.
+	 *
+	 * We choose the 2nd one because we prefer use space solution.
+	 *
+	 * */
+	uint32_t sym_stack_used = 0, sym_stack_user = 0;
+	if (opts->fix_pthread_tid) {
+		fix_libpthread(&sym_stack_used, &sym_stack_user);
+		SYS_WARNING("sym_stack_used=0x%x, sym_stack_user=0x%x\n",
+				sym_stack_used, sym_stack_user);
+	}
+
+	/* we push those 2 addresses onto the stack */
+	ptrace_push(&sym_stack_used, sizeof(uint32_t), FALSE);
+	ptrace_push(&sym_stack_user, sizeof(uint32_t), FALSE);
 
 	/* move eip and detach, let the target process to run */
 	ptrace_goto(debug_entry);

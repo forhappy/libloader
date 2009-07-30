@@ -11,6 +11,8 @@ struct opts {
 	char * old_vsyscall;
 	char * state_vect;
 	char * ckpt_fn;	/* for gdbloader only */
+	char * pthread_so_fn;	/* libpthread.so, for gdbloader only */
+	int fix_pthread_tid;	/* whether to fix libpthread's tid, for gdbloader only */
 	uint32_t inj_bias;
 	int logger_threshold;
 	int cmd_idx;

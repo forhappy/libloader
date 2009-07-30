@@ -30,7 +30,7 @@ struct proc_entry {
 	uint32_t offset;
 };
 
-extern void
+extern int
 proc_fill_entry(struct proc_entry * entry,
 		pid_t pid);
 

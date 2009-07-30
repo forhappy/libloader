@@ -290,6 +290,7 @@ inject_statvec(void)
 static void
 currf2_main(int argc, char * argv[])
 {
+	int err;
 	/* check files */
 	check_file(target.fn);
 	check_file(injector.fn);
@@ -314,7 +315,9 @@ currf2_main(int argc, char * argv[])
 	r = ptrace_peekuser();
 	spe.addr = r.esp;
 	spe.bits = PE_ADDR;
-	proc_fill_entry(&spe, child_pid);
+
+	err = proc_fill_entry(&spe, child_pid);
+	CTHROW(err == 0, "addr 0x%x is not mapped\n", (uint32_t)r.esp);
 	SYS_TRACE("stack range: 0x%x-0x%x\n", spe.start, spe.end);
 
 	size_t stk_sz = spe.end - r.esp;
@@ -345,7 +348,6 @@ currf2_main(int argc, char * argv[])
 	free(stack_image);
 	stack_image = NULL;
 
-	int err;
 	err = checkpoint_init();
 	CTHROW(err == 0, "chkp init failed: %s", strerror(errno));
 

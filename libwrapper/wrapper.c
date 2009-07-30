@@ -11,11 +11,14 @@
 #include "checkpoint/checkpoint.h"
 #include "injector_utils.h"
 #include "injector_debug.h"
+#include "pthread_defs.h"
 
 extern void __vsyscall();
 
 static char help_string[] = "This is help string\n";
 pid_t SCOPE self_pid = 0;
+/* for replay use */
+pid_t SCOPE old_self_pid = 0;
 
 static int replay = 0;
 
@@ -122,7 +125,7 @@ injector_entry(struct syscall_regs r,
 
 	logger_threshold = threshold;
 
-	self_pid = INTERNAL_SYSCALL(getpid, 0);
+	old_self_pid = self_pid = INTERNAL_SYSCALL(getpid, 0);
 
 	snprintf(logger_filename, 64, LOGGER_DIRECTORY"/%d.log", self_pid);
 	INJ_TRACE("logger fn: %s\n", logger_filename);
@@ -198,11 +201,104 @@ restore_state(void)
 			SIG_SETMASK, &state_vector.sigmask, NULL, sizeof(state_vector.sigmask));
 }
 
-SCOPE void
-debug_entry(void)
+static void
+fix_libpthread(pt_list_t * sym_stack_user,
+		pt_list_t * sym_stack_used)
 {
+	if ((sym_stack_user == NULL) || (sym_stack_used == NULL))
+		return;
+
+	int nr_thread = 0;
+
+	pt_list_t * pos;
+	pt_list_for_each(pos, sym_stack_user) {
+		nr_thread ++;
+		int * tid, * pid;
+		tid = (int*)((void*)(pos) + 8);
+		pid = (int*)((void*)(pos) + 12);
+		INJ_TRACE("find thread %d: tid=%x, pid=%d\n", nr_thread, * tid, * pid);
+		if (nr_thread == 1) {
+			if (*tid != *pid) {
+				INJ_WARNING("1st thread tid=%d, pid=%d, doesn't support\n",
+						*tid, *pid);
+			} else {
+				if (*tid != old_self_pid) {
+					INJ_WARNING("1st thread tid=%d, pid=%d, target pid=%d, doesn't support\n",
+							*tid, *pid, old_self_pid);
+				} else {
+					INJ_WARNING("fixing pthread's tid and pid: \n");
+					INJ_WARNING("reset old tid and pid from %d to %d\n", *tid, self_pid);
+					INJ_WARNING("this may cause unfaithful replay\n", *tid, self_pid);
+					*tid = self_pid;
+					*pid = self_pid;
+				}
+			}
+		}
+	}
+
+	pt_list_for_each(pos, sym_stack_used) {
+		nr_thread ++;
+		int * tid, * pid;
+		tid = (int*)((void*)(pos) + 8);
+		pid = (int*)((void*)(pos) + 12);
+		INJ_TRACE("find thread %d: tid=%x, pid=%d\n", nr_thread, * tid, * pid);
+	}
+
+	if (nr_thread != 1) {
+		INJ_WARNING("we have %d threads, it doesn't support now.\n",
+				nr_thread);
+	}
+}
+
+
+#if 0
+static void
+restore_libpthread(pt_list_t * sym_stack_user,
+		pt_list_t * sym_stack_used)
+{
+	if ((sym_stack_user == NULL) || (sym_stack_used == NULL))
+		return;
+
+	int nr_thread = 0;
+	pt_list_t * pos;
+	pt_list_for_each(pos, sym_stack_user) {
+		nr_thread ++;
+		int * tid, * pid;
+		tid = (int*)((void*)(pos) + 8);
+		pid = (int*)((void*)(pos) + 12);
+		INJ_TRACE("find thread %d: tid=%x, pid=%d\n", nr_thread, * tid, * pid);
+		if (nr_thread == 1) {
+			if (*tid != *pid) {
+				INJ_WARNING("1st thread tid=%d, pid=%d, doesn't support\n",
+						*tid, *pid);
+			} else {
+				if (*tid != self_pid) {
+					INJ_WARNING("1st thread tid=%d, pid=%d, target pid=%d, doesn't support\n",
+							*tid, *pid, old_self_pid);
+				} else {
+					*tid = old_self_pid;
+					*pid = old_self_pid;
+				}
+			}
+		}
+	}
+}
+#endif
+
+SCOPE void
+debug_entry(struct syscall_regs r,
+		void * sym_stack_user,
+		void * sym_stack_used,
+		void * entry)
+{
+	/* only reset self_pid, old_self_pid still be the original pid. */
+	self_pid = INTERNAL_SYSCALL(getpid, 0);
+
 	/* from state_vector, restore state */
 	restore_state();
+
+	fix_libpthread(sym_stack_user, sym_stack_used);
+
 	/* set replay to 1 */
 	replay = 1;
 
@@ -233,7 +329,22 @@ debug_entry(void)
 
 	/* spin */
 	volatile int xxx = 0;
-	while (xxx == 0);
+	INJ_FORCE("state has been restored, run gdb:\n");
+	INJ_FORCE("\t(gdb) attach %d\n", self_pid);
+	INJ_FORCE("\t(gdb) p *(int*)(0x%x) = 1\n", &xxx);
+	INJ_FORCE("\t(gdb) b *0x%x\n", entry);
+	INJ_FORCE("\t(gdb) c\n");
+	while (xxx == 0) {
+		struct timespec {
+			long       ts_sec;
+			long       ts_nsec;
+		};
+		struct timespec tm = {1, 0};
+		INTERNAL_SYSCALL(nanosleep, 2, &tm, NULL);
+	}
+
+	/* if restore tid and pid, gdb will crash */
+/* 	restore_libpthread(sym_stack_user, sym_stack_used); */
 }
 
 

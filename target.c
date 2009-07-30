@@ -32,8 +32,10 @@ int main(int argc, char * argv[])
 //		sleep(1);
 		fprintf(stdout, "%d, %c, global_data=%d\n", i++, c, global_data);
 		fflush(stdout);
-		if (i == 1784705)
+		if (i == 17)
 			break;
+//		if (i == 1784705)
+//			break;
 	}
 	return 0;
 }
