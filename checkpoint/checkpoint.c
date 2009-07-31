@@ -184,8 +184,13 @@ replay_syscall(const struct syscall_regs * regs)
 
 	/* read from logger, check */
 	uint32_t nr = read_uint32();
-	ASSERT(nr == regs->orig_eax, "logger mismatch: new syscall should be 0x%x, but actually %d\n",
+	if (nr != regs->orig_eax) {
+		INJ_FATAL("logger mismatch: new syscall should be 0x%x, but actually %d\n",
 				nr, regs->orig_eax);
+		INJ_FATAL("eip=0x%x\n", regs->eip);
+		asm volatile ("int3\n");
+		__exit(-1);
+	}
 	
 	if (syscall_table[regs->orig_eax].replay_handler != NULL) {
 		return (uint32_t)(syscall_table[regs->orig_eax].replay_handler(regs));

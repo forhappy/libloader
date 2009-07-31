@@ -9,7 +9,7 @@ export LD_LIBRARY_PATH=/home/wn/work/glibc-2.7/lib
 export LD_PRELOAD=/home/wn/src/glibc-2.7/build/rt/librt.so
 ./currf2 -s 10M ~/src/wget/bin/wget http://cluster0/file -O /dev/null
 
-./gdbloader -f /tmp/currf2/*.ckpt -t /home/wn/work/glibc-2.7/lib/libpthread-2.7.so  ~/src/wget/bin/wget
-#//gdbloader -f /tmp/currf2/*.ckpt ~/src/wget/bin/wget
+#./gdbloader -f /tmp/currf2/*.ckpt -t /home/wn/work/glibc-2.7/lib/libpthread-2.7.so  ~/src/wget/bin/wget
+./gdbloader -f /tmp/currf2/*.ckpt ~/src/wget/bin/wget
 
 
