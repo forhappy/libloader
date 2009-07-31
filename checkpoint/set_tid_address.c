@@ -6,7 +6,6 @@
 int SCOPE
 post_set_tid_address(const struct syscall_regs * regs)
 {
-	
 	write_eax(regs);
 	state_vector.clear_child_tid = regs->ebx;
 	return 0;

@@ -22,6 +22,8 @@ inject_memory(void)
 {
 	struct mem_region * stack_r = NULL;
 
+	SYS_TRACE("nr_regions=%d\n", cf->nr_regions);
+
 	/* for each mem region in ckpt file */
 	for (int i = 0; i < cf->nr_regions; i++) {
 		struct mem_region * r = cf->regions[i];

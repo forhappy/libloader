@@ -32,7 +32,7 @@ static const char * debug_comp_name[NR_COMPONENTS] = {
 };
 
 static enum debug_level debug_levels[NR_COMPONENTS] = {
-	[INJECTOR] = VERBOSE,
+	[INJECTOR] = TRACE,
 };
 #endif
 
@@ -77,6 +77,7 @@ extern SCOPE void message_out(int prefix, enum debug_level, enum debug_component
 # define FORCE_CONT(comp, str...) message_out(0, comp, str)
 #endif
 
+#define INJ_SILENT(str...) do {} while(0)
 #define INJ_TRACE(str...) TRACE(INJECTOR, str)
 #define INJ_VERBOSE(str...) VERBOSE(INJECTOR, str)
 #define INJ_WARNING(str...) WARNING(INJECTOR, str)

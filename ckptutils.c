@@ -114,6 +114,10 @@ load_ckpt_file(char * fn)
 		s->regions = realloc(s->regions,
 				s->nr_regions * sizeof(*s->regions));
 		struct mem_region * mr = p;
+
+		SYS_TRACE("region %d, start: 0x%x, end: 0x%x (p-img=0x%x)\n",
+				s->nr_regions, mr->start, mr->end, p - ckpt_img);
+
 		s->regions[s->nr_regions - 1] = mr;
 		p += sz_m;
 		p += mr->end - mr->start;

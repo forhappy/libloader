@@ -302,6 +302,7 @@ do_make_checkpoint(int ckpt_fd, int maps_fd, int cmdline_fd, int environ_fd,
 		int l = -1;
 		uint32_t offset;
 		char prot[5]="XXXX\0";
+		int err;
 
 		INJ_TRACE("%s\n", p);
 
@@ -351,8 +352,31 @@ do_make_checkpoint(int ckpt_fd, int maps_fd, int cmdline_fd, int environ_fd,
 		}
 
 		f_pos += m.fn_len;
+
 		/* Write memory */
-		__write(ckpt_fd, start, end-start);
+		/* if the region is not writable, use mprotect to reset the PROT */
+		if (m.prot & PROT_READ) {
+			err = __write(ckpt_fd, start, end-start);
+			if (err != end - start) {
+				INJ_WARNING("write memregion failed: err=%d\n", err);
+			}
+		} else {
+			uint32_t old_prot = m.prot;
+			uint32_t new_prot = old_prot | PROT_READ;
+			INJ_TRACE("this is a unreadable mem region, make it readable now\n");
+			err = INTERNAL_SYSCALL(mprotect, 3, start, end - start, new_prot);
+			ASSERT(err == 0, "mprotect error: %d\n", err);
+
+			err = __write(ckpt_fd, start, end-start);
+			if (err != end - start) {
+				INJ_WARNING("write memregion failed: err=%d\n", err);
+			}
+
+			err = INTERNAL_SYSCALL(mprotect, 3, start, end - start, old_prot);
+			ASSERT(err == 0, "mprotect error: %d\n", err);
+		}
+
+
 		f_pos += end - start;
 
 		p = readline(maps_fd);

@@ -42,6 +42,7 @@ SET(HANDLERS
 	lstat64.c
 	getpeername.c
 	unlink.c
+	futex.c
 	)
 
 ADD_LIBRARY(checkpoint

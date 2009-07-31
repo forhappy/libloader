@@ -79,7 +79,7 @@ wrapped_syscall(const struct syscall_regs r)
 		/* in the assembly code, we have modify the 'eax'. */
 
 		/* check the logger sz */
-		INJ_TRACE("logger_sz = %d\n", logger_sz);
+		INJ_SILENT("logger_sz = %d\n", logger_sz);
 		if (logger_sz > logger_threshold) {
 			int err;
 
