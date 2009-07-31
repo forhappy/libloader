@@ -84,7 +84,7 @@ wrapped_syscall(const struct syscall_regs r)
 			int err;
 
 			/* we need to remake ckpt */
-			INJ_WARNING("make ckpt: eip=0x%x\n", r.eip);
+			INJ_TRACE("make ckpt: eip=0x%x\n", r.eip);
 			/* we still need to adjust esp:
 			 * when we come here, r.esp hold an 'ret' address for
 			 * coming 'ret'. */

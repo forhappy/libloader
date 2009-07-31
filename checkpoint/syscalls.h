@@ -76,6 +76,8 @@ define_post_handler(unlink);
 
 define_post_handler(futex);
 
+define_post_handler(clock_gettime);
+
 __END_DECLS
 
 #endif

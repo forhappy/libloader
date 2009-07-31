@@ -178,7 +178,7 @@ fix_libpthread(uint32_t * sym_stack_used, uint32_t * sym_stack_user)
 		return;
 	}
 
-	SYS_TRACE("find %s mapped ");
+	SYS_TRACE("find %s mapped ", opts->pthread_so_fn);
 
 	/* find symbol __stack_user and stack_used */
 	void * img = load_file(pe.fn);

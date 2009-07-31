@@ -273,14 +273,14 @@ do_make_checkpoint(int ckpt_fd, int maps_fd, int cmdline_fd, int environ_fd,
 	loadsr(s->ss, ss);
 #undef loadsr
 
-	INJ_VERBOSE("eax in ckpt: 0x%x\n", s->eax);
-	INJ_VERBOSE("ebx in ckpt: 0x%x\n", s->ebx);
-	INJ_VERBOSE("ecx in ckpt: 0x%x\n", s->ecx);
-	INJ_VERBOSE("edx in ckpt: 0x%x\n", s->edx);
-	INJ_VERBOSE("esi in ckpt: 0x%x\n", s->esi);
-	INJ_VERBOSE("edi in ckpt: 0x%x\n", s->edi);
-	INJ_VERBOSE("esp in ckpt: 0x%x\n", s->esp);
-	INJ_VERBOSE("ebp in ckpt: 0x%x\n", s->ebp);
+	INJ_TRACE("eax in ckpt: 0x%x\n", s->eax);
+	INJ_TRACE("ebx in ckpt: 0x%x\n", s->ebx);
+	INJ_TRACE("ecx in ckpt: 0x%x\n", s->ecx);
+	INJ_TRACE("edx in ckpt: 0x%x\n", s->edx);
+	INJ_TRACE("esi in ckpt: 0x%x\n", s->esi);
+	INJ_TRACE("edi in ckpt: 0x%x\n", s->edi);
+	INJ_TRACE("esp in ckpt: 0x%x\n", s->esp);
+	INJ_TRACE("ebp in ckpt: 0x%x\n", s->ebp);
 
 	/* write state vector */
 	/* before we write the vector, we call brk, to make sure each

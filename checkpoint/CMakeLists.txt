@@ -43,6 +43,7 @@ SET(HANDLERS
 	getpeername.c
 	unlink.c
 	futex.c
+	clock_gettime.c
 	)
 
 ADD_LIBRARY(checkpoint
