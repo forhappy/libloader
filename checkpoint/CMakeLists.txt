@@ -47,6 +47,9 @@ SET(HANDLERS
 	getuid32.c
 	getpid.c
 	getcwd.c
+	geteuid32.c
+	getegid32.c
+	getgid32.c
 	)
 
 ADD_LIBRARY(checkpoint

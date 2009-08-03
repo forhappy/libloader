@@ -81,6 +81,9 @@ define_post_handler(clock_gettime);
 define_post_handler(getuid32);
 define_post_handler(getpid);
 define_post_handler(getcwd);
+define_post_handler(geteuid32);
+define_post_handler(getegid32);
+define_post_handler(getgid32);
 __END_DECLS
 
 #endif
