@@ -303,6 +303,12 @@ debug_entry(struct syscall_regs r,
 		void * sym_stack_used,
 		void * entry)
 {
+	/* see injector_entry */
+	if (STDOUT_FILENO != STDOUT_FILENO_INJ)
+		INTERNAL_SYSCALL(dup2, 2, STDOUT_FILENO, STDOUT_FILENO_INJ);
+	if (STDERR_FILENO != STDERR_FILENO_INJ)
+		INTERNAL_SYSCALL(dup2, 2, STDERR_FILENO, STDERR_FILENO_INJ);
+
 	/* only reset self_pid, old_self_pid still be the original pid. */
 	self_pid = INTERNAL_SYSCALL(getpid, 0);
 
