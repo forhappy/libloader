@@ -50,6 +50,7 @@ SET(HANDLERS
 	geteuid32.c
 	getegid32.c
 	getgid32.c
+	setsockopt.c
 	)
 
 ADD_LIBRARY(checkpoint
