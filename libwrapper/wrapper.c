@@ -43,6 +43,7 @@ SCOPE void
 wrapped_syscall(const struct syscall_regs r)
 {
 	if (!replay) {
+		INJ_SILENT("wrapped_syscall: %d\n", r.orig_eax);
 		before_syscall(&r);
 		/* before we call real vsyscall, we must restore register
 		 * state */
@@ -117,6 +118,17 @@ injector_entry(struct syscall_regs r,
 		uint32_t main_addr)
 {
 	int err;
+
+	/* build STDOUT_FILENO_INJ and STDERR_FILENO_INJ */
+	/* all INJ_XXXX messages are wrote to console through
+	 * STDOUT_FILENO_INJ and STDERR_FILENO_INJ, not the original
+	 * 1 and 2. This is for some targets which close 1 and 2, like
+	 * lighttpd.
+	 * STDOUT_FILENO_INJ and STDERR_FILENO_INJ are defined in injector_debug.h */
+	if (STDOUT_FILENO != STDOUT_FILENO_INJ)
+		INTERNAL_SYSCALL(dup2, 2, STDOUT_FILENO, STDOUT_FILENO_INJ);
+	if (STDERR_FILENO != STDERR_FILENO_INJ)
+		INTERNAL_SYSCALL(dup2, 2, STDERR_FILENO, STDERR_FILENO_INJ);
 
 	INJ_TRACE("Here! we come to injector!!!\n");
 	INJ_TRACE("%d, 0x%x, 0x%x\n", threshold, old_vdso_ventry, main_addr);

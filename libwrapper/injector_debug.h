@@ -9,6 +9,18 @@
 
 __BEGIN_DECLS
 
+
+/* use defferent stdout and stderr.
+ * if the target close those 2 files,
+ * injector's err msg can still be display.
+ * below 2 fds cannot be 1023 (which is logger_fd),
+ * and they are limited by rlimit. at least in
+ * my system, by the default configuration,
+ * 1024 is too large, 1021 and 1022 are just OK.
+ * */
+#define STDOUT_FILENO_INJ	(1021)
+#define STDERR_FILENO_INJ	(1022)
+
 enum debug_level {
 	SILENT = 0,
 	TRACE,

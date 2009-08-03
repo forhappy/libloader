@@ -57,13 +57,14 @@ ADD_EXECUTABLE(target
 ADD_EXECUTABLE(testerrno
 	testerrno.c)
 
-SET_TARGET_PROPERTIES(target testerrno
+
+ADD_EXECUTABLE(testmath
+	testmath.c)
+
+SET_TARGET_PROPERTIES(target testerrno testmath
 	PROPERTIES COMPILE_FLAGS "-g")
 
 TARGET_LINK_LIBRARIES(testerrno "-lpthread")
-
-#ADD_EXECUTABLE(testloader
-#	testloader.c)
 
 ADD_SUBDIRECTORY(checkpoint)
 

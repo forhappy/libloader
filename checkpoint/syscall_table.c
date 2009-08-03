@@ -55,6 +55,9 @@ SCOPE struct syscall_tabent syscall_table[] = {
 	def_syscall_entry(unlink, NULL),
 	def_syscall_entry(futex, NULL),
 	def_syscall_entry(clock_gettime, NULL),
+	def_syscall_entry(getuid32, NULL),
+	def_syscall_entry(getpid, NULL),
+	def_syscall_entry(getcwd, NULL),
 #ifndef SYSCALL_PRINTER
 	[NR_SYSCALLS]	= {NULL, NULL, NULL},
 #else

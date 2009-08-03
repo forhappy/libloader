@@ -118,7 +118,7 @@ logger_init(pid_t pid)
 			pid);
 	fd = __open(filename, O_WRONLY|O_APPEND|O_CREAT, 0666);
 	if (fd < 0) {
-		__printf("open log file %s failed: %d\n", filename, fd);
+		INJ_WARNING("open log file %s failed: %d\n", filename, fd);
 		return fd;
 	}
 
@@ -145,10 +145,8 @@ checkpoint(void)
 SCOPE int
 before_syscall(const struct syscall_regs * regs)
 {
-	if (regs->orig_eax >= NR_SYSCALLS) {
-		__printf("before: no such syscall: %d\n", regs->orig_eax);
-		__exit(0);
-	}
+	ASSERT(regs->orig_eax < NR_SYSCALLS,
+			"before: no such syscall: %d\n", regs->orig_eax);
 
 	/* write syscall nr */
 	write_syscall_nr(regs->orig_eax);
@@ -160,27 +158,20 @@ before_syscall(const struct syscall_regs * regs)
 SCOPE int
 after_syscall(const struct syscall_regs * regs)
 {
-	if (regs->orig_eax >= NR_SYSCALLS) {
-		__printf("no such syscall: %d\n", regs->orig_eax);
-		__exit(0);
-	}
+	ASSERT(regs->orig_eax < NR_SYSCALLS,
+			"no such syscall: %d\n", regs->orig_eax);
+	ASSERT(syscall_table[regs->orig_eax].post_handler != NULL,
+			"no such syscall post-handler: %d\n", regs->orig_eax);
 
-	if (syscall_table[regs->orig_eax].post_handler != NULL) {
-		return syscall_table[regs->orig_eax].post_handler(regs);
-	} else {
-		__printf("no such syscall post-handler: %d\n", regs->orig_eax);
-		__exit(0);
-	}
-	return 0;
+	return syscall_table[regs->orig_eax].post_handler(regs);
 }
 
 SCOPE uint32_t
 replay_syscall(const struct syscall_regs * regs)
 {
-	if (regs->orig_eax >= NR_SYSCALLS) {
-		__printf("no such syscall: %d\n", regs->orig_eax);
-		__exit(0);
-	}
+
+	ASSERT(regs->orig_eax < NR_SYSCALLS,
+			"no such syscall: %d\n", regs->orig_eax);
 
 	/* read from logger, check */
 	uint32_t nr = read_uint32();
@@ -188,17 +179,14 @@ replay_syscall(const struct syscall_regs * regs)
 		INJ_FATAL("logger mismatch: new syscall should be 0x%x, but actually %d\n",
 				nr, regs->orig_eax);
 		INJ_FATAL("eip=0x%x\n", regs->eip);
+		/* int3 make gdb trap in */
 		asm volatile ("int3\n");
 		__exit(-1);
 	}
 	
-	if (syscall_table[regs->orig_eax].replay_handler != NULL) {
-		return (uint32_t)(syscall_table[regs->orig_eax].replay_handler(regs));
-	} else {
-		__printf("no such syscall post-handler: %d\n", regs->orig_eax);
-		__exit(0);
-	}
-	return 0;
+	ASSERT(syscall_table[regs->orig_eax].replay_handler != NULL,
+			"no such syscall post-handler: %d\n", regs->orig_eax);
+	return (uint32_t)(syscall_table[regs->orig_eax].replay_handler(regs));
 }
 
 #ifdef IN_INJECTOR

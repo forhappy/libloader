@@ -44,6 +44,9 @@ SET(HANDLERS
 	unlink.c
 	futex.c
 	clock_gettime.c
+	getuid32.c
+	getpid.c
+	getcwd.c
 	)
 
 ADD_LIBRARY(checkpoint

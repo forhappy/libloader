@@ -78,6 +78,9 @@ define_post_handler(futex);
 
 define_post_handler(clock_gettime);
 
+define_post_handler(getuid32);
+define_post_handler(getpid);
+define_post_handler(getcwd);
 __END_DECLS
 
 #endif
