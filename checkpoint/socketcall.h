@@ -103,5 +103,11 @@ extern void SCOPE
 output_setsockopt(int fd, int level, int optname,
 		uint32_t optval, int optlen, int retval);
 
+extern SCOPE int
+post_listen(int fd, int backlog, int retval);
+extern SCOPE int
+replay_listen(int fd, int backlog, int retval);
+extern void
+output_listen(int fd, int backlog, int retval);
 #endif 
 

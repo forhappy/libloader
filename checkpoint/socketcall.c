@@ -69,6 +69,8 @@ post_socketcall(const struct syscall_regs * regs)
 			return post_getpeername(a0, a1, a2, retval);
 		case SYS_SETSOCKOPT:
 			return post_setsockopt(a0, a1, a2, a[3], a[4], retval);
+		case SYS_LISTEN:
+			return post_listen(a0, a1, retval);
 		default:
 			INJ_WARNING("Unknown socket call: %d\n", call);
 			__exit(-1);
@@ -119,6 +121,8 @@ replay_socketcall(const struct syscall_regs * regs)
 			return replay_getpeername(a0, a1, a2, retval);
 		case SYS_SETSOCKOPT:
 			return replay_setsockopt(a0, a1, a2, a[3], a[4], retval);
+		case SYS_LISTEN:
+			return replay_listen(a0, a1, retval);
 		default:
 			INJ_FATAL("Unknown socket call: %d\n", call);
 			INJ_FATAL("eip=0x%x\n", regs->eip);
@@ -191,6 +195,8 @@ output_socketcall(void)
 			return;
 		case SYS_SETSOCKOPT:
 			return output_setsockopt(a0, a1, a2, a[3], a[4], retval);
+		case SYS_LISTEN:
+			return output_listen(a0, a1, retval);
 		default:
 			THROW(EXCEPTION_FATAL, "Unknown socket number: %d", call);
 	}

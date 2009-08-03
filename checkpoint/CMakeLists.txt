@@ -51,6 +51,7 @@ SET(HANDLERS
 	getegid32.c
 	getgid32.c
 	setsockopt.c
+	listen.c
 	)
 
 ADD_LIBRARY(checkpoint

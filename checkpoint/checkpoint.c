@@ -166,6 +166,19 @@ after_syscall(const struct syscall_regs * regs)
 	return syscall_table[regs->orig_eax].post_handler(regs);
 }
 
+static void
+replay_trap(const struct syscall_regs * regs)
+{
+	INJ_FATAL("eip=0x%x\n", regs->eip);
+	INJ_FATAL("esp=0x%x\n", regs->esp);
+	INJ_FATAL("ebp=0x%x\n", regs->ebp);
+	asm volatile (
+			"movl %0, %%esp\n"
+			"movl %1, %%ebp\n" : : "m" (regs->esp), "m" (regs->ebp));
+	asm volatile ("int3\n");
+	__exit(-1);
+}
+
 SCOPE uint32_t
 replay_syscall(const struct syscall_regs * regs)
 {
@@ -184,15 +197,13 @@ replay_syscall(const struct syscall_regs * regs)
 		/* int3 traps gdb */
 		/* restore stack make gdb know the call stack */
 		/* esp must be set prior ebp */
-		asm volatile (
-			"movl %0, %%esp\n"
-			"movl %1, %%ebp\n" : : "m" (regs->esp), "m" (regs->ebp));
-		asm volatile ("int3\n");
-		__exit(-1);
+		replay_trap(regs);
 	}
 	
-	ASSERT(syscall_table[regs->orig_eax].replay_handler != NULL,
-			"no such syscall post-handler: %d\n", regs->orig_eax);
+	if (syscall_table[regs->orig_eax].replay_handler == NULL) {
+		INJ_FATAL("no such syscall post-handler: %d\n", regs->orig_eax);
+		replay_trap(regs);
+	}
 	return (uint32_t)(syscall_table[regs->orig_eax].replay_handler(regs));
 }
 
