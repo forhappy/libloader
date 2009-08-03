@@ -120,7 +120,15 @@ replay_socketcall(const struct syscall_regs * regs)
 		case SYS_SETSOCKOPT:
 			return replay_setsockopt(a0, a1, a2, a[3], a[4], retval);
 		default:
-			INJ_WARNING("Unknown socket call: %d\n", call);
+			INJ_FATAL("Unknown socket call: %d\n", call);
+			INJ_FATAL("eip=0x%x\n", regs->eip);
+			INJ_FATAL("esp=0x%x\n", regs->esp);
+			INJ_FATAL("ebp=0x%x\n", regs->ebp);
+			/* see replay_syscall, int3 traps gdb */
+			asm volatile (
+				"movl %0, %%esp\n"
+				"movl %1, %%ebp\n" : : "m" (regs->esp), "m" (regs->ebp));
+			asm volatile ("int3\n");
 			__exit(-1);
 	}
 

@@ -179,7 +179,14 @@ replay_syscall(const struct syscall_regs * regs)
 		INJ_FATAL("logger mismatch: new syscall should be 0x%x, but actually %d\n",
 				nr, regs->orig_eax);
 		INJ_FATAL("eip=0x%x\n", regs->eip);
-		/* int3 make gdb trap in */
+		INJ_FATAL("esp=0x%x\n", regs->esp);
+		INJ_FATAL("ebp=0x%x\n", regs->ebp);
+		/* int3 traps gdb */
+		/* restore stack make gdb know the call stack */
+		/* esp must be set prior ebp */
+		asm volatile (
+			"movl %0, %%esp\n"
+			"movl %1, %%ebp\n" : : "m" (regs->esp), "m" (regs->ebp));
 		asm volatile ("int3\n");
 		__exit(-1);
 	}
