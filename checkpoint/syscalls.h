@@ -84,6 +84,7 @@ define_post_handler(getcwd);
 define_post_handler(geteuid32);
 define_post_handler(getegid32);
 define_post_handler(getgid32);
+define_post_handler(poll);
 __END_DECLS
 
 #endif

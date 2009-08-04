@@ -52,6 +52,7 @@ SET(HANDLERS
 	getgid32.c
 	setsockopt.c
 	listen.c
+	poll.c
 	)
 
 ADD_LIBRARY(checkpoint
