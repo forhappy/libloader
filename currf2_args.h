@@ -10,6 +10,8 @@ struct opts {
 	char * entry;
 	char * old_vsyscall;
 	char * state_vect;
+	char * sigreturn;
+	char * rt_sigreturn;
 	char * ckpt_fn;	/* for gdbloader only */
 	char * pthread_so_fn;	/* libpthread.so, for gdbloader only */
 	int fix_pthread_tid;	/* whether to fix libpthread's tid, for gdbloader only */

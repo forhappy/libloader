@@ -35,7 +35,7 @@ SCOPE struct syscall_tabent syscall_table[] = {
 	def_syscall_entry(munmap, NULL),
 	def_syscall_entry(set_tid_address, NULL),
 	def_syscall_entry(set_robust_list, NULL),
-	def_syscall_entry(rt_sigaction, NULL),
+	def_syscall_entry(rt_sigaction, pre_rt_sigaction),
 	def_syscall_entry(rt_sigprocmask, NULL),
 	def_syscall_entry(sigprocmask, NULL),
 	def_syscall_entry(ugetrlimit, NULL),

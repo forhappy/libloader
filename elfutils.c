@@ -149,7 +149,7 @@ elf_reloc_symbols(struct elf_handler * h,
 	/* 1st: find the dynamic section */
 	struct elf32_shdr * sh = h->dynamic;
 	if (sh == NULL) {
-		WARNING(ELF, "There's no '.dynamic' section\n");
+		WARNING(ELF, "no '.dynamic' section\n");
 		return;
 	}
 

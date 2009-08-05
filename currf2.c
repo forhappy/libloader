@@ -73,6 +73,10 @@ static uint32_t * pvdso_entry = NULL;
 static uint32_t * pvdso_ehdr = NULL;
 static uint32_t old_vdso_entry = 0;
 
+/* below 2 vars are for sigaction and rt_sigaction */
+uint32_t wrapped_sigreturn = 0;
+uint32_t wrapped_rt_sigreturn = 0;
+
 static void main_clup(struct cleanup * cleanup)
 {
 	if (target.h != NULL) {
@@ -232,7 +236,10 @@ reloc_injector(uintptr_t addr, const char * sym, int type, int sym_val)
 
 	SYS_TRACE("relocate symbol '%s' at address 0x%x\n", sym, addr);
 
-	if ((type != R_386_PC32) && (type != R_386_32) && (type != R_386_RELATIVE)) {
+	if ((type != R_386_PC32) &&
+			(type != R_386_32) &&
+			(type != R_386_RELATIVE) &&
+			(type != R_386_GLOB_DAT)) {
 		SYS_WARNING("doesn't support reloc type 0x%x", type);
 		return;
 	}
@@ -247,12 +254,13 @@ reloc_injector(uintptr_t addr, const char * sym, int type, int sym_val)
 		}
 		real_val = 0;
 	} else {
-		if (strncmp(sym, opts->old_vsyscall, strlen(opts->old_vsyscall)) != 0) {
+		if (strncmp(sym, opts->old_vsyscall, strlen(opts->old_vsyscall)) == 0) {
+			real_val = old_vdso_entry;
+		} else if (type != R_386_GLOB_DAT) {
 			SYS_WARNING("don't know how to relocate this symbol: '%s'\n",
 					sym);
 			return;
 		}
-		real_val = old_vdso_entry;
 	}
 
 
@@ -270,6 +278,10 @@ reloc_injector(uintptr_t addr, const char * sym, int type, int sym_val)
 			int32_t old_val;
 			ptrace_dupmem(&old_val, addr, sizeof(old_val));
 			real_val = old_val + opts->inj_bias;
+			break;
+		}
+		case R_386_GLOB_DAT: {
+			real_val = sym_val + opts->inj_bias;
 			break;
 		}
 	}
@@ -327,7 +339,17 @@ currf2_main(int argc, char * argv[])
 
 	find_vdso();
 	map_injector();
-	
+	/* find sigreturn and rt_sigreturn */
+	wrapped_sigreturn = elf_get_symbol_address(injector.h,
+			opts->sigreturn);
+	CTHROW(wrapped_sigreturn != 0, "symbol \"%s\" not found",
+			opts->sigreturn);
+	wrapped_rt_sigreturn = elf_get_symbol_address(injector.h,
+			opts->rt_sigreturn);
+	CTHROW(wrapped_rt_sigreturn != 0, "symbol \"%s\" not found",
+			opts->rt_sigreturn);
+
+
 	/* relocate injector */
 	SYS_TRACE("begin to relocate symbol %s\n", opts->old_vsyscall);
 	elf_reloc_symbols(injector.h, reloc_injector);

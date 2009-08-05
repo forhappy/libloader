@@ -32,7 +32,7 @@ show_help(void)
 	memset(buffer, '\0', BUFFER_SIZE);
 	printf_int80("state_vector at %p\n", &state_vector);
 	printf_int80("buffer at %p\n", buffer);
-	while(1);
+	INTERNAL_SYSCALL_int80(exit, 1, 0);
 }
 
 
@@ -111,6 +111,8 @@ wrapped_syscall(const struct syscall_regs r)
 	}
 }
 
+extern void wrapped_sigreturn(void);
+extern void wrapped_rt_sigreturn(void);
 
 SCOPE void
 injector_entry(struct syscall_regs r,
@@ -130,7 +132,10 @@ injector_entry(struct syscall_regs r,
 	if (STDERR_FILENO != STDERR_FILENO_INJ)
 		INTERNAL_SYSCALL(dup2, 2, STDERR_FILENO, STDERR_FILENO_INJ);
 
+
 	INJ_TRACE("Here! we come to injector!!!\n");
+	INJ_TRACE("wrapped_sigreturn=%p\n", wrapped_sigreturn);
+	INJ_TRACE("wrapped_rt_sigreturn=%p\n", wrapped_rt_sigreturn);
 	INJ_TRACE("%d, 0x%x, 0x%x\n", threshold, old_vdso_ventry, main_addr);
 
 	ASSERT(threshold >= 4096, "logger threshold %d is strange\n", threshold);

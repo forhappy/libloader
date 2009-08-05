@@ -9,7 +9,7 @@ libwrapper.so: entry.o wrapper.o libprintf.os libcheckpoint.os
 	@if ! readelf -r $@  | grep "no relocations" > /dev/null ; then echo "*** Warning *** $@ needs relocation" ; fi
 
 entry.o: entry.S
-	as $^ -o $@
+	gcc -c $^ -o $@
 
 wrapper.o: wrapper.c injector.h
 

@@ -36,6 +36,7 @@ __BEGIN_DECLS
 # define __printf printf
 # define __exit(x) THROW(EXCEPTION_FATAL, "checkpoint exit")
 # define __dup_mem(d, s, sz) ptrace_dupmem(d, s, sz)
+# define __upd_mem(d, s, sz) ptrace_updmem((void*)s, d, sz)
 
 /* temporarily define read_obj */
 # define read_obj(x)	do {memset(&x, '\0', sizeof(x));} while(0)
@@ -67,7 +68,8 @@ extern int SCOPE logger_fd;
 # define __printf(args...)	printf(args)
 # define __exit(x)		INTERNAL_SYSCALL(exit, 1, x)
 
-# define __dup_mem(d, s, sz)	memcpy(d, (void*)s, sz)
+# define __dup_mem(d, s, sz)	memcpy((void*)d, (void*)s, sz)
+# define __upd_mem(d, s, sz)	memcpy((void*)d, (void*)s, sz)
 
 extern int SCOPE logger_fd;
 /* size of logger file */
@@ -151,6 +153,13 @@ typedef struct {
 	unsigned long sig[_NSIG_WORDS];
 } k_sigset_t;
 
+/* 
+ * this k_sigaction is not the same as kernel's k_sigaction, which is:
+ * struct k_sigaction {
+ *	struct sigaction sa;
+ * }
+ * although they are equal internally.
+ */
 struct k_sigaction {
 	void * sa_handler;
 	unsigned long sa_flags;

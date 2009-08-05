@@ -22,6 +22,10 @@ static struct argp_option options[] = {
 	{"vsyscall",	'e', "vsyscall",	0, "symbol which hold syscall, \'__vsyscall\' by default"},
 	{"statevect",	'v', "statevect",	0, "state_vect's symbol, \'state_vector\' by default"},
 	{"loggersize",	's', "size",		0, "logger size threshold, 10MB by default, at least 4kB"},
+	{"sigreturn",	-1, "sigreturn sym",
+		0,  "wrapped_sigreturn symbol, \"wrapped_sigreturn\" by default"},
+	{"rt_sigreturn", -2, "rt_sigaction sym", 
+		0, "wrapped_rt_sigreturn symbol, \"wrapped_rt_sigreturn\" by default"},
 	{NULL},
 };
 
@@ -32,6 +36,8 @@ static struct opts opts = {
 	.entry		= "__entry",
 	.old_vsyscall	= "__vsyscall",
 	.state_vect		= "state_vector",
+	.sigreturn		= "wrapped_sigreturn",
+	.rt_sigreturn	= "wrapped_rt_sigreturn",
 	.logger_threshold	= 10 << 20,
 };
 
@@ -40,6 +46,12 @@ parse_opt(int key, char *arg, struct argp_state *state)
 {
 	static int found_target = 0;
 	switch (key) {
+		case -1:
+			opts.sigreturn= arg;
+			return 0;
+		case -2:
+			opts.rt_sigreturn = arg;
+			return 0;
 		case 's':
 			{
 				char * t, s;
