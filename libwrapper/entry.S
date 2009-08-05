@@ -124,6 +124,7 @@ __ALIGN
 wrapped_sigreturn:
 .LSTART_sigreturn:
 	popl	%eax
+	call	do_wrapped_sigreturn
 	movl	$0x77,%eax
 	int	$0x80
 .LEND_sigreturn:
@@ -135,6 +136,7 @@ wrapped_sigreturn:
 __ALIGN
 wrapped_rt_sigreturn:
 .LSTART_rt_sigreturn:
+	call	do_wrapped_rt_sigreturn
 	movl	$0xad,%eax
 	int	$0x80
 .LEND_rt_sigreturn:

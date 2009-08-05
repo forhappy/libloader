@@ -370,6 +370,20 @@ debug_entry(struct syscall_regs r,
 /* 	restore_libpthread(sym_stack_user, sym_stack_used); */
 }
 
+void SCOPE
+do_wrapped_rt_sigreturn(void)
+{
+	INJ_WARNING("XXXXAAA\n");
+	return;
+}
+
+
+void SCOPE
+do_wrapped_sigreturn(void)
+{
+	INJ_WARNING("XXXXBBB\n");
+	return;
+}
 
 // vim:ts=4:sw=4
 
