@@ -61,7 +61,7 @@ replay_ioctl(const struct syscall_regs * regs)
 	int arg = regs->edx;
 
 	if (_IOC_TYPE(cmd) == 'T') {
-		return replay_tty_ioctl(fd, cmd, arg);
+		return replay_tty_ioctl(fd, cmd, arg, regs);
 	} else {
 		INJ_ERROR("no such ioctl command: 0x%x\n", cmd);
 		__exit(-1);

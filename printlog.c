@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
+#include <asm/unistd.h>
 
 FILE * log_fp = NULL;
 
@@ -28,12 +29,12 @@ read_logger(void * buffer, int sz)
 		THROW(EXCEPTION_RESOURCE_LOST, "read failed");
 }
 
+
+int finished = 0;
 static void
 printer_main(void)
 {
-
-	int finished = 0;
-
+	finished = 0;
 	while (!finished) {
 		uint32_t nr = 0;
 
@@ -47,7 +48,23 @@ printer_main(void)
 
 			if (syscall_table[nr].output_handler == NULL)
 				THROW(EXCEPTION_FATAL, "no handler for syscall %u", nr);
-			syscall_table[nr].output_handler();
+			switch (nr) {
+				default:
+					{
+						int16_t sigflag;
+						read_logger(&sigflag, sizeof(sigflag));
+						if (sigflag != -1) {
+							printf("process distrubed by a signal\n");
+							finished = 1;
+							continue;
+						}
+					}
+					/* check for signal */
+				case __NR_rt_sigaction:
+				case __NR_ioctl:
+				case __NR_exit_group:
+						syscall_table[nr].output_handler();
+			}
 
 		} CATCH (exp) {
 			case EXCEPTION_NO_ERROR:
@@ -59,7 +76,6 @@ printer_main(void)
 			default:
 				RETHROW(exp);
 		}
-
 	}
 }
 

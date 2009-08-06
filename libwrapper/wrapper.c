@@ -41,15 +41,24 @@ show_help(void)
 }
 
 
-SCOPE char logger_filename[64] = "";
-SCOPE char ckpt_filename[64] = "";
+SCOPE char logger_filename[128] = "";
+SCOPE char ckpt_filename[128] = "";
+
+SCOPE volatile enum syscall_status syscall_status = OUT_OF_SYSCALL;
+
+SCOPE const struct syscall_regs * current_regs;
 
 SCOPE void
 wrapped_syscall(const struct syscall_regs r)
 {
 	if (!replay) {
-		INJ_SILENT("wrapped_syscall: %d\n", r.orig_eax);
+		/* we save current regs file for signal checkpoint use. */
+		current_regs = &r;
+
+		uint32_t syscall_nr = r.orig_eax;
+		INJ_SILENT("wrapped_syscall: %d\n", syscall_nr);
 		before_syscall(&r);
+		syscall_status = IN_SYSCALL;
 		/* before we call real vsyscall, we must restore register
 		 * state */
 		uint32_t retval;
@@ -81,7 +90,42 @@ wrapped_syscall(const struct syscall_regs r)
 				: "m" (r.eax), "m" (r.ebx), "m" (r.ecx), 
 				"m" (r.edx), "m" (r.esi), "m" (r.edi),
 				"m" (r.ebp));
+
+		/* syscall_status == OUT_OF_SYSCALL, this means we come back here by
+		 * load a ckpt. this shouldn't happen, think about SA_RESTORER. */
+		ASSERT(syscall_status != OUT_OF_SYSCALL, "ckeck point come to the wrong place\n");
+
+		if (syscall_status >= SIGNALED) {
+			/* last syscall is disturbed by a signal, the logger has been switched */
+			/* we redo before_syscall. most of syscall has no real pre_handler. */
+			if (syscall_table[syscall_nr].pre_handler != NULL) {
+				INJ_WARNING("syscall %d interrupted by signal %d, logger may inconsistent\n",
+						syscall_nr, syscall_status - SIGNALED);
+			}
+			int32_t real_eax = retval;
+			((struct syscall_regs*)(&r))->eax = syscall_nr;
+			before_syscall(&r);
+			((struct syscall_regs*)(&r))->eax = real_eax;
+
+			/* we still need to write this flag */
+			int16_t f = -1;
+			INTERNAL_SYSCALL(write, 3, logger_fd, &f, sizeof(f));
+		} else if (syscall_status == IN_SYSCALL){
+			/* write a flag to indicate syscall not be distrubed */
+			/* if this syscall distrubed, the next data in logger
+			 * may be a syscall_nr (if signal processing use syscall) or a -2
+			 * (write by wrapped_(rt_)sigreturn). when replay, if see this -1,
+			 * we know this syscall ends normally. */
+			int16_t f = -1;
+			INTERNAL_SYSCALL(write, 3, logger_fd, &f, sizeof(f));
+		} else {
+			INJ_FATAL("!@#!#$^%#%@#$\n");
+			INTERNAL_SYSCALL(exit, 1, -1);
+		}
+
 		after_syscall(&r);
+		syscall_status = OUT_OF_SYSCALL;
+
 		/* in the assembly code, we have modify the 'eax'. */
 
 		/* check the logger sz */
@@ -98,7 +142,7 @@ wrapped_syscall(const struct syscall_regs r)
 			/* save fpustate */
 			save_i387(&fpustate_struct);
 			make_checkpoint(ckpt_filename, (struct syscall_regs *)(&r),
-					&fpustate_struct);
+					&fpustate_struct, NULL);
 			((struct syscall_regs*)(&r))->esp -= 4;
 
 			/* truncate logger file */
@@ -152,26 +196,26 @@ injector_entry(struct syscall_regs r,
 
 	old_self_pid = self_pid = INTERNAL_SYSCALL(getpid, 0);
 
-	snprintf(logger_filename, 64, LOGGER_DIRECTORY"/%d.log", self_pid);
+	snprintf(logger_filename, 128, LOGGER_DIRECTORY"/%d.log", self_pid);
 	INJ_TRACE("logger fn: %s\n", logger_filename);
 
-	snprintf(ckpt_filename, 64, LOGGER_DIRECTORY"/%d.ckpt", self_pid);
+	snprintf(ckpt_filename, 128, LOGGER_DIRECTORY"/%d.ckpt", self_pid);
 	INJ_TRACE("ckpt fn: %s\n", ckpt_filename);
 
 	int fd = INTERNAL_SYSCALL(open, 3, logger_filename, O_WRONLY|O_APPEND, 0666);
 	INJ_TRACE("logger fd = %d\n", fd);
 	ASSERT(fd > 0, "open logger failed: %d\n", fd);
 
-	/* dup the fd to 1023 */
-	err = INTERNAL_SYSCALL(dup2, 2, fd, 1023);
-	ASSERT(err == 1023, "dup2 failed: %d\n", err);
-	INJ_TRACE("dup fd to 1023\n");
+	/* dup the fd to LOGGER_FD */
+	err = INTERNAL_SYSCALL(dup2, 2, fd, LOGGER_FD);
+	ASSERT(err == LOGGER_FD, "dup2 failed: %d\n", err);
+	INJ_TRACE("dup fd to %d\n", err);
 
 	err = INTERNAL_SYSCALL(close, 1, fd);
 	ASSERT(err == 0, "close failed: %d\n", err);
 	INJ_TRACE("close %d\n", fd);
 
-	logger_fd = 1023;
+	logger_fd = LOGGER_FD;
 
 	/* :NOTICE: */
 	/* We MUST adjust esp here. when loader call injector, it pushs
@@ -179,7 +223,7 @@ injector_entry(struct syscall_regs r,
 	 */
 	save_i387(&fpustate_struct);
 	r.esp += 12;
-	make_checkpoint(ckpt_filename, &r, &fpustate_struct);
+	make_checkpoint(ckpt_filename, &r, &fpustate_struct, NULL);
 	r.esp -= 12;
 
 	err = INTERNAL_SYSCALL(ftruncate, 2, logger_fd, 0);
@@ -340,16 +384,16 @@ debug_entry(struct syscall_regs r,
 	INJ_TRACE("logger fd = %d\n", fd);
 	ASSERT(fd > 0, "open logger failed: %d\n", fd);
 
-	/* dup the fd to 1023 */
-	int err = INTERNAL_SYSCALL(dup2, 2, fd, 1023);
-	ASSERT(err == 1023, "dup2 failed: %d\n", err);
-	INJ_TRACE("logger fd dupped to 1023\n");
+	/* dup the fd to LOGGER_FD */
+	int err = INTERNAL_SYSCALL(dup2, 2, fd, LOGGER_FD);
+	ASSERT(err == LOGGER_FD, "dup2 failed: %d\n", err);
+	INJ_TRACE("logger fd dupped to %d\n", err);
 
 	err = INTERNAL_SYSCALL(close, 1, fd);
 	ASSERT(err == 0, "close fd %d failed: %d\n", fd, err);
 	INJ_TRACE("close %d\n", fd);
 
-	logger_fd = 1023;
+	logger_fd = LOGGER_FD;
 
 	/* most of registers should have been restored in loader.
 	 * gs is special, poke gs only restore thread.gs in kernel's code,
@@ -363,6 +407,9 @@ debug_entry(struct syscall_regs r,
 	/* fpustate_struct is aligned */
 	memcpy(&fpustate_struct, &state_vector.fpustate, sizeof(fpustate_struct));
 	restore_i387(&fpustate_struct);
+
+	/* restore syscall_status to OUT_OF_SYSCALL */
+	syscall_status = OUT_OF_SYSCALL;
 
 	/* spin */
 	volatile int xxx = 0;

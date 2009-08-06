@@ -20,6 +20,8 @@
 #endif
 #define SCOPE ATTR(visibility ("hidden"))
 
+#define LOGGER_FD	(1023)
+
 __BEGIN_DECLS
 /* code from glibc 2.7 */
 /* We need some help from the assembler to generate optimal code.  We
@@ -159,6 +161,13 @@ extern SCOPE int self_pid;
 extern SCOPE char logger_filename[];
 extern SCOPE char ckpt_filename[];
 
+enum syscall_status {
+	OUT_OF_SYSCALL = 0,
+	IN_SYSCALL = 1,
+	SIGNALED,
+};
+
+extern SCOPE volatile enum syscall_status syscall_status;
 __END_DECLS
 
 #endif

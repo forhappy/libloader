@@ -266,6 +266,7 @@ read_logger(void * buffer, int sz);
 # define read_eax() ({int32_t eax; read_obj(eax); eax;})
 # define read_int32() ({int32_t v; read_obj(v); v;})
 # define read_uint32() ({uint32_t v; read_obj(v); v;})
+# define read_int16() ({int16_t v; read_obj(v); v;})
 #endif
 
 /* caller must ensure fx is aligned by 16 bytes */
@@ -289,12 +290,16 @@ restore_i387(struct i387_fxsave_struct * fx)
 	);
 }
 
+struct seg_regs {
+	uint16_t cs, ds, es, fs, gs, ss;
+};
 
 #ifdef IN_INJECTOR
 extern struct i387_fxsave_struct SCOPE fpustate_struct;
 extern SCOPE void
 make_checkpoint(const char * ckpt_fn, struct syscall_regs * r,
-		struct i387_fxsave_struct * fpustate);
+		struct i387_fxsave_struct * fpustate,
+		struct seg_regs * seg_regs);
 #endif
 
 extern SCOPE int

@@ -23,6 +23,7 @@ post_exit_group(const struct syscall_regs * regs)
 int SCOPE
 replay_exit_group(const struct syscall_regs * regs)
 {
+	/* needn't check signal */
 #ifdef IN_INJECTOR
 	INTERNAL_SYSCALL(exit_group, 1, regs->ebx);
 #endif

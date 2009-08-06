@@ -90,8 +90,6 @@ __debug_entry:
 	 * 3. stack_used.
 	 * 2 and 3 are used for libpthread
 	 */
-
-
 	pushl %esp
 	pushl 12(%esp)		/* eip */
 	pushl $0		/* orig_eax */

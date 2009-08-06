@@ -166,7 +166,7 @@ after_syscall(const struct syscall_regs * regs)
 	return syscall_table[regs->orig_eax].post_handler(regs);
 }
 
-static void
+static void ATTR(noreturn)
 replay_trap(const struct syscall_regs * regs)
 {
 	INJ_FATAL("eip=0x%x\n", regs->eip);
@@ -177,6 +177,7 @@ replay_trap(const struct syscall_regs * regs)
 			"movl %1, %%ebp\n" : : "m" (regs->esp), "m" (regs->ebp));
 	asm volatile ("int3\n");
 	__exit(-1);
+	while(1);
 }
 
 SCOPE uint32_t
@@ -199,19 +200,37 @@ replay_syscall(const struct syscall_regs * regs)
 		/* esp must be set prior ebp */
 		replay_trap(regs);
 	}
-	
+
 	if (syscall_table[regs->orig_eax].replay_handler == NULL) {
 		INJ_FATAL("no such syscall post-handler: %d\n", regs->orig_eax);
 		replay_trap(regs);
 	}
-	return (uint32_t)(syscall_table[regs->orig_eax].replay_handler(regs));
+	
+	/* if the syscall use pre_handler, then it need to check signal itself. */
+	if (syscall_table[regs->orig_eax].pre_handler == NULL) {
+		/* we check the signal flag for those syscall. if we read a -1,
+		 * there's no signal happen. else, we let user switch ckpt */
+		int16_t f = read_int16();
+		if (f == -1) {
+			/* no signal happen */
+			return (uint32_t)(syscall_table[regs->orig_eax].replay_handler(regs));
+		} else {
+			INJ_WARNING("process distrubed by a signal, this logger has over. switch a ckpt.\n");
+			replay_trap(regs);
+			return 0;
+		}
+	} else {
+		/* this replay_handler can handle the flag */
+		return (uint32_t)(syscall_table[regs->orig_eax].replay_handler(regs));
+	}
 }
 
 #ifdef IN_INJECTOR
 
 static void ATTR(unused)
 do_make_checkpoint(int ckpt_fd, int maps_fd, int cmdline_fd, int environ_fd,
-		struct syscall_regs * r, struct i387_fxsave_struct * fpustate)
+		struct syscall_regs * r, struct i387_fxsave_struct * fpustate,
+		struct seg_regs * seg_regs)
 {
 	uint32_t f_pos = 0;
 
@@ -273,14 +292,25 @@ do_make_checkpoint(int ckpt_fd, int maps_fd, int cmdline_fd, int environ_fd,
 	s->eflags = r->flags;
 	s->esp = r->esp;
 	/* 6 seg regs */
+	if (seg_regs == NULL) {
 #define loadsr(d, r) asm volatile("movl %%" #r ", %%eax" : "=a" (d))
-	loadsr(s->cs, cs);
-	loadsr(s->ds, ds);
-	loadsr(s->es, es);
-	loadsr(s->fs, fs);
-	loadsr(s->gs, gs);
-	loadsr(s->ss, ss);
+		loadsr(s->cs, cs);
+		loadsr(s->ds, ds);
+		loadsr(s->es, es);
+		loadsr(s->fs, fs);
+		loadsr(s->gs, gs);
+		loadsr(s->ss, ss);
 #undef loadsr
+	} else {
+#define loadsr(d, r) d = seg_regs->r
+		loadsr(s->cs, cs);
+		loadsr(s->ds, ds);
+		loadsr(s->es, es);
+		loadsr(s->fs, fs);
+		loadsr(s->gs, gs);
+		loadsr(s->ss, ss);
+#undef loadsr
+	}
 
 	INJ_TRACE("eax in ckpt: 0x%x\n", s->eax);
 	INJ_TRACE("ebx in ckpt: 0x%x\n", s->ebx);
@@ -400,13 +430,13 @@ do_make_checkpoint(int ckpt_fd, int maps_fd, int cmdline_fd, int environ_fd,
 
 	/* reset logger_sz */
 	logger_sz = 0;
-
 }
 #endif
 
 SCOPE void
 make_checkpoint(const char * ckpt_fn, struct syscall_regs * r,
-		struct i387_fxsave_struct * fpustate)
+		struct i387_fxsave_struct * fpustate,
+		struct seg_regs * seg_regs)
 {
 #ifdef IN_INJECTOR
 	int maps_fd, cmdline_fd, ckpt_fd, environ_fd;
@@ -427,7 +457,7 @@ make_checkpoint(const char * ckpt_fn, struct syscall_regs * r,
 	ASSERT(ckpt_fd > 0, "open ckpt file failed: %d\n", ckpt_fd);
 
 	do_make_checkpoint(ckpt_fd, maps_fd, cmdline_fd, environ_fd, r,
-			fpustate);
+			fpustate, seg_regs);
 
 	INTERNAL_SYSCALL(close, 1, ckpt_fd);
 	INTERNAL_SYSCALL(close, 1, maps_fd);
