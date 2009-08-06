@@ -15,9 +15,9 @@ extern void wrapped_sigreturn(void);
 extern void wrapped_rt_sigreturn(void);
 #endif
 
-#define SIG_DFL	(0)	/* default signal handling */
-#define SIG_IGN	(1)	/* ignore signal */
-#define SIG_ERR	(-1)	/* error return from signal */
+#define SIG_DFL	((void*)(0))	/* default signal handling */
+#define SIG_IGN	((void*)(1))	/* ignore signal */
+#define SIG_ERR	((void*)(-1))	/* error return from signal */
 
 #define SA_NOCLDSTOP	0x00000001u
 #define SA_NOCLDWAIT	0x00000002u
@@ -44,6 +44,10 @@ pre_rt_sigaction(const struct syscall_regs * regs)
 	if (act == 0)
 		return 0;
 	__dup_mem(&d, act, sizeof(d));
+
+	if ((d.sa_handler == SIG_IGN) || (d.sa_handler == SIG_DFL))
+		return 0;
+
 	/* check sa_flags, whether the handler use itself restorer */
 	ASSERT(!(d.sa_flags & SA_RESTORER) || (d.sa_restorer == (void*)wrapped_rt_sigreturn),
 			"handler for signal %d use itself's restorer, doesn't support\n");

@@ -4,7 +4,7 @@ all: clean libwrapper.so # test_libwrapper
 CFLAGS= -g -std=gnu99 -Wall -nostartfiles -nodefaultlibs -nostdlib -fno-builtin -fvisibility=hidden -fPIC \
 	-DIN_INJECTOR -I../  -I.
 
-libwrapper.so: entry.o wrapper.o libprintf.os libcheckpoint.os
+libwrapper.so: entry.o wrapper.o signal.o libprintf.os libcheckpoint.os
 	ld -shared -e show_help_entry $^ -o $@
 	@if ! readelf -r $@  | grep "no relocations" > /dev/null ; then echo "*** Warning *** $@ needs relocation" ; fi
 
@@ -12,6 +12,7 @@ entry.o: entry.S
 	gcc -c $^ -o $@
 
 wrapper.o: wrapper.c injector.h
+signal.o: signal.c injector.h
 
 #test_libwrapper: entry.o wrapper.o libprintf.os test_libwrapper.o
 #	gcc -g -Wl,-rpath,. $^ -o $@
