@@ -20,9 +20,14 @@ pid_t SCOPE self_pid = 0;
 /* for replay use */
 pid_t SCOPE old_self_pid = 0;
 
+/* we define this var because this struct need to be aligned by 16
+ * bytes. if we use local var, we need special align work */
+struct i387_fxsave_struct SCOPE fpustate_struct __attribute__((aligned(16)));
+
 static int replay = 0;
 
 static int logger_threshold = 10 << 20;	/* 10MB */
+
 
 SCOPE void
 show_help(void)
@@ -90,7 +95,10 @@ wrapped_syscall(const struct syscall_regs r)
 			 * when we come here, r.esp hold an 'ret' address for
 			 * coming 'ret'. */
 			((struct syscall_regs*)(&r))->esp += 4;
-			make_checkpoint(ckpt_filename, (struct syscall_regs *)(&r));
+			/* save fpustate */
+			save_i387(&fpustate_struct);
+			make_checkpoint(ckpt_filename, (struct syscall_regs *)(&r),
+					&fpustate_struct);
 			((struct syscall_regs*)(&r))->esp -= 4;
 
 			/* truncate logger file */
@@ -169,8 +177,9 @@ injector_entry(struct syscall_regs r,
 	/* We MUST adjust esp here. when loader call injector, it pushs
 	 * 3 int32_t onto stack, so the esp in 'r' cannot be used directly.
 	 */
+	save_i387(&fpustate_struct);
 	r.esp += 12;
-	make_checkpoint(ckpt_filename, &r);
+	make_checkpoint(ckpt_filename, &r, &fpustate_struct);
 	r.esp -= 12;
 
 	err = INTERNAL_SYSCALL(ftruncate, 2, logger_fd, 0);
@@ -349,6 +358,11 @@ debug_entry(struct syscall_regs r,
 		"movw %%ax, %%gs\n"
 		:
 		: "a" (state_vector.regs.gs));
+
+	/* restore fpustate */
+	/* fpustate_struct is aligned */
+	memcpy(&fpustate_struct, &state_vector.fpustate, sizeof(fpustate_struct));
+	restore_i387(&fpustate_struct);
 
 	/* spin */
 	volatile int xxx = 0;

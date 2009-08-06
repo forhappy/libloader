@@ -211,7 +211,7 @@ replay_syscall(const struct syscall_regs * regs)
 
 static void ATTR(unused)
 do_make_checkpoint(int ckpt_fd, int maps_fd, int cmdline_fd, int environ_fd,
-		struct syscall_regs * r)
+		struct syscall_regs * r, struct i387_fxsave_struct * fpustate)
 {
 	uint32_t f_pos = 0;
 
@@ -250,8 +250,6 @@ do_make_checkpoint(int ckpt_fd, int maps_fd, int cmdline_fd, int environ_fd,
 		__write(ckpt_fd, &zero, sizeof(zero));
 		f_pos += sizeof(zero);
 	}
-
-
 
 	/* before we write mem regions, we first set all fields in state_vector, so
 	 * when we reload this ckpt, registers is valid in target, not only in the
@@ -300,6 +298,9 @@ do_make_checkpoint(int ckpt_fd, int maps_fd, int cmdline_fd, int environ_fd,
 	/* and we still need to save the pid */
 	state_vector.pid = INTERNAL_SYSCALL(getpid, 0);
 	
+	/* save fpustate */
+	memcpy(&state_vector.fpustate, fpustate, sizeof(*fpustate));
+
 	/* we write state_vector again for the loader, before mem regions */
 	__write(ckpt_fd, &state_vector, sizeof(state_vector));
 	f_pos += sizeof(state_vector);
@@ -404,7 +405,8 @@ do_make_checkpoint(int ckpt_fd, int maps_fd, int cmdline_fd, int environ_fd,
 #endif
 
 SCOPE void
-make_checkpoint(const char * ckpt_fn, struct syscall_regs * r)
+make_checkpoint(const char * ckpt_fn, struct syscall_regs * r,
+		struct i387_fxsave_struct * fpustate)
 {
 #ifdef IN_INJECTOR
 	int maps_fd, cmdline_fd, ckpt_fd, environ_fd;
@@ -424,7 +426,8 @@ make_checkpoint(const char * ckpt_fn, struct syscall_regs * r)
 			ckpt_fn, O_WRONLY|O_CREAT|O_TRUNC, 0666);
 	ASSERT(ckpt_fd > 0, "open ckpt file failed: %d\n", ckpt_fd);
 
-	do_make_checkpoint(ckpt_fd, maps_fd, cmdline_fd, environ_fd, r);
+	do_make_checkpoint(ckpt_fd, maps_fd, cmdline_fd, environ_fd, r,
+			fpustate);
 
 	INTERNAL_SYSCALL(close, 1, ckpt_fd);
 	INTERNAL_SYSCALL(close, 1, maps_fd);

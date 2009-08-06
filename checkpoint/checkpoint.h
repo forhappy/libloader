@@ -177,6 +177,33 @@ struct robust_list_head {
 	struct robust_list *list_op_pending;
 };
 
+struct i387_fxsave_struct {
+	uint16_t	cwd;
+	uint16_t	swd;
+	uint16_t	twd;
+	uint16_t	fop;
+	union {
+		struct {
+			uint64_t	rip;
+			uint64_t	rdp;
+		};
+		struct {
+			uint32_t	fip;
+			uint32_t	fcs;
+			uint32_t	foo;
+			uint32_t	fos;
+		};
+	};
+	uint32_t	mxcsr;
+	uint32_t	mxcsr_mask;
+	uint32_t	st_space[32];	/* 8*16 bytes for each FP-reg = 128 bytes */
+	uint32_t	xmm_space[64];	/* 16*16 bytes for each XMM-reg = 256 bytes */
+	uint32_t	padding[24];
+};
+
+/* struct i387_fxsave_struct will be embed into state vector, don't
+ * use aligned option here. use it in defenition */
+
 extern SCOPE struct state_vector {
 	int dummy;
 	uint32_t brk;
@@ -189,6 +216,7 @@ extern SCOPE struct state_vector {
 	/* add user regs into state_vector, this is for only
 	 * checkpoints use */
 	struct user_regs_struct regs;
+	struct i387_fxsave_struct fpustate;
 	int end;
 } state_vector;
 
@@ -240,8 +268,34 @@ read_logger(void * buffer, int sz);
 # define read_uint32() ({uint32_t v; read_obj(v); v;})
 #endif
 
+/* caller must ensure fx is aligned by 16 bytes */
+static void inline
+save_i387(struct i387_fxsave_struct * fx)
+{
+	asm volatile (
+		"fxsave	(%[fx])\n\t"
+		: "=m" (*fx)
+		: [fx] "cdaSDb" (fx)
+	);
+}
+
+static void inline
+restore_i387(struct i387_fxsave_struct * fx)
+{
+	asm volatile (
+		"fxrstor (%[fx])\n\t"
+		:
+		: [fx] "cdaSDb" (fx)
+	);
+}
+
+
+#ifdef IN_INJECTOR
+extern struct i387_fxsave_struct SCOPE fpustate_struct;
 extern SCOPE void
-make_checkpoint(const char * ckpt_fn, struct syscall_regs * r);
+make_checkpoint(const char * ckpt_fn, struct syscall_regs * r,
+		struct i387_fxsave_struct * fpustate);
+#endif
 
 extern SCOPE int
 logger_init(pid_t pid);

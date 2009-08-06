@@ -123,8 +123,14 @@ __debug_entry:
 __ALIGN
 wrapped_sigreturn:
 .LSTART_sigreturn:
-	popl	%eax
+	/* adjust stack. the 1st field of struct sigframe is
+	   pretcode. when sighandler call 'ret', it return to
+	   this address, make esp point to the 2nd field of this
+	   struct. */
+	subl	0x4, %esp
 	call	do_wrapped_sigreturn
+	addl	0x4, %esp
+	popl	%eax
 	movl	$0x77,%eax
 	int	$0x80
 .LEND_sigreturn:
@@ -136,7 +142,9 @@ wrapped_sigreturn:
 __ALIGN
 wrapped_rt_sigreturn:
 .LSTART_rt_sigreturn:
+	subl	$0x4, %esp
 	call	do_wrapped_rt_sigreturn
+	addl	$0x4, %esp
 	movl	$0xad,%eax
 	int	$0x80
 .LEND_rt_sigreturn:

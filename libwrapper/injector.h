@@ -159,7 +159,6 @@ extern SCOPE int self_pid;
 extern SCOPE char logger_filename[];
 extern SCOPE char ckpt_filename[];
 
-
 __END_DECLS
 
 #endif
