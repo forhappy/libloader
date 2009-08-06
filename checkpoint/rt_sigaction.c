@@ -96,19 +96,6 @@ post_rt_sigaction(const struct syscall_regs * regs)
 	return 0;
 }
 
-static void
-replay_trap(const struct syscall_regs * regs)
-{
-	INJ_FATAL("eip=0x%x\n", regs->eip);
-	INJ_FATAL("esp=0x%x\n", regs->esp);
-	INJ_FATAL("ebp=0x%x\n", regs->ebp);
-	asm volatile (
-			"movl %0, %%esp\n"
-			"movl %1, %%ebp\n" : : "m" (regs->esp), "m" (regs->ebp));
-	asm volatile ("int3\n");
-	__exit(-1);
-}
-
 int SCOPE
 replay_rt_sigaction(const struct syscall_regs * regs)
 {
@@ -116,8 +103,13 @@ replay_rt_sigaction(const struct syscall_regs * regs)
 	int16_t flag = read_int16();
 	if (flag != -1) {
 		/* signal distrub me */
-		INJ_WARNING("rt_sigaction distrubed by a signal, this logger has over. switch a ckpt.\n");
+		seek_logger(-2, SEEK_END);
+		int16_t sig = read_int16();
+		INJ_WARNING("rt_sigaction distrubed by signal %d, this logger has over. switch a ckpt.\n",
+				-sig);
+#ifdef IN_INJECTOR
 		replay_trap(regs);
+#endif
 	}
 	int32_t eax = read_int32();
 	if (eax == 0) {

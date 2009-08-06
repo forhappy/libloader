@@ -216,7 +216,7 @@ do_wrapped_rt_sigreturn(struct rt_sigframe frame)
 	/* before we close current logger, we write a int16_t -2 into logger.
 	 * see comment in wrapper.c - wrapped_syscall */
 	{
-		int16_t f = -2;
+		int16_t f = -frame.sig;
 		INTERNAL_SYSCALL(write, 3, logger_fd, &f, sizeof(f));
 	}
 	/* close current logger */

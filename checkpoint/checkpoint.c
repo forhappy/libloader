@@ -166,19 +166,7 @@ after_syscall(const struct syscall_regs * regs)
 	return syscall_table[regs->orig_eax].post_handler(regs);
 }
 
-static void ATTR(noreturn)
-replay_trap(const struct syscall_regs * regs)
-{
-	INJ_FATAL("eip=0x%x\n", regs->eip);
-	INJ_FATAL("esp=0x%x\n", regs->esp);
-	INJ_FATAL("ebp=0x%x\n", regs->ebp);
-	asm volatile (
-			"movl %0, %%esp\n"
-			"movl %1, %%ebp\n" : : "m" (regs->esp), "m" (regs->ebp));
-	asm volatile ("int3\n");
-	__exit(-1);
-	while(1);
-}
+#ifdef IN_INJECTOR
 
 SCOPE uint32_t
 replay_syscall(const struct syscall_regs * regs)
@@ -215,7 +203,11 @@ replay_syscall(const struct syscall_regs * regs)
 			/* no signal happen */
 			return (uint32_t)(syscall_table[regs->orig_eax].replay_handler(regs));
 		} else {
-			INJ_WARNING("process distrubed by a signal, this logger has over. switch a ckpt.\n");
+			/* read the lase 2 bytes to get the signumber */
+			seek_logger(-2, SEEK_END);
+			int16_t sig = read_int16();
+			INJ_WARNING("process distrubed by signal %d, this logger has over. switch a ckpt.\n",
+					-sig);
 			replay_trap(regs);
 			return 0;
 		}
@@ -224,8 +216,6 @@ replay_syscall(const struct syscall_regs * regs)
 		return (uint32_t)(syscall_table[regs->orig_eax].replay_handler(regs));
 	}
 }
-
-#ifdef IN_INJECTOR
 
 static void ATTR(unused)
 do_make_checkpoint(int ckpt_fd, int maps_fd, int cmdline_fd, int environ_fd,

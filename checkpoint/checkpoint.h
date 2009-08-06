@@ -33,6 +33,7 @@ __BEGIN_DECLS
 # define __close close
 # define __read read
 # define __write write
+# define __lseek lseek
 # define __printf printf
 # define __exit(x) THROW(EXCEPTION_FATAL, "checkpoint exit")
 # define __dup_mem(d, s, sz) ptrace_dupmem(d, s, sz)
@@ -66,6 +67,7 @@ extern int SCOPE logger_fd;
 # define __read(args...)	INTERNAL_SYSCALL(read, 3, args)
 # define __write(args...)	INTERNAL_SYSCALL(write, 3, args)
 # define __printf(args...)	printf(args)
+# define __lseek(fd, off, ori)	INTERNAL_SYSCALL(lseek, 3, fd, off, ori)
 # define __exit(x)		INTERNAL_SYSCALL(exit, 1, x)
 
 # define __dup_mem(d, s, sz)	memcpy((void*)d, (void*)s, sz)
@@ -104,8 +106,23 @@ extern uint32_t SCOPE logger_sz;
 	ASSERT(___ret == sz, "read_mem failed: ___ret=%d, sz=%d\n", ___ret, sz);\
 } while(0)
 
-
 #endif	/* IN_INJECTOR */
+
+
+#ifndef SEEK_SET
+# define SEEK_SET	0	/* seek relative to beginning of file */
+#endif
+#ifndef SEEK_SET
+# define SEEK_CUR	1	/* seek relative to current file position */
+#endif
+#ifndef SEEK_SET
+# define SEEK_END	2	/* seek relative to end of file */
+#endif
+
+#ifndef SYSCALL_PRINTER
+# define seek_logger(off, ori)	__lseek(logger_fd, off, ori)
+#endif
+
 
 # define write_syscall_nr(nr)	do {	\
 	uint32_t x_nr;	\
@@ -241,6 +258,9 @@ checkpoint_init(void);
 extern void
 read_logger(void * buffer, int sz);
 
+extern void
+seek_logger(int off, int origin);
+
 #ifdef read_obj
 # undef read_obj
 #endif
@@ -295,6 +315,23 @@ struct seg_regs {
 };
 
 #ifdef IN_INJECTOR
+
+static inline void ATTR(noreturn)
+replay_trap(const struct syscall_regs * regs)
+{
+	INJ_FATAL("eip=0x%x\n", regs->eip);
+	INJ_FATAL("esp=0x%x\n", regs->esp);
+	INJ_FATAL("ebp=0x%x\n", regs->ebp);
+	asm volatile (
+			"movl %0, %%esp\n"
+			"movl %1, %%ebp\n" : : "m" (regs->esp), "m" (regs->ebp));
+	asm volatile ("int3\n");
+	__exit(-1);
+	while(1);
+}
+
+
+
 extern struct i387_fxsave_struct SCOPE fpustate_struct;
 extern SCOPE void
 make_checkpoint(const char * ckpt_fn, struct syscall_regs * r,

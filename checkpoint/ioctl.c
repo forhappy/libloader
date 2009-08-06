@@ -91,7 +91,7 @@ output_ioctl(void)
 		THROW(EXCEPTION_FATAL, "unsupport ioctl cmd %x", cmd);
 	}
 }
-#endif
 
+#endif
 // vim:ts=4:sw=4
 

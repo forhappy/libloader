@@ -29,6 +29,15 @@ read_logger(void * buffer, int sz)
 		THROW(EXCEPTION_RESOURCE_LOST, "read failed");
 }
 
+void
+seek_logger(int off, int origin)
+{
+	int err;
+	err = fseek(log_fp, off, origin);
+	if (err != 0)
+		THROW(EXCEPTION_RESOURCE_LOST, "seek failed");
+}
+
 
 int finished = 0;
 static void
@@ -54,7 +63,10 @@ printer_main(void)
 						int16_t sigflag;
 						read_logger(&sigflag, sizeof(sigflag));
 						if (sigflag != -1) {
-							printf("process distrubed by a signal\n");
+							int16_t sig;
+							seek_logger(-2, SEEK_END);
+							read_logger(&sig, sizeof(sig));
+							printf("process distrubed by signal %d\n", -sig);
 							finished = 1;
 							continue;
 						}
