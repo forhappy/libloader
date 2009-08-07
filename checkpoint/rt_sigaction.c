@@ -54,7 +54,14 @@ pre_rt_sigaction(const struct syscall_regs * regs)
 
 	/* now update sa_flags and sa_restorer */
 	d.sa_flags |= SA_RESTORER;
-	d.sa_restorer = (void*)wrapped_rt_sigreturn;
+
+	/* rt_sigaction and rt_sigreturn are not partners. see kernel code:
+	 * do_signal, if sa_flags has SA_SIGINFO, it setup a rt_frame and use
+	 * rt_sigreturn, if not, it use sigreturn. */
+	if (d.sa_flags & SA_SIGINFO)
+		d.sa_restorer = (void*)wrapped_rt_sigreturn;
+	else
+		d.sa_restorer = (void*)wrapped_sigreturn;
 
 	/* update mem */
 	__upd_mem(act, &d, sizeof(d));

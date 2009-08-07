@@ -125,9 +125,9 @@ wrapped_sigreturn:
 	   pretcode. when sighandler call 'ret', it return to
 	   this address, make esp point to the 2nd field of this
 	   struct. */
-	subl	0x4, %esp
+	subl	$0x4, %esp
 	call	do_wrapped_sigreturn
-	addl	0x4, %esp
+	addl	$0x4, %esp
 	popl	%eax
 	movl	$0x77,%eax
 	int	$0x80

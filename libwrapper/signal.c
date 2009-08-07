@@ -11,180 +11,8 @@
 #include "checkpoint/checkpoint.h"
 #include "injector_utils.h"
 #include "injector_debug.h"
-#include "pthread_defs.h"
 
-typedef uint8_t u8;
-typedef uint16_t u16;
-typedef uint32_t u32;
-typedef uint64_t u64;
-
-typedef int32_t s32;
-
-typedef s32		compat_timer_t;
-typedef s32		compat_int_t;
-typedef	u32		compat_uptr_t;
-typedef s32		compat_clock_t;
-
-typedef u32		__u32;
-typedef s32		__s32;
-
-typedef union compat_sigval {
-	compat_int_t	sival_int;
-	compat_uptr_t	sival_ptr;
-} compat_sigval_t;
-
-
-typedef struct compat_siginfo{
-	int si_signo;
-	int si_errno;
-	int si_code;
-
-	union {
-		int _pad[((128/sizeof(int)) - 3)];
-
-		/* kill() */
-		struct {
-			unsigned int _pid;	/* sender's pid */
-			unsigned int _uid;	/* sender's uid */
-		} _kill;
-
-		/* POSIX.1b timers */
-		struct {
-			compat_timer_t _tid;	/* timer id */
-			int _overrun;		/* overrun count */
-			compat_sigval_t _sigval;	/* same as below */
-			int _sys_private;	/* not to be passed to user */
-			int _overrun_incr;	/* amount to add to overrun */
-		} _timer;
-
-		/* POSIX.1b signals */
-		struct {
-			unsigned int _pid;	/* sender's pid */
-			unsigned int _uid;	/* sender's uid */
-			compat_sigval_t _sigval;
-		} _rt;
-
-		/* SIGCHLD */
-		struct {
-			unsigned int _pid;	/* which child */
-			unsigned int _uid;	/* sender's uid */
-			int _status;		/* exit code */
-			compat_clock_t _utime;
-			compat_clock_t _stime;
-		} _sigchld;
-
-		/* SIGILL, SIGFPE, SIGSEGV, SIGBUS */
-		struct {
-			unsigned int _addr;	/* faulting insn/memory ref. */
-		} _sigfault;
-
-		/* SIGPOLL */
-		struct {
-			int _band;	/* POLL_IN, POLL_OUT, POLL_MSG */
-			int _fd;
-		} _sigpoll;
-	} _sifields;
-} compat_siginfo_t;
-
-
-typedef struct sigaltstack_ia32 {
-	unsigned int	ss_sp;
-	int		ss_flags;
-	unsigned int	ss_size;
-} stack_ia32_t;
-
-struct sigcontext_ia32 {
-       unsigned short gs, __gsh;
-       unsigned short fs, __fsh;
-       unsigned short es, __esh;
-       unsigned short ds, __dsh;
-       unsigned int di;
-       unsigned int si;
-       unsigned int bp;
-       unsigned int sp;
-       unsigned int bx;
-       unsigned int dx;
-       unsigned int cx;
-       unsigned int ax;
-       unsigned int trapno;
-       unsigned int err;
-       unsigned int ip;
-       unsigned short cs, __csh;
-       unsigned int flags;
-       unsigned int sp_at_signal;
-       unsigned short ss, __ssh;
-       unsigned int fpstate;		/* really (struct _fpstate_ia32 *) */
-       unsigned int oldmask;
-       unsigned int cr2;
-};
-
-typedef u32               compat_sigset_word;
-
-#define _COMPAT_NSIG		64
-#define _COMPAT_NSIG_BPW	32
-#define _COMPAT_NSIG_WORDS	(_COMPAT_NSIG / _COMPAT_NSIG_BPW)
-
-typedef struct {
-	compat_sigset_word	sig[_COMPAT_NSIG_WORDS];
-} compat_sigset_t;
-
-struct ucontext_ia32 {
-	unsigned int	  uc_flags;
-	unsigned int 	  uc_link;
-	stack_ia32_t	  uc_stack;
-	struct sigcontext_ia32 uc_mcontext;
-	compat_sigset_t	  uc_sigmask;	/* mask last for extensibility */
-};
-
-struct _fpreg {
-	unsigned short significand[4];
-	unsigned short exponent;
-};
-
-struct _fpxreg {
-	unsigned short significand[4];
-	unsigned short exponent;
-	unsigned short padding[3];
-};
-
-struct _xmmreg {
-	unsigned long element[4];
-};
-
-struct _fpstate_ia32 {
-	/* Regular FPU environment */
-	__u32 	cw;
-	__u32	sw;
-	__u32	tag;	/* not compatible to 64bit twd */
-	__u32	ipoff;			
-	__u32	cssel;
-	__u32	dataoff;
-	__u32	datasel;
-	struct _fpreg	_st[8];
-	unsigned short	status;
-	unsigned short	magic;		/* 0xffff = regular FPU data only */
-
-	/* FXSR FPU environment */
-	__u32	_fxsr_env[6];
-	__u32	mxcsr;
-	__u32	reserved;
-	struct _fpxreg	_fxsr_st[8];
-	struct _xmmreg	_xmm[8];	/* It's actually 16 */ 
-	__u32	padding[56];
-};
-
-
-struct rt_sigframe
-{
-	u32 pretcode;
-	int sig;
-	u32 pinfo;
-	u32 puc;
-	compat_siginfo_t info;
-	struct ucontext_ia32 uc;
-	struct _fpstate_ia32 fpstate;
-	char retcode[8];
-};
+#include "signal_defs.h"
 
 extern void __vsyscall();
 
@@ -199,12 +27,10 @@ extern const struct syscall_regs * current_regs;
 /* defined in injector.h */
 /* extern SCOPE volatile enum syscall_status syscall_status; */
 
-void SCOPE
-do_wrapped_rt_sigreturn(struct rt_sigframe frame)
+static void
+do_sigreturn(int signum, struct sigcontext * ctx, struct _fpstate * fpstate)
 {
 	int err;
-	INJ_WARNING("target received rt_signal %d, the log will switch\n", frame.sig);
-
 	/* generate timestamp for new ckpt */
 	struct timeval tv;
 	err = INTERNAL_SYSCALL(gettimeofday, 2, &tv, NULL);
@@ -213,12 +39,14 @@ do_wrapped_rt_sigreturn(struct rt_sigframe frame)
 	snprintf(ckpt_filename, 128, LOGGER_DIRECTORY"/%d-%u-%u.ckpt",
 			self_pid, tv.tv_sec, tv.tv_usec);
 
-	/* before we close current logger, we write a int16_t -2 into logger.
+	/* before we close current logger, we write a int16_t -signum into logger.
+	 * this num should become last 2 bytes in logger.
 	 * see comment in wrapper.c - wrapped_syscall */
 	{
-		int16_t f = -frame.sig;
+		int16_t f = -signum;
 		INTERNAL_SYSCALL(write, 3, logger_fd, &f, sizeof(f));
 	}
+
 	/* close current logger */
 	err = INTERNAL_SYSCALL(close, 1, logger_fd);
 	ASSERT(err == 0, "close logger file %s failed\n", logger_filename);
@@ -231,12 +59,12 @@ do_wrapped_rt_sigreturn(struct rt_sigframe frame)
 	struct syscall_regs r;
 	memset(&r, '\0', sizeof(r));
 
-	/* we don't use uc_mcontext's regs in checkpoint, if the signal
+	/* we don't use context's regs in checkpoint, if the signal
 	 * breaks a syscall.
 	 *
 	 * think the signal handling, check and replay:
 	 *
-	 * if we use the frame.uc.uc_mcontext's regs, then ip should
+	 * if we use the context's regs, then ip should
 	 * point at the next instr of 'sysenter', or 'sysenter' if
 	 * we use SA_RESTART and such syscall return some -ERESTART_XXX.
 	 * then when we run gdbloader, the checkpoint will return to
@@ -254,7 +82,8 @@ do_wrapped_rt_sigreturn(struct rt_sigframe frame)
 	 *    the call stack, and this method need relocation.
 	 * */
 	if (syscall_status == OUT_OF_SYSCALL) {
-#define copy_reg(x)	r.e##x = frame.uc.uc_mcontext.x
+		INJ_WARNING("break no syscall\n");
+#define copy_reg(x)	r.e##x = ctx->x
 		copy_reg(ax);
 		copy_reg(bx);
 		copy_reg(cx);
@@ -265,18 +94,19 @@ do_wrapped_rt_sigreturn(struct rt_sigframe frame)
 		copy_reg(sp);
 		copy_reg(ip);
 #undef copy_reg
-		r.flags = frame.uc.uc_mcontext.flags;
-		r.orig_eax = frame.uc.uc_mcontext.ax;
+		r.flags = ctx->flags;
+		r.orig_eax = 0;
 	} else {
+		INJ_WARNING("break syscall\n");
 		memcpy(&r, current_regs, sizeof(r));
 		r.eip -= 7;
 		r.esp += 4;
+		r.orig_eax = ctx->ax;
 	}
-
 
 	/* build fake regs and fpustate */
 	struct seg_regs seg_regs;
-#define copy_sreg(x)	seg_regs.x = frame.uc.uc_mcontext.x
+#define copy_sreg(x)	seg_regs.x = ctx->x
 	copy_sreg(cs);
 	copy_sreg(ss);
 	copy_sreg(ds);
@@ -284,11 +114,12 @@ do_wrapped_rt_sigreturn(struct rt_sigframe frame)
 	copy_sreg(fs);
 	copy_sreg(gs);
 #undef copy_sreg
+
 	/* from kernel's code: arch/x86/kernel/signal_32.c, restore_sigcontext,
 	 * frame.fpstate is actually struct i387_fxsave_struct, although their
 	 * size is defferent. */
 	make_checkpoint(ckpt_filename, &r,
-			(struct i387_fxsave_struct*)(&(frame.fpstate)), &seg_regs);
+			(struct i387_fxsave_struct*)(fpstate), &seg_regs);
 
 	/* create new logger file */
 	int fd;
@@ -309,16 +140,26 @@ do_wrapped_rt_sigreturn(struct rt_sigframe frame)
 	/* we reset syscall_status to SIGNALED, make the syscall wrapper know there's a signal
 	 * distrub current syscall */
 	syscall_status = SIGNALED;
+}
+
+
+void SCOPE
+do_wrapped_rt_sigreturn(struct rt_sigframe frame)
+{
+	INJ_WARNING("target received rt_signal %d, the log will be switched\n", frame.sig);
+	do_sigreturn(frame.sig, &frame.uc.uc_mcontext, &frame.fpstate);
+	INJ_WARNING("return from do_wrapped_rt_sigreturn\n");
 
 	return;
 }
 
 
 void SCOPE
-do_wrapped_sigreturn(void)
+do_wrapped_sigreturn(struct sigframe frame)
 {
-	INJ_WARNING("sigreturn\n");
-	INTERNAL_SYSCALL(exit, 1, 10);
+	INJ_WARNING("target received signal %d, the log will be switched\n", frame.sig);
+	do_sigreturn(frame.sig, &frame.sc, &frame.fpstate);
+	INJ_WARNING("return from do_wrapped_sigreturn\n");
 	return;
 }
 
