@@ -30,7 +30,7 @@ post_socketcall(const struct syscall_regs * regs)
 	int call = regs->ebx;
 	uint32_t args = regs->ecx;
 
-	INJ_WARNING("in socket_call, nr=0x%x\n", call);
+	INJ_TRACE("in socket_call, nr=0x%x\n", call);
 	if (call < 1 || call > SYS_RECVMSG) {
 		INJ_FATAL("No such syscall number: %d\n", call);
 		__exit(-1);
@@ -94,7 +94,7 @@ replay_socketcall(const struct syscall_regs * regs)
 
 	uint32_t retval = eax;
 	read_mem(a, nargs[call]);
-	INJ_WARNING("replay socketcall 0x%x\n", call);
+	INJ_TRACE("replay socketcall 0x%x\n", call);
 	ASSERT(memcmp(a, (void*)args, nargs[call]) == 0, "!@!@#\n");
 
 	a0 = a[0];
