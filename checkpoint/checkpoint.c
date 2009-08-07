@@ -338,7 +338,7 @@ do_make_checkpoint(int ckpt_fd, int maps_fd, int cmdline_fd, int environ_fd,
 
 		INJ_TRACE("%s\n", p);
 
-		sscanf(p, "%lx-%lx %4s %x %*2d:%*2d %*d %n",
+		sscanf(p, "%lx-%lx %4s %x %*2x:%*2x %*d %n",
 				&start, &end, prot, &offset, &l);
 
 		INJ_TRACE("start=%p, end=%p, prot=%s, offset=0x%x l=%d\n",

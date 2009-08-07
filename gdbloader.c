@@ -26,6 +26,7 @@ inject_memory(void)
 
 	/* for each mem region in ckpt file */
 	for (int i = 0; i < cf->nr_regions; i++) {
+
 		struct mem_region * r = cf->regions[i];
 
 		SYS_TRACE("range %d: 0x%x--0x%x (0x%x:0x%x): %s\n",
@@ -44,6 +45,7 @@ inject_memory(void)
 				start = e.end;
 				SYS_TRACE("\talready mapped in target: 0x%x--0x%x (0x%x:0x%x): %s\n",
 						e.start, e.end, e.prot, e.offset, e.fn);
+
 
 				/* check if 2 maps are same */
 				if ((e.start != r->start) ||
@@ -90,6 +92,7 @@ inject_memory(void)
 				start = r->end;
 			}
 		} while (start < end);
+
 
 		/* now the region has been cleaned up, there may be 2 situations:
 		 * 1. the desired region is empty;
@@ -154,6 +157,7 @@ inject_memory(void)
 					r->start,
 					r->end - r->start);
 	}
+
 
 	CTHROW(stack_r != NULL, "no \"[stack]\" found");
 	/* we poke stack at last */

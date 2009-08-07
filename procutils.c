@@ -42,7 +42,7 @@ iterate_lines(pid_t pid,
 		uint32_t offset;
 		uint32_t prot = 0;
 		
-		sscanf(pline, "%lx-%lx %4[-rwxp] %x %*2d:%*2d %*d %n",
+		sscanf(pline, "%lx-%lx %4[-rwxp] %x %*2x:%*2x %*d %n",
 				&start, &end, prots, &offset, &l);
 		assert_throw(errno == 0, "sscanf failed: string is \"%s\"", pline);
 
