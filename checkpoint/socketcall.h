@@ -109,5 +109,17 @@ extern SCOPE int
 replay_listen(int fd, int backlog, int retval);
 extern void
 output_listen(int fd, int backlog, int retval);
+
+
+extern int SCOPE
+post_accept(int fd, uintptr_t pupeer_sockaddr,
+		uintptr_t pupeer_addrlen, int retval);
+extern int SCOPE
+replay_accept(int fd, uintptr_t pupeer_sockaddr,
+		uintptr_t pupeer_addrlen, int retval);
+void SCOPE
+output_accept(int fd, uintptr_t pupeer_sockaddr,
+		uintptr_t pupeer_addrlen, int retval);
+
 #endif 
 

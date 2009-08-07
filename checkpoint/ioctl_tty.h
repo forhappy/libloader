@@ -319,7 +319,7 @@ pre_tty_ioctl(int fd, uint32_t cmd, uint32_t arg);
 
 /* regs used for replay_trap */
 extern SCOPE int
-post_tty_ioctl(int fd, uint32_t cmd, uint32_t arg);
+post_tty_ioctl(int fd, uint32_t cmd, uint32_t arg, int32_t retval);
 
 extern SCOPE int
 replay_tty_ioctl(int fd, uint32_t cmd, uint32_t arg,

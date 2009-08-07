@@ -36,7 +36,7 @@ post_ioctl(const struct syscall_regs * regs)
 	write_eax(regs);
 
 	if (_IOC_TYPE(cmd) == 'T') {
-		return post_tty_ioctl(fd, cmd, arg);
+		return post_tty_ioctl(fd, cmd, arg, regs->eax);
 	} else {
 		INJ_ERROR("no such ioctl command: 0x%x\n", cmd);
 		__exit(-1);

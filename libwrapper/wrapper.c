@@ -56,7 +56,7 @@ wrapped_syscall(const struct syscall_regs r)
 		current_regs = &r;
 
 		uint32_t syscall_nr = r.orig_eax;
-		INJ_SILENT("wrapped_syscall: %d\n", syscall_nr);
+		INJ_WARNING("wrapped_syscall: %d\n", syscall_nr);
 		before_syscall(&r);
 		syscall_status = IN_SYSCALL;
 		/* before we call real vsyscall, we must restore register
@@ -124,6 +124,7 @@ wrapped_syscall(const struct syscall_regs r)
 		}
 
 		after_syscall(&r);
+		INJ_WARNING("wrapped_syscall: %d over, retval=%d\n", syscall_nr, r.eax);
 		syscall_status = OUT_OF_SYSCALL;
 
 		/* in the assembly code, we have modify the 'eax'. */
@@ -155,9 +156,10 @@ wrapped_syscall(const struct syscall_regs r)
 		}
 
 	} else {
-		INJ_TRACE("syscall, eax=%d\n", r.eax);
+		INJ_WARNING("replay syscall, eax=%d\n", r.eax);
 		uint32_t retval;
 		retval = replay_syscall(&r);
+		INJ_WARNING("syscall, eax=%d, replayed: %d\n", r.eax, retval);
 		/* here we force to reset the eax */
 		(((volatile struct syscall_regs *)&r)->eax) = retval;
 	}

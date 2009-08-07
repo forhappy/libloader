@@ -53,6 +53,7 @@ SET(HANDLERS
 	setsockopt.c
 	listen.c
 	poll.c
+	accept.c
 	)
 
 ADD_LIBRARY(checkpoint

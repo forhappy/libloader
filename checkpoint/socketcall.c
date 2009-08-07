@@ -26,11 +26,11 @@ static const unsigned char nargs[18]={
 int SCOPE
 post_socketcall(const struct syscall_regs * regs)
 {
-	INJ_TRACE("in socket_call\n");
 
 	int call = regs->ebx;
 	uint32_t args = regs->ecx;
 
+	INJ_WARNING("in socket_call, nr=0x%x\n", call);
 	if (call < 1 || call > SYS_RECVMSG) {
 		INJ_FATAL("No such syscall number: %d\n", call);
 		__exit(-1);
@@ -71,6 +71,8 @@ post_socketcall(const struct syscall_regs * regs)
 			return post_setsockopt(a0, a1, a2, a[3], a[4], retval);
 		case SYS_LISTEN:
 			return post_listen(a0, a1, retval);
+		case SYS_ACCEPT:
+			return post_accept(a0, a1, a2, retval);
 		default:
 			INJ_WARNING("Unknown socket call: %d\n", call);
 			__exit(-1);
@@ -92,7 +94,7 @@ replay_socketcall(const struct syscall_regs * regs)
 
 	uint32_t retval = eax;
 	read_mem(a, nargs[call]);
-	INJ_TRACE("socketcall 0x%x\n", call);
+	INJ_WARNING("replay socketcall 0x%x\n", call);
 	ASSERT(memcmp(a, (void*)args, nargs[call]) == 0, "!@!@#\n");
 
 	a0 = a[0];
@@ -123,6 +125,8 @@ replay_socketcall(const struct syscall_regs * regs)
 			return replay_setsockopt(a0, a1, a2, a[3], a[4], retval);
 		case SYS_LISTEN:
 			return replay_listen(a0, a1, retval);
+		case SYS_ACCEPT:
+			return replay_accept(a0, a1, a2, retval);
 		default:
 			INJ_FATAL("Unknown socket call: %d\n", call);
 			INJ_FATAL("eip=0x%x\n", regs->eip);
@@ -197,6 +201,8 @@ output_socketcall(void)
 			return output_setsockopt(a0, a1, a2, a[3], a[4], retval);
 		case SYS_LISTEN:
 			return output_listen(a0, a1, retval);
+		case SYS_ACCEPT:
+			return output_accept(a0, a1, a2, retval);
 		default:
 			THROW(EXCEPTION_FATAL, "Unknown socket number: %d", call);
 	}

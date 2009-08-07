@@ -13,7 +13,7 @@ pre_tty_ioctl(int fd, uint32_t cmd, uint32_t arg)
 }
 
 SCOPE int
-post_tty_ioctl(int fd, uint32_t cmd, uint32_t arg)
+post_tty_ioctl(int fd, uint32_t cmd, uint32_t arg, int32_t retval)
 {
 	switch (cmd) {
 		case TCGETS:
@@ -23,6 +23,10 @@ post_tty_ioctl(int fd, uint32_t cmd, uint32_t arg)
 		case TIOCGWINSZ:
 			if (arg != 0)
 				write_mem(arg, sizeof(struct winsize));
+			return 0;
+		case FIONREAD:
+			if (arg != 0)
+				write_mem(arg, sizeof(int));
 			return 0;
 		default:
 			INJ_WARNING("doesn't know such tty ioctl: 0x%x\n", cmd);
@@ -60,6 +64,10 @@ replay_tty_ioctl(int fd, uint32_t cmd, uint32_t arg,
 			if (arg != 0)
 				read_mem(arg, sizeof(struct winsize));
 			return eax;
+		case FIONREAD:
+			if (arg != 0)
+				read_mem(arg, sizeof(int));
+			return eax;
 		default:
 			INJ_WARNING("doesn't know such tty ioctl: 0x%x\n", cmd);
 			__exit(-1);
@@ -89,6 +97,10 @@ output_tty_ioctl(int fd, uint32_t cmd, uint32_t arg)
 		case TIOCGWINSZ:
 			if (arg != 0)
 				skip(sizeof(struct winsize));
+			break;
+		case FIONREAD:
+			if (arg != 0)
+				skip(sizeof(int));
 			break;
 		default:
 			INJ_WARNING("Unknown tty ioctl cmd 0x%x\n", cmd);
