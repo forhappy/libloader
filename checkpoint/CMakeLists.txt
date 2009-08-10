@@ -61,6 +61,10 @@ SET(HANDLERS
 	gettimeofday.c
 	pipe.c
 	clone.c
+	kill.c
+	getppid.c
+	alarm.c
+	waitpid.c
 	)
 
 ADD_LIBRARY(checkpoint

@@ -116,7 +116,7 @@ logger_init(pid_t pid)
 
 	snprintf(filename, 64, LOGGER_DIRECTORY"/%d.log",
 			pid);
-	fd = __open(filename, O_WRONLY|O_APPEND|O_CREAT, 0666);
+	fd = __open(filename, O_WRONLY|O_APPEND|O_CREAT, 0664);
 	if (fd < 0) {
 		INJ_WARNING("open log file %s failed: %d\n", filename, fd);
 		return fd;
@@ -180,9 +180,6 @@ replay_syscall(const struct syscall_regs * regs)
 	if (nr != regs->orig_eax) {
 		INJ_FATAL("logger mismatch: new syscall should be 0x%x, but actually %d\n",
 				nr, regs->orig_eax);
-		INJ_FATAL("eip=0x%x\n", regs->eip);
-		INJ_FATAL("esp=0x%x\n", regs->esp);
-		INJ_FATAL("ebp=0x%x\n", regs->ebp);
 		/* int3 traps gdb */
 		/* restore stack make gdb know the call stack */
 		/* esp must be set prior ebp */
@@ -455,7 +452,7 @@ make_checkpoint(const char * ckpt_fn, struct syscall_regs * r,
 	ASSERT(environ_fd > 0, "open self environ failed: %d", environ_fd);
 
 	ckpt_fd = INTERNAL_SYSCALL(open, 3,
-			ckpt_fn, O_WRONLY|O_CREAT|O_TRUNC, 0666);
+			ckpt_fn, O_WRONLY|O_CREAT|O_TRUNC, 0664);
 	ASSERT(ckpt_fd > 0, "open ckpt file failed: %d\n", ckpt_fd);
 
 	do_make_checkpoint(ckpt_fd, maps_fd, cmdline_fd, environ_fd, r,

@@ -23,15 +23,13 @@ post__newselect(const struct syscall_regs * regs)
 	write_obj(outp);
 	write_obj(exp);
 
-	if (regs->eax > 0) {
-		int fd_bytes = FDS_BYTES(n);
-		if (inp != 0)
-			write_mem(inp, fd_bytes);
-		if (outp != 0)
-			write_mem(outp, fd_bytes);
-		if (exp != 0)
-			write_mem(exp, fd_bytes);
-	}
+	int fd_bytes = FDS_BYTES(n);
+	if (inp != 0)
+		write_mem(inp, fd_bytes);
+	if (outp != 0)
+		write_mem(outp, fd_bytes);
+	if (exp != 0)
+		write_mem(exp, fd_bytes);
 	return 0;
 }
 
@@ -53,15 +51,14 @@ replay__newselect(const struct syscall_regs * regs)
 	ASSERT(inp == regs->ecx, "");
 	ASSERT(outp == regs->edx, "");
 	ASSERT(exp == regs->esi, "");
-	if (eax > 0) {
-		int fd_bytes = FDS_BYTES(n);
-		if (inp != 0)
-			read_mem(inp, fd_bytes);
-		if (outp != 0)
-			read_mem(outp, fd_bytes);
-		if (exp != 0)
-			read_mem(exp, fd_bytes);
-	}
+
+	int fd_bytes = FDS_BYTES(n);
+	if (inp != 0)
+		read_mem(inp, fd_bytes);
+	if (outp != 0)
+		read_mem(outp, fd_bytes);
+	if (exp != 0)
+		read_mem(exp, fd_bytes);
 	return eax;
 }
 
@@ -81,15 +78,13 @@ output__newselect(void)
 	read_obj(outp);
 	read_obj(exp);
 
-	if (retval > 0) {
-		int fd_bytes = FDS_BYTES(n);
-		if (inp != 0)
-			skip(fd_bytes);
-		if (outp != 0)
-			skip(fd_bytes);
-		if (exp != 0)
-			skip(fd_bytes);
-	}
+	int fd_bytes = FDS_BYTES(n);
+	if (inp != 0)
+		skip(fd_bytes);
+	if (outp != 0)
+		skip(fd_bytes);
+	if (exp != 0)
+		skip(fd_bytes);
 }
 #endif
 

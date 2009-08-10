@@ -85,7 +85,7 @@ do_child_fork(unsigned long clone_flags,
 
 	/* open new logger */
 	int fd;
-	fd = INTERNAL_SYSCALL(open, 3, logger_filename, O_WRONLY|O_APPEND|O_CREAT, 0666);
+	fd = INTERNAL_SYSCALL(open, 3, logger_filename, O_WRONLY|O_APPEND|O_CREAT, 0664);
 	ASSERT(fd > 0, "open new logger file %s failed: %d\n", logger_filename, fd);
 
 	/* dup logger_fd */

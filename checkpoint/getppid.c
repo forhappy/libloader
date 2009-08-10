@@ -4,14 +4,14 @@
 #ifndef SYSCALL_PRINTER
 
 int SCOPE
-post_getpid(const struct syscall_regs * regs)
+post_getppid(const struct syscall_regs * regs)
 {
 	write_eax(regs);
 	return 0;
 }
 
 int SCOPE
-replay_getpid(const struct syscall_regs * regs)
+replay_getppid(const struct syscall_regs * regs)
 {
 	int32_t eax = read_int32();
 	return eax;
@@ -19,9 +19,9 @@ replay_getpid(const struct syscall_regs * regs)
 #else
 
 void
-output_getpid(void)
+output_getppid(void)
 {
-	printf("getpid:\t%d\n", read_eax());
+	printf("getppid:\t%d\n", read_eax());
 }
 #endif
 

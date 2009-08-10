@@ -97,6 +97,11 @@ define_post_handler(pipe);
 
 define_post_handler(clone);
 
+define_post_handler(kill);
+define_post_handler(getppid);
+define_post_handler(alarm);
+define_post_handler(waitpid);
+
 __END_DECLS
 
 #endif

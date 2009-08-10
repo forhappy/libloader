@@ -219,7 +219,7 @@ injector_entry(struct syscall_regs r,
 	snprintf(ckpt_filename, 128, LOGGER_DIRECTORY"/%d.ckpt", self_pid);
 	INJ_TRACE("ckpt fn: %s\n", ckpt_filename);
 
-	int fd = INTERNAL_SYSCALL(open, 3, logger_filename, O_WRONLY|O_APPEND, 0666);
+	int fd = INTERNAL_SYSCALL(open, 3, logger_filename, O_WRONLY|O_APPEND, 0664);
 	INJ_TRACE("logger fd = %d\n", fd);
 	ASSERT(fd > 0, "open logger failed: %d\n", fd);
 
@@ -397,7 +397,7 @@ debug_entry(struct syscall_regs r,
 
 	/* open logger */
 	int fd = INTERNAL_SYSCALL(open, 3, logger_filename,
-			O_RDONLY, 0666);
+			O_RDONLY, 0664);
 	INJ_TRACE("logger fd = %d\n", fd);
 	ASSERT(fd > 0, "open logger failed: %d\n", fd);
 
