@@ -54,6 +54,9 @@ SET(HANDLERS
 	listen.c
 	poll.c
 	accept.c
+	writev.c
+	sendfile64.c
+	shutdown.c
 	)
 
 ADD_LIBRARY(checkpoint

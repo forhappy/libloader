@@ -121,5 +121,13 @@ void SCOPE
 output_accept(int fd, uintptr_t pupeer_sockaddr,
 		uintptr_t pupeer_addrlen, int retval);
 
+
+extern int SCOPE
+post_shutdown(int fd, int how, int retval);
+extern int SCOPE
+replay_shutdown(int fd, int how, int retval);
+void SCOPE
+output_shutdown(int fd, int how, int retval);
+
 #endif 
 

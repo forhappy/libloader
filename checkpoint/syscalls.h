@@ -88,6 +88,9 @@ define_post_handler(geteuid32);
 define_post_handler(getegid32);
 define_post_handler(getgid32);
 define_post_handler(poll);
+
+define_post_handler(writev);
+define_post_handler(sendfile64);
 __END_DECLS
 
 #endif
