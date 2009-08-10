@@ -20,7 +20,7 @@ struct opts {
 	int logger_threshold;
 	int cmd_idx;
 	int trace_fork;
-	int trace_clone;
+	int untraced;
 };
 
 extern struct opts *

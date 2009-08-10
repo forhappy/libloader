@@ -52,6 +52,8 @@ checkflags(unsigned long clone_flags)
 	ASSERT(!(clone_flags & not_support), "clone_flags 0x%x contain non-support flags\n");
 }
 
+extern SCOPE int tracing;
+
 SCOPE void
 do_child_fork(unsigned long clone_flags,
 		unsigned long stack_start,
@@ -67,6 +69,13 @@ do_child_fork(unsigned long clone_flags,
 	/* close current logger in child */
 	err = INTERNAL_SYSCALL(close, 1, logger_fd);
 	ASSERT(err == 0, "close current logger %s failed\n", logger_filename);
+
+	if (!injector_opts.trace_fork) {
+		/* don't trace child, no checkpoint and log */
+		tracing = 0;
+		return;
+	}
+
 
 	self_pid = old_self_pid = INTERNAL_SYSCALL(getpid, 0);
 

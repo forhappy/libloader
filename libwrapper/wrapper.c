@@ -25,7 +25,7 @@ pid_t SCOPE old_self_pid = 0;
 struct i387_fxsave_struct SCOPE fpustate_struct __attribute__((aligned(16)));
 
 static int replay = 0;
-static int tracing = 0;
+int SCOPE tracing = 0;
 
 SCOPE void
 show_help(void)
@@ -58,9 +58,48 @@ is_fork_syscall(int nr)
 	return 0;
 }
 
+#define call_syscall(__r, __retval) \
+		asm volatile(	\
+				"pushl %%eax\n"	\
+				"pushl %%ebx\n"	\
+				"pushl %%ecx\n"	\
+				"pushl %%edx\n"	\
+				"pushl %%esi\n"	\
+				"pushl %%edi\n"	\
+				"pushl %%ebp\n"	\
+				"movl %P1, %%eax\n"	\
+				"movl %P2, %%ebx\n"	\
+				"movl %P3, %%ecx\n"	\
+				"movl %P4, %%edx\n"	\
+				"movl %P5, %%esi\n"	\
+				"movl %P6, %%edi\n"	\
+				"movl %P7, %%ebp\n"	\
+				"call __vsyscall\n"	\
+				"popl %%ebp\n"	\
+				"popl %%edi\n"	\
+				"popl %%esi\n"	\
+				"popl %%edx\n"	\
+				"popl %%ecx\n"	\
+				"popl %%ebx\n"	\
+				"addl $0x4, %%esp\n"	/* eax */	\
+				"movl %%eax, %P1\n"	\
+				: "=a" ((__retval))	\
+				: "m" ((__r).eax), "m" ((__r).ebx), "m" ((__r).ecx), 	\
+				"m" ((__r).edx), "m" ((__r).esi), "m" ((__r).edi),	\
+				"m" ((__r).ebp))
+
+
 SCOPE void
 wrapped_syscall(const struct syscall_regs r)
 {
+	/* if we don't trace fork and clone, the
+	 * child process can set tracing to 0 */
+	if (!tracing) {
+		uint32_t retval;
+		call_syscall(r, retval);
+		return;
+	}
+
 	if (!replay) {
 		/* we save current regs file for signal checkpoint use. */
 		current_regs = &r;
@@ -72,34 +111,10 @@ wrapped_syscall(const struct syscall_regs r)
 		/* before we call real vsyscall, we must restore register
 		 * state */
 		uint32_t retval;
-		asm volatile(
-				"pushl %%eax\n"
-				"pushl %%ebx\n"
-				"pushl %%ecx\n"
-				"pushl %%edx\n"
-				"pushl %%esi\n"
-				"pushl %%edi\n"
-				"pushl %%ebp\n"
-				"movl %P1, %%eax\n"
-				"movl %P2, %%ebx\n"
-				"movl %P3, %%ecx\n"
-				"movl %P4, %%edx\n"
-				"movl %P5, %%esi\n"
-				"movl %P6, %%edi\n"
-				"movl %P7, %%ebp\n"
-				"call __vsyscall\n"
-				"popl %%ebp\n"
-				"popl %%edi\n"
-				"popl %%esi\n"
-				"popl %%edx\n"
-				"popl %%ecx\n"
-				"popl %%ebx\n"
-				"addl $0x4, %%esp\n"	/* eax */
-				"movl %%eax, %P1\n"
-				: "=a" (retval)
-				: "m" (r.eax), "m" (r.ebx), "m" (r.ecx), 
-				"m" (r.edx), "m" (r.esi), "m" (r.edi),
-				"m" (r.ebp));
+
+
+		call_syscall(r, retval);
+
 
 		/* syscall_status == OUT_OF_SYSCALL, this means we come back here by
 		 * load a ckpt. this shouldn't happen, think about SA_RESTORER. */
@@ -217,6 +232,13 @@ injector_entry(struct syscall_regs r,
 
 	old_self_pid = self_pid = INTERNAL_SYSCALL(getpid, 0);
 
+	if (injector_opts.untraced) {
+		tracing = 0;
+		return;
+	}
+
+	tracing = 1;
+
 	snprintf(logger_filename, 128, LOGGER_DIRECTORY"/%d.log", self_pid);
 	INJ_TRACE("logger fn: %s\n", logger_filename);
 
@@ -240,12 +262,12 @@ injector_entry(struct syscall_regs r,
 
 	/* :NOTICE: */
 	/* We MUST adjust esp here. when loader call injector, it pushs
-	 * 3 int32_t onto stack, so the esp in 'r' cannot be used directly.
+	 * 2 int32_t onto stack, so the esp in 'r' cannot be used directly.
 	 */
 	save_i387(&fpustate_struct);
-	r.esp += 12;
+	r.esp += 8;
 	make_checkpoint(ckpt_filename, &r, &fpustate_struct, NULL);
-	r.esp -= 12;
+	r.esp -= 8;
 
 	err = INTERNAL_SYSCALL(ftruncate, 2, logger_fd, 0);
 	ASSERT(err == 0, "ftruncate failed: %d\n", err);

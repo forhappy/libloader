@@ -27,8 +27,9 @@ static struct argp_option options[] = {
 	{"rt_sigreturn", -2, "rt_sigaction sym", 
 		0, "wrapped_rt_sigreturn symbol, \"wrapped_rt_sigreturn\" by default"},
 	{"tracefork",	'f', NULL,			0, "trace fork, default: off"},
-	{"traceclone",	'c', NULL,			0, "trace clone, default: off"},
-	{"injopts",		'o', "opts sym",	0, "injector opts symbol, \"injector_opts\" by default"},
+	{"injopts",		-3, "opts sym",	0, "injector opts symbol, \"injector_opts\" by default"},
+	{"untraced",	-4, NULL,			0, "start untraced running. traced by default. "
+		"This option is designed for debug use only."},
 	{NULL},
 };
 
@@ -44,7 +45,7 @@ static struct opts opts = {
 	.rt_sigreturn	= "wrapped_rt_sigreturn",
 	.logger_threshold	= 10 << 20,
 	.trace_fork		= 0,
-	.trace_clone	= 0,
+	.untraced		= 0,
 };
 
 static error_t
@@ -52,14 +53,14 @@ parse_opt(int key, char *arg, struct argp_state *state)
 {
 	static int found_target = 0;
 	switch (key) {
-		case 'o':
+		case -4:
+			opts.untraced = 1;
+			return 0;
+		case -3:
 			opts.injector_opts = arg;
 			return 0;
 		case 'f':
 			opts.trace_fork = 1;
-			return 0;
-		case 'c':
-			opts.trace_clone = 1;
 			return 0;
 		case -1:
 			opts.sigreturn= arg;

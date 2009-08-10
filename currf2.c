@@ -304,6 +304,11 @@ inject_injopts(void)
 {
 	uintptr_t addr = elf_get_symbol_address(injector.h, opts->injector_opts);
 	CTHROW(addr != 0, "wrong symbol: %s", opts->injector_opts);
+
+	injector_opts.logger_threshold = opts->logger_threshold;
+	injector_opts.trace_fork = opts->trace_fork;
+	injector_opts.untraced = opts->untraced;
+
 	ptrace_updmem(&injector_opts, addr, sizeof(injector_opts));
 	
 }
@@ -419,9 +424,6 @@ currf2_main(int argc, char * argv[])
 	inject_statvec();
 
 	/* set and inject the options of injector */
-	injector_opts.logger_threshold = opts->logger_threshold;
-	injector_opts.trace_fork = opts->trace_fork;
-	injector_opts.trace_clone = opts->trace_clone;
 	inject_injopts();
 
 	/* goto the injector '__entry' */

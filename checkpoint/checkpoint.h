@@ -240,7 +240,7 @@ extern SCOPE struct state_vector {
 extern SCOPE struct injector_opts {
 	int logger_threshold;
 	int trace_fork;
-	int trace_clone;
+	int untraced;
 } injector_opts;
 
 

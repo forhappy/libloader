@@ -27,7 +27,6 @@ SCOPE struct state_vector state_vector = {
 SCOPE struct injector_opts injector_opts = {
 	.logger_threshold	= 10 << 20,
 	.trace_fork			= 0,
-	.trace_clone		= 0,
 };
 
 int SCOPE logger_fd = 0;
