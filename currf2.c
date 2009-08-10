@@ -300,6 +300,15 @@ inject_statvec(void)
 }
 
 static void
+inject_injopts(void)
+{
+	uintptr_t addr = elf_get_symbol_address(injector.h, opts->injector_opts);
+	CTHROW(addr != 0, "wrong symbol: %s", opts->injector_opts);
+	ptrace_updmem(&injector_opts, addr, sizeof(injector_opts));
+	
+}
+
+static void
 currf2_main(int argc, char * argv[])
 {
 	int err;
@@ -406,19 +415,21 @@ currf2_main(int argc, char * argv[])
 	/* reset the wrapper entry */
 	ptrace_updmem(wrapper_bkup, *pvdso_entry, SZ_TRIVAL_WRAPPER);
 
-
 	/* inject the 'state vector' */
 	inject_statvec();
+
+	/* set and inject the options of injector */
+	injector_opts.logger_threshold = opts->logger_threshold;
+	injector_opts.trace_fork = opts->trace_fork;
+	injector_opts.trace_clone = opts->trace_clone;
+	inject_injopts();
 
 	/* goto the injector '__entry' */
 
 	/* order is important, this is ABI between currf2 and injector */
-	/* put the ret val of __entry. it is also the 3rd arg */
+	/* put the ret val of __entry. it is also the 2nd arg */
 	ptrace_push(&main_entry, sizeof(uint32_t), FALSE);
 
-
-	/* 2nd arg: logger_threshold */
-	ptrace_push(&(opts->logger_threshold), sizeof(uint32_t), FALSE);
 	/* 1st arg: old sysinfo addr */
 	ptrace_push(&old_vdso_entry, sizeof(uint32_t), FALSE);
 

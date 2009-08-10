@@ -48,11 +48,11 @@ syscall_wrapper_entry:
 .type __entry, @function
 __ALIGN
 __entry:
-	/* before go int __entry, loader should have been pushed 3 things:
+	/* before go int __entry, loader should have been pushed 2 things:
 	   (from high addr to low addr (the order of push)) should be:
-	   main_entry, logger_threshold, old_vdso_entry. */
+	   main_entry, old_vdso_entry. */
 	pushl %esp
-	pushl 12(%esp)		/* eip */
+	pushl 8(%esp)		/* eip */
 	pushl $0		/* orig_eax */
 	pushf
 	pushl %ebp
@@ -71,7 +71,7 @@ __entry:
 	popl %edi
 	popl %ebp
 	popf
-	addl $20, %esp
+	addl $16, %esp
 	ret
 
 .globl __debug_entry

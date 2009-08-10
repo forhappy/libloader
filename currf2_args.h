@@ -10,6 +10,7 @@ struct opts {
 	char * entry;
 	char * old_vsyscall;
 	char * state_vect;
+	char * injector_opts;
 	char * sigreturn;
 	char * rt_sigreturn;
 	char * ckpt_fn;	/* for gdbloader only */
@@ -18,6 +19,8 @@ struct opts {
 	uint32_t inj_bias;
 	int logger_threshold;
 	int cmd_idx;
+	int trace_fork;
+	int trace_clone;
 };
 
 extern struct opts *

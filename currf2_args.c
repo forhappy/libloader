@@ -26,6 +26,9 @@ static struct argp_option options[] = {
 		0,  "wrapped_sigreturn symbol, \"wrapped_sigreturn\" by default"},
 	{"rt_sigreturn", -2, "rt_sigaction sym", 
 		0, "wrapped_rt_sigreturn symbol, \"wrapped_rt_sigreturn\" by default"},
+	{"tracefork",	'f', NULL,			0, "trace fork, default: off"},
+	{"traceclone",	'c', NULL,			0, "trace clone, default: off"},
+	{"injopts",		'o', "opts sym",	0, "injector opts symbol, \"injector_opts\" by default"},
 	{NULL},
 };
 
@@ -36,9 +39,12 @@ static struct opts opts = {
 	.entry		= "__entry",
 	.old_vsyscall	= "__vsyscall",
 	.state_vect		= "state_vector",
+	.injector_opts	= "injector_opts",
 	.sigreturn		= "wrapped_sigreturn",
 	.rt_sigreturn	= "wrapped_rt_sigreturn",
 	.logger_threshold	= 10 << 20,
+	.trace_fork		= 0,
+	.trace_clone	= 0,
 };
 
 static error_t
@@ -46,6 +52,15 @@ parse_opt(int key, char *arg, struct argp_state *state)
 {
 	static int found_target = 0;
 	switch (key) {
+		case 'o':
+			opts.injector_opts = arg;
+			return 0;
+		case 'f':
+			opts.trace_fork = 1;
+			return 0;
+		case 'c':
+			opts.trace_clone = 1;
+			return 0;
 		case -1:
 			opts.sigreturn= arg;
 			return 0;

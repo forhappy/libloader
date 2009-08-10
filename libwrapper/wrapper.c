@@ -25,9 +25,7 @@ pid_t SCOPE old_self_pid = 0;
 struct i387_fxsave_struct SCOPE fpustate_struct __attribute__((aligned(16)));
 
 static int replay = 0;
-
-static int logger_threshold = 10 << 20;	/* 10MB */
-
+static int tracing = 0;
 
 SCOPE void
 show_help(void)
@@ -122,8 +120,12 @@ wrapped_syscall(const struct syscall_regs r)
 			/* we still need to write this flag */
 			int16_t f = -1;
 			/* if this is a fork don't write the tag */
-			if (!(is_fork_syscall(syscall_nr) && (retval == 0)))
-				INTERNAL_SYSCALL(write, 3, logger_fd, &f, sizeof(f));
+			if (!(is_fork_syscall(syscall_nr) && (retval == 0))) {
+				int err;
+				err = INTERNAL_SYSCALL(write, 3, logger_fd, &f, sizeof(f));
+				ASSERT(err == sizeof(f), "write signal tag failed: %d\n", err);
+				logger_sz += err;
+			}
 		} else if (syscall_status == IN_SYSCALL){
 			/* write a flag to indicate syscall not be distrubed */
 			/* if this syscall distrubed, the next data in logger
@@ -131,8 +133,12 @@ wrapped_syscall(const struct syscall_regs r)
 			 * (write by wrapped_(rt_)sigreturn). when replay, if see this -1,
 			 * we know this syscall ends normally. */
 			int16_t f = -1;
-			if (!(is_fork_syscall(syscall_nr) && (retval == 0)))
-				INTERNAL_SYSCALL(write, 3, logger_fd, &f, sizeof(f));
+			if (!(is_fork_syscall(syscall_nr) && (retval == 0))) {
+				int err;
+				err = INTERNAL_SYSCALL(write, 3, logger_fd, &f, sizeof(f));
+				ASSERT(err == sizeof(f), "write signal tag failed: %d\n", err);
+				logger_sz += err;
+			}
 		} else {
 			INJ_FATAL("!@#!#$^%#%@#$\n");
 			INTERNAL_SYSCALL(exit, 1, -1);
@@ -146,7 +152,7 @@ wrapped_syscall(const struct syscall_regs r)
 
 		/* check the logger sz */
 		INJ_SILENT("logger_sz = %d\n", logger_sz);
-		if (logger_sz > logger_threshold) {
+		if (logger_sz > injector_opts.logger_threshold) {
 			int err;
 
 			/* we need to remake ckpt */
@@ -185,7 +191,7 @@ extern void wrapped_rt_sigreturn(void);
 
 SCOPE void
 injector_entry(struct syscall_regs r,
-		uint32_t old_vdso_ventry, int threshold,
+		uint32_t old_vdso_ventry,
 		uint32_t main_addr)
 {
 	int err;
@@ -205,11 +211,9 @@ injector_entry(struct syscall_regs r,
 	INJ_TRACE("Here! we come to injector!!!\n");
 	INJ_TRACE("wrapped_sigreturn=%p\n", wrapped_sigreturn);
 	INJ_TRACE("wrapped_rt_sigreturn=%p\n", wrapped_rt_sigreturn);
-	INJ_TRACE("%d, 0x%x, 0x%x\n", threshold, old_vdso_ventry, main_addr);
 
-	ASSERT(threshold >= 4096, "logger threshold %d is strange\n", threshold);
-
-	logger_threshold = threshold;
+	ASSERT(injector_opts.logger_threshold >= 4096, "logger threshold %d is strange\n",
+			injector_opts.logger_threshold);
 
 	old_self_pid = self_pid = INTERNAL_SYSCALL(getpid, 0);
 

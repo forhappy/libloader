@@ -237,6 +237,12 @@ extern SCOPE struct state_vector {
 	int end;
 } state_vector;
 
+extern SCOPE struct injector_opts {
+	int logger_threshold;
+	int trace_fork;
+	int trace_clone;
+} injector_opts;
+
 
 struct mem_region {
 	uint32_t start;
