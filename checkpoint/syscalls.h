@@ -91,6 +91,9 @@ define_post_handler(poll);
 
 define_post_handler(writev);
 define_post_handler(sendfile64);
+define_post_handler(getrusage);
+define_post_handler(gettimeofday);
+define_post_handler(pipe);
 __END_DECLS
 
 #endif

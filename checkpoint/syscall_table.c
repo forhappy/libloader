@@ -64,6 +64,9 @@ SCOPE struct syscall_tabent syscall_table[] = {
 	def_syscall_entry(poll, NULL),
 	def_syscall_entry(writev, NULL),
 	def_syscall_entry(sendfile64, NULL),
+	def_syscall_entry(getrusage, NULL),
+	def_syscall_entry(gettimeofday, NULL),
+	def_syscall_entry(pipe, NULL),
 #ifndef SYSCALL_PRINTER
 	[NR_SYSCALLS]	= {NULL, NULL, NULL},
 #else

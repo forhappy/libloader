@@ -57,6 +57,9 @@ SET(HANDLERS
 	writev.c
 	sendfile64.c
 	shutdown.c
+	getrusage.c
+	gettimeofday.c
+	pipe.c
 	)
 
 ADD_LIBRARY(checkpoint
