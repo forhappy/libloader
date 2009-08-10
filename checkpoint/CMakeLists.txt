@@ -60,6 +60,7 @@ SET(HANDLERS
 	getrusage.c
 	gettimeofday.c
 	pipe.c
+	clone.c
 	)
 
 ADD_LIBRARY(checkpoint

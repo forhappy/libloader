@@ -319,6 +319,18 @@ do_make_checkpoint(int ckpt_fd, int maps_fd, int cmdline_fd, int environ_fd,
 	state_vector.pid = INTERNAL_SYSCALL(getpid, 0);
 	
 	/* save fpustate */
+	if (fpustate == NULL) {
+		struct {
+			struct i387_fxsave_struct _fpustate;
+			uint8_t __padding[16];
+		} __attribute__((packed)) align;
+#define UL(x)		((uint32_t)(x))
+#define ALIGN(x, n)	(void*)(((UL(x)) + (1UL << (n)) - 1) & (~((1UL << (n)) - 1)))
+#define ALIGN16(x)	(void*)ALIGN(x, 4)
+		struct i387_fxsave_struct * p = ALIGN16(&(align._fpustate));
+		save_i387(p);
+		fpustate = p;
+	}
 	memcpy(&state_vector.fpustate, fpustate, sizeof(*fpustate));
 
 	/* we write state_vector again for the loader, before mem regions */

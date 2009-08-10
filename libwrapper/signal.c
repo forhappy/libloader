@@ -16,7 +16,6 @@
 
 extern void __vsyscall();
 
-
 extern SCOPE char logger_filename[128];
 extern SCOPE char ckpt_filename[128];
 extern SCOPE pid_t self_pid;
@@ -140,6 +139,9 @@ do_sigreturn(int signum, struct sigcontext * ctx, struct _fpstate * fpstate)
 	/* we reset syscall_status to SIGNALED, make the syscall wrapper know there's a signal
 	 * distrub current syscall */
 	syscall_status = SIGNALED;
+
+	/* logger_sz has been reset in do_make_checkpoint */
+	logger_sz = 0;
 }
 
 

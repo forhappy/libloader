@@ -94,6 +94,9 @@ define_post_handler(sendfile64);
 define_post_handler(getrusage);
 define_post_handler(gettimeofday);
 define_post_handler(pipe);
+
+define_post_handler(clone);
+
 __END_DECLS
 
 #endif

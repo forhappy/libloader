@@ -48,6 +48,18 @@ SCOPE volatile enum syscall_status syscall_status = OUT_OF_SYSCALL;
 
 SCOPE const struct syscall_regs * current_regs;
 
+static inline int
+is_fork_syscall(int nr)
+{
+	if (nr == __NR_fork)
+		return 1;
+	if (nr == __NR_vfork)
+		return 1;
+	if (nr == __NR_clone)
+		return 1;
+	return 0;
+}
+
 SCOPE void
 wrapped_syscall(const struct syscall_regs r)
 {
@@ -109,7 +121,9 @@ wrapped_syscall(const struct syscall_regs r)
 
 			/* we still need to write this flag */
 			int16_t f = -1;
-			INTERNAL_SYSCALL(write, 3, logger_fd, &f, sizeof(f));
+			/* if this is a fork don't write the tag */
+			if (!(is_fork_syscall(syscall_nr) && (retval == 0)))
+				INTERNAL_SYSCALL(write, 3, logger_fd, &f, sizeof(f));
 		} else if (syscall_status == IN_SYSCALL){
 			/* write a flag to indicate syscall not be distrubed */
 			/* if this syscall distrubed, the next data in logger
@@ -117,7 +131,8 @@ wrapped_syscall(const struct syscall_regs r)
 			 * (write by wrapped_(rt_)sigreturn). when replay, if see this -1,
 			 * we know this syscall ends normally. */
 			int16_t f = -1;
-			INTERNAL_SYSCALL(write, 3, logger_fd, &f, sizeof(f));
+			if (!(is_fork_syscall(syscall_nr) && (retval == 0)))
+				INTERNAL_SYSCALL(write, 3, logger_fd, &f, sizeof(f));
 		} else {
 			INJ_FATAL("!@#!#$^%#%@#$\n");
 			INTERNAL_SYSCALL(exit, 1, -1);
