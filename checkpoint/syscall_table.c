@@ -75,6 +75,7 @@ SCOPE struct syscall_tabent syscall_table[] = {
 	def_syscall_entry(link, NULL),
 	def_syscall_entry(dup, NULL),
 	def_syscall_entry(dup2, NULL),
+	def_syscall_entry(wait4, NULL),
 #ifndef SYSCALL_PRINTER
 	[NR_SYSCALLS]	= {NULL, NULL, NULL},
 #else

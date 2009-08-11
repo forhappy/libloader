@@ -118,7 +118,7 @@ wrapped_syscall(const struct syscall_regs r)
 
 		/* syscall_status == OUT_OF_SYSCALL, this means we come back here by
 		 * load a ckpt. this shouldn't happen, think about SA_RESTORER. */
-		ASSERT(syscall_status != OUT_OF_SYSCALL, &r, "ckeck point come to the wrong place\n");
+		ASSERT(syscall_status != OUT_OF_SYSCALL, &r, "ckeck point comes to a wrong place\n");
 
 		if (syscall_status >= SIGNALED) {
 			/* last syscall is disturbed by a signal, the logger has been switched */

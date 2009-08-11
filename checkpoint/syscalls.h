@@ -105,6 +105,7 @@ define_post_handler(link);
 
 define_post_handler(dup);
 define_post_handler(dup2);
+define_post_handler(wait4);
 
 __END_DECLS
 

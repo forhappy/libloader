@@ -69,6 +69,7 @@ SET(HANDLERS
 	send.c
 	dup.c
 	dup2.c
+	wait4.c
 	)
 
 ADD_LIBRARY(checkpoint
