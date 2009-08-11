@@ -65,6 +65,10 @@ SET(HANDLERS
 	getppid.c
 	alarm.c
 	waitpid.c
+	link.c
+	send.c
+	dup.c
+	dup2.c
 	)
 
 ADD_LIBRARY(checkpoint

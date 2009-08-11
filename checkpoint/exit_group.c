@@ -9,7 +9,8 @@
 int SCOPE
 pre_exit_group(const struct syscall_regs * regs)
 {
-	/* placeholder */
+	/* save ebx */
+	write_obj(regs->ebx);
 	return 0;
 }
 
@@ -23,8 +24,9 @@ post_exit_group(const struct syscall_regs * regs)
 int SCOPE
 replay_exit_group(const struct syscall_regs * regs)
 {
-	/* needn't check signal */
 #ifdef IN_INJECTOR
+	/* needn't check signal */
+	INJ_VERBOSE("target call exit_group(%d), exit normally\n", regs->ebx);
 	INTERNAL_SYSCALL(exit_group, 1, regs->ebx);
 #endif
 	return 0;
@@ -35,7 +37,8 @@ replay_exit_group(const struct syscall_regs * regs)
 void
 output_exit_group(void)
 {
-	printf("exit_group.\n");
+	int32_t code = read_int32();
+	printf("exit_group(%d).\n", code);
 }
 #endif
 

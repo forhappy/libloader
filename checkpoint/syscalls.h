@@ -101,6 +101,10 @@ define_post_handler(kill);
 define_post_handler(getppid);
 define_post_handler(alarm);
 define_post_handler(waitpid);
+define_post_handler(link);
+
+define_post_handler(dup);
+define_post_handler(dup2);
 
 __END_DECLS
 

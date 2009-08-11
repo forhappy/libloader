@@ -129,5 +129,13 @@ replay_shutdown(int fd, int how, int retval, const struct syscall_regs * regs);
 void SCOPE
 output_shutdown(int fd, int how, int retval);
 
+extern int SCOPE
+post_send(int fd, uint32_t buff, uint32_t len, uint32_t flags,
+		int retval, const struct syscall_regs * regs);
+extern int SCOPE
+replay_send(int fd, uint32_t buff, uint32_t len, uint32_t flags,
+		int retval, const struct syscall_regs * regs);
+extern void SCOPE
+output_send(int fd, uint32_t buff, uint32_t len, uint32_t flags, int retval);
 #endif 
 

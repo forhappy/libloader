@@ -180,7 +180,7 @@ extern void show_mem_info();
 #endif
 
 #ifndef ASSERT
-# define ASSERT(c, str...) assert((c))
+# define ASSERT(c, regs, str...) assert((c))
 #endif
 
 __END_DECLS
