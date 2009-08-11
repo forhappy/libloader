@@ -241,6 +241,7 @@ extern SCOPE struct injector_opts {
 	int logger_threshold;
 	int trace_fork;
 	int untraced;
+	int nowait;	/* for gdbloader only */
 } injector_opts;
 
 

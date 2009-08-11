@@ -1,3 +1,7 @@
+/* 
+ * gdbloader.c
+ * by WN @ Jul. 16, 2009
+ */
 
 #include "debug.h"
 #include "exception.h"
@@ -196,6 +200,15 @@ fix_libpthread(uint32_t * sym_stack_used, uint32_t * sym_stack_user)
 }
 
 static void
+inject_injopts(struct elf_handler * inj_so)
+{
+	uintptr_t addr = elf_get_symbol_address(inj_so, opts->injector_opts);
+	struct injector_opts o;
+	o.nowait = opts->nowait;
+	ptrace_updmem(&o, addr, sizeof(o));
+}
+
+static void
 gdbloader_main(const char * target_fn)
 {
 	/* check: target_fn should be same as argv[0] */
@@ -243,6 +256,9 @@ gdbloader_main(const char * target_fn)
 	uintptr_t debug_entry = elf_get_symbol_address(inj_so,
 			opts->entry);
 	SYS_TRACE("symbol %s at 0x%x\n", opts->entry, debug_entry);
+
+	/* inject the injector opts */
+	inject_injopts(inj_so);
 
 	elf_cleanup(inj_so);
 	free(img);

@@ -455,21 +455,22 @@ debug_entry(struct syscall_regs r,
 	syscall_status = OUT_OF_SYSCALL;
 
 	/* spin */
-	volatile int xxx = 0;
-	INJ_FORCE("state has been restored, run gdb:\n");
-	INJ_FORCE("\t(gdb) attach %d\n", self_pid);
-	INJ_FORCE("\t(gdb) p *(int*)(0x%x) = 1\n", &xxx);
-	INJ_FORCE("\t(gdb) b *0x%x\n", entry);
-	INJ_FORCE("\t(gdb) c\n");
-	while (xxx == 0) {
-		struct timespec {
-			long       ts_sec;
-			long       ts_nsec;
-		};
-		struct timespec tm = {1, 0};
-		INTERNAL_SYSCALL(nanosleep, 2, &tm, NULL);
+	if (!injector_opts.nowait) {
+		volatile int xxx = 0;
+		INJ_FORCE("state has been restored, run gdb:\n");
+		INJ_FORCE("\t(gdb) attach %d\n", self_pid);
+		INJ_FORCE("\t(gdb) p *(int*)(0x%x) = 1\n", &xxx);
+		INJ_FORCE("\t(gdb) b *0x%x\n", entry);
+		INJ_FORCE("\t(gdb) c\n");
+		while (xxx == 0) {
+			struct timespec {
+				long       ts_sec;
+				long       ts_nsec;
+			};
+			struct timespec tm = {1, 0};
+			INTERNAL_SYSCALL(nanosleep, 2, &tm, NULL);
+		}
 	}
-
 	/* if restore tid and pid, gdb will crash */
 /* 	restore_libpthread(sym_stack_user, sym_stack_used); */
 }

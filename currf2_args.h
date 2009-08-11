@@ -21,6 +21,7 @@ struct opts {
 	int cmd_idx;
 	int trace_fork;
 	int untraced;
+	int nowait;
 };
 
 extern struct opts *

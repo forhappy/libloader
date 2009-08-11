@@ -22,6 +22,8 @@ static struct argp_option options[] = {
 	{"statevect",	'v', "statevect",	0, "state_vect's symbol, \'state_vector\' by default"},
 	{"pthreadso",	't', "pthreadso",	0, "desired libpthread.so file name, \'/lib/libpthread.so.0\' by default"},
 	{"fixpthread",	'f', NULL,			0, "fix libpthreaed tid and pid"},
+	{"nowait",		-1,  NULL,			0, "don't wait for gdb attach, default is off"},
+	{"injopts",		-2, "opts sym",		0, "injector opts symbol, \"injector_opts\" by default"},
 	{NULL},
 };
 
@@ -34,6 +36,8 @@ static struct opts opts = {
 	.pthread_so_fn	= "/lib/libpthread.so.0",
 	.fix_pthread_tid = 0,
 	.ckpt_fn	= NULL,
+	.injector_opts	= "injector_opts",
+	.nowait = 0,
 };
 
 static error_t
@@ -41,6 +45,12 @@ parse_opt(int key, char *arg, struct argp_state *state)
 {
 	static int found_target = 0;
 	switch (key) {
+		case -1:
+			opts.nowait = 1;
+			return 0;
+		case -2:
+			opts.injector_opts = arg;
+			return 0;
 		case 'f':
 			opts.fix_pthread_tid = 1;
 			return 0;
