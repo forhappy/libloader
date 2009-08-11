@@ -25,7 +25,7 @@ replay__llseek(const struct syscall_regs * regs)
 	int32_t eax = read_int32();
 	uint32_t presult;
 	read_obj(presult);
-	ASSERT(presult == regs->esi, "");
+	ASSERT(presult == regs->esi, regs, "");
 	if (eax >= 0) {
 		if (presult != 0)
 			read_mem(presult, sizeof(loff_t));

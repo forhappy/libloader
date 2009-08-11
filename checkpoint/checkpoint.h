@@ -90,7 +90,7 @@ extern uint32_t SCOPE logger_sz;
 # define read_obj(x) do {	\
 	int err;	\
 	err = __read(logger_fd, &(x), sizeof(x));\
-	ASSERT(err == sizeof(x), "read failed: %d != %d\n", err, sizeof(x));\
+	ASSERT(err == sizeof(x), regs, "read failed: %d != %d\n", err, sizeof(x));\
 } while(0)
 #if 0
 # define read_mem(dst, sz)	do {\
@@ -103,7 +103,7 @@ extern uint32_t SCOPE logger_sz;
 # define read_mem(dst, sz)	do {\
 	int ___ret = 0;\
 	___ret = __read(logger_fd, (void*)(dst), (sz));	\
-	ASSERT(___ret == sz, "read_mem failed: ___ret=%d, sz=%d\n", ___ret, sz);\
+	ASSERT(___ret == sz, regs, "read_mem failed: ___ret=%d, sz=%d\n", ___ret, sz);\
 } while(0)
 
 #endif	/* IN_INJECTOR */

@@ -47,10 +47,10 @@ replay__newselect(const struct syscall_regs * regs)
 	read_obj(outp);
 	read_obj(exp);
 
-	ASSERT(n == regs->ebx, "");
-	ASSERT(inp == regs->ecx, "");
-	ASSERT(outp == regs->edx, "");
-	ASSERT(exp == regs->esi, "");
+	ASSERT(n == regs->ebx, regs, "");
+	ASSERT(inp == regs->ecx, regs, "");
+	ASSERT(outp == regs->edx, regs, "");
+	ASSERT(exp == regs->esi, regs, "");
 
 	int fd_bytes = FDS_BYTES(n);
 	if (inp != 0)

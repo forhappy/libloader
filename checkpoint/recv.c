@@ -4,7 +4,7 @@
 
 int SCOPE
 post_recv(int fd, uint32_t ubuf, uint32_t size,
-		uint32_t flags, int retval)
+		uint32_t flags, int retval, const struct syscall_regs * regs)
 {
 	/* if addr and addr_len error, retval < 0, but
 	 * data will still be copied into buffer */
@@ -15,7 +15,7 @@ post_recv(int fd, uint32_t ubuf, uint32_t size,
 
 int SCOPE
 replay_recv(int fd, uint32_t ubuf, uint32_t size,
-		uint32_t flags, int retval)
+		uint32_t flags, int retval, const struct syscall_regs * regs)
 {
 	/* if addr and addr_len error, retval < 0, but
 	 * data will still be copied into buffer */

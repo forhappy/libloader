@@ -4,14 +4,14 @@
 
 int SCOPE
 post_setsockopt(int fd, int level, int optname,
-		uint32_t optval, int optlen, int retval)
+		uint32_t optval, int optlen, int retval, const struct syscall_regs * regs)
 {
 	return 0;
 }
 
 int SCOPE
 replay_setsockopt(int fd, int level, int optname,
-		uint32_t optval, int optlen, int retval)
+		uint32_t optval, int optlen, int retval, const struct syscall_regs * regs)
 {
 	return retval;
 }

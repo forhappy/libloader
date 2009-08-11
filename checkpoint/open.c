@@ -35,18 +35,18 @@ replay_open(const struct syscall_regs * regs)
 		}
 
 		/* if still < 0, error... */
-		ASSERT(ret >= 0, "open file %s with flags=0x%x, mode=0x%x still error\n",
+		ASSERT(ret >= 0, regs, "open file %s with flags=0x%x, mode=0x%x still error\n",
 				regs->ebx, flags, regs->edx);
 
 		/* dup fd and close the original one */
 		if (ret != eax) {
 			int err;
 			err = INTERNAL_SYSCALL(dup2, 2, ret, eax);
-			ASSERT(err >= 0, "dup2 from %d to %d failed\n",
+			ASSERT(err >= 0, regs, "dup2 from %d to %d failed\n",
 					ret, eax);
 			/* close old file */
 			err = INTERNAL_SYSCALL(close, 1, ret);
-			ASSERT(err >= 0, "close file %d failed\n", ret);
+			ASSERT(err >= 0, regs, "close file %d failed\n", ret);
 		}
 	}
 #endif

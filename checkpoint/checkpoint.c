@@ -150,7 +150,7 @@ checkpoint(void)
 SCOPE int
 before_syscall(const struct syscall_regs * regs)
 {
-	ASSERT(regs->orig_eax < NR_SYSCALLS,
+	ASSERT(regs->orig_eax < NR_SYSCALLS, regs,
 			"before: no such syscall: %d\n", regs->orig_eax);
 
 	/* write syscall nr */
@@ -163,9 +163,9 @@ before_syscall(const struct syscall_regs * regs)
 SCOPE int
 after_syscall(const struct syscall_regs * regs)
 {
-	ASSERT(regs->orig_eax < NR_SYSCALLS,
+	ASSERT(regs->orig_eax < NR_SYSCALLS, regs,
 			"no such syscall: %d\n", regs->orig_eax);
-	ASSERT(syscall_table[regs->orig_eax].post_handler != NULL,
+	ASSERT(syscall_table[regs->orig_eax].post_handler != NULL, regs,
 			"no such syscall post-handler: %d\n", regs->orig_eax);
 
 	return syscall_table[regs->orig_eax].post_handler(regs);
@@ -177,7 +177,7 @@ SCOPE uint32_t
 replay_syscall(const struct syscall_regs * regs)
 {
 
-	ASSERT(regs->orig_eax < NR_SYSCALLS,
+	ASSERT(regs->orig_eax < NR_SYSCALLS, regs,
 			"no such syscall: %d\n", regs->orig_eax);
 
 	/* read from logger, check */
@@ -411,7 +411,7 @@ do_make_checkpoint(int ckpt_fd, int maps_fd, int cmdline_fd, int environ_fd,
 			uint32_t new_prot = old_prot | PROT_READ;
 			INJ_TRACE("this is a unreadable mem region, make it readable now\n");
 			err = INTERNAL_SYSCALL(mprotect, 3, start, end - start, new_prot);
-			ASSERT(err == 0, "mprotect error: %d\n", err);
+			ASSERT(err == 0, r, "mprotect error: %d\n", err);
 
 			err = __write(ckpt_fd, start, end-start);
 			if (err != end - start) {
@@ -419,7 +419,7 @@ do_make_checkpoint(int ckpt_fd, int maps_fd, int cmdline_fd, int environ_fd,
 			}
 
 			err = INTERNAL_SYSCALL(mprotect, 3, start, end - start, old_prot);
-			ASSERT(err == 0, "mprotect error: %d\n", err);
+			ASSERT(err == 0, r, "mprotect error: %d\n", err);
 		}
 
 
@@ -446,19 +446,19 @@ make_checkpoint(const char * ckpt_fn, struct syscall_regs * r,
 	int maps_fd, cmdline_fd, ckpt_fd, environ_fd;
 	maps_fd = INTERNAL_SYSCALL(open, 2,
 			"/proc/self/maps", O_RDONLY);
-	ASSERT(maps_fd > 0, "open self maps failed: %d", maps_fd);
+	ASSERT(maps_fd > 0, r, "open self maps failed: %d", maps_fd);
 
 	cmdline_fd = INTERNAL_SYSCALL(open, 2,
 			"/proc/self/cmdline", O_RDONLY);
-	ASSERT(cmdline_fd > 0, "open self cmdline failed: %d", cmdline_fd);
+	ASSERT(cmdline_fd > 0, r, "open self cmdline failed: %d", cmdline_fd);
 
 	environ_fd = INTERNAL_SYSCALL(open, 2,
 			"/proc/self/environ", O_RDONLY);
-	ASSERT(environ_fd > 0, "open self environ failed: %d", environ_fd);
+	ASSERT(environ_fd > 0, r, "open self environ failed: %d", environ_fd);
 
 	ckpt_fd = INTERNAL_SYSCALL(open, 3,
 			ckpt_fn, O_WRONLY|O_CREAT|O_TRUNC, 0664);
-	ASSERT(ckpt_fd > 0, "open ckpt file failed: %d\n", ckpt_fd);
+	ASSERT(ckpt_fd > 0, r, "open ckpt file failed: %d\n", ckpt_fd);
 
 	do_make_checkpoint(ckpt_fd, maps_fd, cmdline_fd, environ_fd, r,
 			fpustate, seg_regs);

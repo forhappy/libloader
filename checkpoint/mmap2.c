@@ -60,14 +60,14 @@ replay_mmap2(const struct syscall_regs * regs)
 		ret = INTERNAL_SYSCALL(mmap2, 6,
 				addr, len, prot,
 				flags | MAP_FIXED, fd, pgoff);
-		ASSERT(ret == eax, "");
+		ASSERT(ret == eax, regs, "mmap2 inconsistent\n");
 
 #if 0
 
 		/* DON'T INJECT MEMORY NOW */
 
 		uint32_t lflags = read_uint32();
-		ASSERT(lflags == flags, "lflags=0x%x, flags=0x%x\n",
+		ASSERT(lflags == flags, regs, "lflags=0x%x, flags=0x%x\n",
 				lflags, flags);
 
 		/* check if it is a file map */
@@ -77,7 +77,7 @@ replay_mmap2(const struct syscall_regs * regs)
 			ret = INTERNAL_SYSCALL(mmap2, 6,
 					addr, len, prot,
 					flags | MAP_FIXED, fd, pgoff);
-			ASSERT(ret == eax, "");
+			ASSERT(ret == eax, regs, "");
 		} else {
 			/* it is a file map. the file shoule have
 			 * been opened... */
@@ -85,7 +85,7 @@ replay_mmap2(const struct syscall_regs * regs)
 			/* read len */
 			int32_t llen;
 			llen = read_uint32();
-			ASSERT(len == llen, "len=%d, llen=%d\n", len, llen);
+			ASSERT(len == llen, regs, "len=%d, llen=%d\n", len, llen);
 
 			/* we must unset 'shared' flag */
 			flags &= (~(MAP_SHARED));
@@ -96,7 +96,7 @@ replay_mmap2(const struct syscall_regs * regs)
 			ret = INTERNAL_SYSCALL(mmap2, 6,
 					addr, len, prot | PROT_WRITE,
 					flags, fd, pgoff);
-			ASSERT(ret == eax, "\n");
+			ASSERT(ret == eax, regs, "\n");
 
 			/* then inject memory */
 			INJ_WARNING("len=0x%x, ret=0x%x, eax=0x%x\n", len, ret, eax);

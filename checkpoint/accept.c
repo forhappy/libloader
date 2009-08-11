@@ -4,7 +4,7 @@
 
 int SCOPE
 post_accept(int fd, uintptr_t pupeer_sockaddr,
-		uintptr_t pupeer_addrlen, int retval)
+		uintptr_t pupeer_addrlen, int retval, const struct syscall_regs * regs)
 {
 	if (retval > 0) {
 		/* sockaddr */
@@ -15,7 +15,7 @@ post_accept(int fd, uintptr_t pupeer_sockaddr,
 			return 0;
 		}
 
-		ASSERT(pupeer_addrlen != 0, "that shouldn't happed...\n");
+		ASSERT(pupeer_addrlen != 0, NULL, "that shouldn't happed...\n");
 
 		/* write addrlen into log */
 		uint32_t l;
@@ -28,14 +28,14 @@ post_accept(int fd, uintptr_t pupeer_sockaddr,
 
 int SCOPE
 replay_accept(int fd, uintptr_t pupeer_sockaddr,
-		uintptr_t pupeer_addrlen, int retval)
+		uintptr_t pupeer_addrlen, int retval, const struct syscall_regs * regs)
 {
 	if (retval > 0) {
 		uint32_t l;
 		l = read_uint32();
 		if (l == 0)
 			return retval;
-		ASSERT(pupeer_addrlen != 0, "shouldn't happen\n");
+		ASSERT(pupeer_addrlen != 0, NULL, "shouldn't happen\n");
 		__upd_mem(pupeer_addrlen, &l, sizeof(l));
 		read_mem(pupeer_sockaddr, l);
 	}

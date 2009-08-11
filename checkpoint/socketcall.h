@@ -22,32 +22,32 @@
 #define SYS_RECVMSG	17		/* sys_recvmsg(2)		*/
 
 extern SCOPE int
-post_socket(int family, int type, int protocol, int retval);
+post_socket(int family, int type, int protocol, int retval, const struct syscall_regs * regs);
 extern SCOPE int
-replay_socket(int family, int type, int protocol, int retval);
+replay_socket(int family, int type, int protocol, int retval, const struct syscall_regs * regs);
 extern void
 output_socket(int family, int type, int protocol, int retval);
 
 extern int SCOPE
-post_bind(int fd, uint32_t umyaddr, int addrlen, int retval);
+post_bind(int fd, uint32_t umyaddr, int addrlen, int retval, const struct syscall_regs * regs);
 extern int SCOPE
-replay_bind(int fd, uint32_t umyaddr, int addrlen, int retval);
+replay_bind(int fd, uint32_t umyaddr, int addrlen, int retval, const struct syscall_regs * regs);
 extern void SCOPE
 output_bind(int fd, uint32_t umyaddr, int addrlen, int retval);
 
 extern int SCOPE
-post_getsockname(int fd, uint32_t usockaddr, uint32_t usockaddr_len, int retval);
+post_getsockname(int fd, uint32_t usockaddr, uint32_t usockaddr_len, int retval, const struct syscall_regs * regs);
 extern int SCOPE
-replay_getsockname(int fd, uint32_t usockaddr, uint32_t usockaddr_len, int retval);
+replay_getsockname(int fd, uint32_t usockaddr, uint32_t usockaddr_len, int retval, const struct syscall_regs * regs);
 extern void SCOPE
 output_getsockname(int fd, uint32_t usockaddr, uint32_t usockaddr_len, int retval);
 
 extern int SCOPE
 post_sendto(int fd, uint32_t buff, uint32_t len, uint32_t flags,
-		uint32_t addr, uint32_t addr_len, int retval);
+		uint32_t addr, uint32_t addr_len, int retval, const struct syscall_regs * regs);
 extern int SCOPE
 replay_sendto(int fd, uint32_t buff, uint32_t len, uint32_t flags,
-		uint32_t addr, uint32_t addr_len, int retval);
+		uint32_t addr, uint32_t addr_len, int retval, const struct syscall_regs * regs);
 extern void SCOPE
 output_sendto(int fd, uint32_t buff, uint32_t len, uint32_t flags,
 		uint32_t addr, uint32_t addr_len, int retval);
@@ -55,77 +55,77 @@ output_sendto(int fd, uint32_t buff, uint32_t len, uint32_t flags,
 extern int SCOPE
 post_recvfrom(int fd, uint32_t ubuf, uint32_t size,
 		uint32_t flags, uint32_t addr,
-		uint32_t addr_len, int retval);
+		uint32_t addr_len, int retval, const struct syscall_regs * regs);
 extern int SCOPE
 replay_recvfrom(int fd, uint32_t ubuf, uint32_t size,
 		uint32_t flags, uint32_t addr,
-		uint32_t addr_len, int retval);
+		uint32_t addr_len, int retval, const struct syscall_regs * regs);
 extern void SCOPE
 output_recvfrom(int fd, uint32_t ubuf, uint32_t size,
 		uint32_t flags, uint32_t addr,
 		uint32_t addr_len, int retval);
 
 extern int SCOPE
-post_recvmsg(int fd, uint32_t msg, uint32_t flags, int retval);
+post_recvmsg(int fd, uint32_t msg, uint32_t flags, int retval, const struct syscall_regs * regs);
 extern int SCOPE
-replay_recvmsg(int fd, uint32_t msg, uint32_t flags, int retval);
+replay_recvmsg(int fd, uint32_t msg, uint32_t flags, int retval, const struct syscall_regs * regs);
 extern void SCOPE
 output_recvmsg(int fd, uint32_t msg, uint32_t flags, int retval);
 
 extern int SCOPE
-post_connect(int fd, uint32_t uservaddr, int addrlen, int retval);
+post_connect(int fd, uint32_t uservaddr, int addrlen, int retval, const struct syscall_regs * regs);
 extern int SCOPE
-replay_connect(int fd, uint32_t uservaddr, int addrlen, int retval);
+replay_connect(int fd, uint32_t uservaddr, int addrlen, int retval, const struct syscall_regs * regs);
 extern void SCOPE
 output_connect(int fd, uint32_t uservaddr, int addrlen, int retval);
 
 extern int SCOPE
-post_recv(int fd, uint32_t ubuf, uint32_t size, uint32_t flags, int retval);
+post_recv(int fd, uint32_t ubuf, uint32_t size, uint32_t flags, int retval, const struct syscall_regs * regs);
 extern int SCOPE
-replay_recv(int fd, uint32_t ubuf, uint32_t size, uint32_t flags, int retval);
+replay_recv(int fd, uint32_t ubuf, uint32_t size, uint32_t flags, int retval, const struct syscall_regs * regs);
 extern void SCOPE
 output_recv(int fd, uint32_t ubuf, uint32_t size, uint32_t flags, int retval);
 
 extern int SCOPE
-post_getpeername(int fd, uint32_t usockaddr, uint32_t usockaddr_len, int retval);
+post_getpeername(int fd, uint32_t usockaddr, uint32_t usockaddr_len, int retval, const struct syscall_regs * regs);
 extern int SCOPE
-replay_getpeername(int fd, uint32_t usockaddr, uint32_t usockaddr_len, int retval);
+replay_getpeername(int fd, uint32_t usockaddr, uint32_t usockaddr_len, int retval, const struct syscall_regs * regs);
 extern void SCOPE
 output_getpeername(int fd, uint32_t usockaddr, uint32_t usockaddr_len, int retval);
 
 extern int SCOPE
 post_setsockopt(int fd, int level, int optname,
-		uint32_t optval, int optlen, int retval);
+		uint32_t optval, int optlen, int retval, const struct syscall_regs * regs);
 extern int SCOPE
 replay_setsockopt(int fd, int level, int optname,
-		uint32_t optval, int optlen, int retval);
+		uint32_t optval, int optlen, int retval, const struct syscall_regs * regs);
 extern void SCOPE
 output_setsockopt(int fd, int level, int optname,
 		uint32_t optval, int optlen, int retval);
 
 extern SCOPE int
-post_listen(int fd, int backlog, int retval);
+post_listen(int fd, int backlog, int retval, const struct syscall_regs * regs);
 extern SCOPE int
-replay_listen(int fd, int backlog, int retval);
+replay_listen(int fd, int backlog, int retval, const struct syscall_regs * regs);
 extern void
 output_listen(int fd, int backlog, int retval);
 
 
 extern int SCOPE
 post_accept(int fd, uintptr_t pupeer_sockaddr,
-		uintptr_t pupeer_addrlen, int retval);
+		uintptr_t pupeer_addrlen, int retval, const struct syscall_regs * regs);
 extern int SCOPE
 replay_accept(int fd, uintptr_t pupeer_sockaddr,
-		uintptr_t pupeer_addrlen, int retval);
+		uintptr_t pupeer_addrlen, int retval, const struct syscall_regs * regs);
 void SCOPE
 output_accept(int fd, uintptr_t pupeer_sockaddr,
 		uintptr_t pupeer_addrlen, int retval);
 
 
 extern int SCOPE
-post_shutdown(int fd, int how, int retval);
+post_shutdown(int fd, int how, int retval, const struct syscall_regs * regs);
 extern int SCOPE
-replay_shutdown(int fd, int how, int retval);
+replay_shutdown(int fd, int how, int retval, const struct syscall_regs * regs);
 void SCOPE
 output_shutdown(int fd, int how, int retval);
 

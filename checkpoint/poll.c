@@ -34,7 +34,7 @@ replay_poll(const struct syscall_regs * regs)
 	
 	if (eax > 0) {
 		read_obj(nfds);
-		ASSERT(nfds == regs->ecx, "poll nfds inconsistent\n");
+		ASSERT(nfds == regs->ecx, regs, "poll nfds inconsistent\n");
 
 		read_mem(ufds, nfds * sizeof(struct pollfd));
 	}

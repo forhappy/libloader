@@ -3,13 +3,13 @@
 #ifndef SYSCALL_PRINTER
 
 int SCOPE
-post_bind(int fd, uint32_t umyaddr, int addrlen, int retval)
+post_bind(int fd, uint32_t umyaddr, int addrlen, int retval, const struct syscall_regs * regs)
 {
 	return 0;
 }
 
 int SCOPE
-replay_bind(int fd, uint32_t umyaddr, int addrlen, int retval)
+replay_bind(int fd, uint32_t umyaddr, int addrlen, int retval, const struct syscall_regs * regs)
 {
 	return retval;
 }

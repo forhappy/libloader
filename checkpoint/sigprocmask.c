@@ -75,7 +75,7 @@ replay_sigprocmask(const struct syscall_regs * regs)
 	int32_t eax = read_int32();
 	if (eax >= 0) {
 		uintptr_t oset = read_uint32();
-		ASSERT(regs->edx == oset, "");
+		ASSERT(regs->edx == oset, regs, "");
 		if (oset != 0) {
 			read_mem(oset, sizeof(uint32_t));
 		}
@@ -83,7 +83,7 @@ replay_sigprocmask(const struct syscall_regs * regs)
 		int32_t ret;
 		ret = INTERNAL_SYSCALL(sigprocmask, 3,
 				regs->ebx, regs->ecx, regs->edx);
-		ASSERT(ret == eax, "!@#!@#\n");
+		ASSERT(ret == eax, regs, "!@#!@#\n");
 #endif
 	}
 	return eax;

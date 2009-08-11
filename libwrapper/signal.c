@@ -33,7 +33,7 @@ do_sigreturn(int signum, struct sigcontext * ctx, struct _fpstate * fpstate)
 	/* generate timestamp for new ckpt */
 	struct timeval tv;
 	err = INTERNAL_SYSCALL(gettimeofday, 2, &tv, NULL);
-	ASSERT(err == 0, "gettimeofday failed: %d\n", err);
+	ASSERT(err == 0, NULL, "gettimeofday failed: %d\n", err);
 
 	snprintf(ckpt_filename, 128, LOGGER_DIRECTORY"/%d-%u-%u.ckpt",
 			self_pid, tv.tv_sec, tv.tv_usec);
@@ -48,7 +48,7 @@ do_sigreturn(int signum, struct sigcontext * ctx, struct _fpstate * fpstate)
 
 	/* close current logger */
 	err = INTERNAL_SYSCALL(close, 1, logger_fd);
-	ASSERT(err == 0, "close logger file %s failed\n", logger_filename);
+	ASSERT(err == 0, NULL, "close logger file %s failed\n", logger_filename);
 
 	/* write logger_filename before we make ckpt, so when replay
 	 * target will get correct logger filename */
@@ -123,15 +123,15 @@ do_sigreturn(int signum, struct sigcontext * ctx, struct _fpstate * fpstate)
 	/* create new logger file */
 	int fd;
 	fd = INTERNAL_SYSCALL(open, 3, logger_filename, O_WRONLY|O_APPEND|O_CREAT, 0664);
-	ASSERT(fd > 0, "open new logger file %s failed: %d\n", logger_filename, fd);
+	ASSERT(fd > 0, &r, "open new logger file %s failed: %d\n", logger_filename, fd);
 
 	/* the old logger should have been closed */
 	err = INTERNAL_SYSCALL(dup2, 2, fd, LOGGER_FD);
-	ASSERT(err == LOGGER_FD, "dup2 failed: %d\n", err);
+	ASSERT(err == LOGGER_FD, &r, "dup2 failed: %d\n", err);
 	INJ_TRACE("dup fd to %d\n", err);
 
 	err = INTERNAL_SYSCALL(close, 1, fd);
-	ASSERT(err == 0, "close failed: %d\n", err);
+	ASSERT(err == 0, &r, "close failed: %d\n", err);
 	INJ_TRACE("close %d\n", fd);
 
 	logger_fd = LOGGER_FD;

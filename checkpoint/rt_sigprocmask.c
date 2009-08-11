@@ -114,10 +114,10 @@ replay_rt_sigprocmask(const struct syscall_regs * regs)
 	int32_t ret = read_int32();
 	if (ret == 0) {
 		int sigsetsize = read_int32();
-		ASSERT(sigsetsize == regs->esi, "");
+		ASSERT(sigsetsize == regs->esi, regs, "");
 		if (sigsetsize == sizeof(k_sigset_t)) {
 			int oset = read_int32();
-			ASSERT(oset == regs->edx, "");
+			ASSERT(oset == regs->edx, regs, "");
 			if (oset)
 				read_mem(oset, sigsetsize);
 		}

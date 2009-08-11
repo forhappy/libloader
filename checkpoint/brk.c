@@ -20,7 +20,7 @@ replay_brk(const struct syscall_regs * regs)
 	uint32_t err;
 	err = INTERNAL_SYSCALL(brk, 1,
 			regs->ebx);
-	ASSERT((uint32_t)eax == err, "brk inconsiste: retval=0x%x, should be 0x%x\n",
+	ASSERT((uint32_t)eax == err, regs, "brk inconsiste: retval=0x%x, should be 0x%x\n",
 			err, eax);
 #endif
 	return eax;

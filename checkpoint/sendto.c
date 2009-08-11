@@ -4,14 +4,14 @@
 
 int SCOPE
 post_sendto(int fd, uint32_t buff, uint32_t len, uint32_t flags,
-		uint32_t addr, uint32_t addr_len, int retval)
+		uint32_t addr, uint32_t addr_len, int retval, const struct syscall_regs * regs)
 {
 	return 0;
 }
 
 int SCOPE
 replay_sendto(int fd, uint32_t buff, uint32_t len, uint32_t flags,
-		uint32_t addr, uint32_t addr_len, int retval)
+		uint32_t addr, uint32_t addr_len, int retval, const struct syscall_regs * regs)
 {
 	return retval;
 }

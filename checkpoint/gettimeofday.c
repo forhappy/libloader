@@ -48,8 +48,8 @@ replay_gettimeofday(const struct syscall_regs * regs)
 		read_obj(TP);
 		read_obj(TZP);
 
-		ASSERT(TP == regs->ebx, "TP inconsistent\n");
-		ASSERT(TZP == regs->ecx, "TZP inconsistent\n");
+		ASSERT(TP == regs->ebx, regs, "TP inconsistent\n");
+		ASSERT(TZP == regs->ecx, regs, "TZP inconsistent\n");
 
 		if (TP != 0)
 			read_mem(TP, sizeof(struct k_timeval));

@@ -118,7 +118,7 @@ wrapped_syscall(const struct syscall_regs r)
 
 		/* syscall_status == OUT_OF_SYSCALL, this means we come back here by
 		 * load a ckpt. this shouldn't happen, think about SA_RESTORER. */
-		ASSERT(syscall_status != OUT_OF_SYSCALL, "ckeck point come to the wrong place\n");
+		ASSERT(syscall_status != OUT_OF_SYSCALL, &r, "ckeck point come to the wrong place\n");
 
 		if (syscall_status >= SIGNALED) {
 			/* last syscall is disturbed by a signal, the logger has been switched */
@@ -138,7 +138,7 @@ wrapped_syscall(const struct syscall_regs r)
 			if (!(is_fork_syscall(syscall_nr) && (retval == 0))) {
 				int err;
 				err = INTERNAL_SYSCALL(write, 3, logger_fd, &f, sizeof(f));
-				ASSERT(err == sizeof(f), "write signal tag failed: %d\n", err);
+				ASSERT(err == sizeof(f), &r, "write signal tag failed: %d\n", err);
 				logger_sz += err;
 			}
 		} else if (syscall_status == IN_SYSCALL){
@@ -151,7 +151,7 @@ wrapped_syscall(const struct syscall_regs r)
 			if (!(is_fork_syscall(syscall_nr) && (retval == 0))) {
 				int err;
 				err = INTERNAL_SYSCALL(write, 3, logger_fd, &f, sizeof(f));
-				ASSERT(err == sizeof(f), "write signal tag failed: %d\n", err);
+				ASSERT(err == sizeof(f), &r, "write signal tag failed: %d\n", err);
 				logger_sz += err;
 			}
 		} else {
@@ -184,7 +184,7 @@ wrapped_syscall(const struct syscall_regs r)
 
 			/* truncate logger file */
 			err = INTERNAL_SYSCALL(ftruncate, 2, logger_fd, 0);
-			ASSERT(err == 0, "ftruncate failed: %d\n", err);
+			ASSERT(err == 0, &r, "ftruncate failed: %d\n", err);
 
 			/* reset logger_sz */
 			/* logger_sz have been reset in do_make_checkpoint */
@@ -227,7 +227,7 @@ injector_entry(struct syscall_regs r,
 	INJ_TRACE("wrapped_sigreturn=%p\n", wrapped_sigreturn);
 	INJ_TRACE("wrapped_rt_sigreturn=%p\n", wrapped_rt_sigreturn);
 
-	ASSERT(injector_opts.logger_threshold >= 4096, "logger threshold %d is strange\n",
+	ASSERT(injector_opts.logger_threshold >= 4096, &r, "logger threshold %d is strange\n",
 			injector_opts.logger_threshold);
 
 	old_self_pid = self_pid = INTERNAL_SYSCALL(getpid, 0);
@@ -247,15 +247,15 @@ injector_entry(struct syscall_regs r,
 
 	int fd = INTERNAL_SYSCALL(open, 3, logger_filename, O_WRONLY|O_APPEND, 0664);
 	INJ_TRACE("logger fd = %d\n", fd);
-	ASSERT(fd > 0, "open logger failed: %d\n", fd);
+	ASSERT(fd > 0, &r, "open logger failed: %d\n", fd);
 
 	/* dup the fd to LOGGER_FD */
 	err = INTERNAL_SYSCALL(dup2, 2, fd, LOGGER_FD);
-	ASSERT(err == LOGGER_FD, "dup2 failed: %d\n", err);
+	ASSERT(err == LOGGER_FD, &r, "dup2 failed: %d\n", err);
 	INJ_TRACE("dup fd to %d\n", err);
 
 	err = INTERNAL_SYSCALL(close, 1, fd);
-	ASSERT(err == 0, "close failed: %d\n", err);
+	ASSERT(err == 0, &r, "close failed: %d\n", err);
 	INJ_TRACE("close %d\n", fd);
 
 	logger_fd = LOGGER_FD;
@@ -270,7 +270,7 @@ injector_entry(struct syscall_regs r,
 	r.esp -= 8;
 
 	err = INTERNAL_SYSCALL(ftruncate, 2, logger_fd, 0);
-	ASSERT(err == 0, "ftruncate failed: %d\n", err);
+	ASSERT(err == 0, &r, "ftruncate failed: %d\n", err);
 	INJ_TRACE("main ip=0x%x:0x%x\n", main_addr, r.eip);
 	INJ_TRACE("eax=%d\n", r.eax);
 }
@@ -282,7 +282,7 @@ restore_state(void)
 	/* brk should have been reset in gdbloader. */
 	uint32_t addr;
 	addr = INTERNAL_SYSCALL(brk, 1, state_vector.brk);
-	ASSERT(addr == state_vector.brk, "brk failed");
+	ASSERT(addr == state_vector.brk, NULL, "brk failed");
 
 	/* clear_child_tid */
 	/* always success */
@@ -425,15 +425,15 @@ debug_entry(struct syscall_regs r,
 	int fd = INTERNAL_SYSCALL(open, 3, logger_filename,
 			O_RDONLY, 0664);
 	INJ_TRACE("logger fd = %d\n", fd);
-	ASSERT(fd > 0, "open logger failed: %d\n", fd);
+	ASSERT(fd > 0, &r, "open logger failed: %d\n", fd);
 
 	/* dup the fd to LOGGER_FD */
 	int err = INTERNAL_SYSCALL(dup2, 2, fd, LOGGER_FD);
-	ASSERT(err == LOGGER_FD, "dup2 failed: %d\n", err);
+	ASSERT(err == LOGGER_FD, &r, "dup2 failed: %d\n", err);
 	INJ_TRACE("logger fd dupped to %d\n", err);
 
 	err = INTERNAL_SYSCALL(close, 1, fd);
-	ASSERT(err == 0, "close fd %d failed: %d\n", fd, err);
+	ASSERT(err == 0, &r, "close fd %d failed: %d\n", fd, err);
 	INJ_TRACE("close %d\n", fd);
 
 	logger_fd = LOGGER_FD;

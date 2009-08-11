@@ -43,13 +43,13 @@ extern SCOPE pid_t old_self_pid;
 extern SCOPE struct i387_fxsave_struct fpustate_struct;
 
 static inline void
-checkflags(unsigned long clone_flags)
+checkflags(unsigned long clone_flags, const struct syscall_regs * regs)
 {
 	unsigned long not_support =
 		CLONE_VM | CLONE_SIGHAND | CLONE_PTRACE | CLONE_VFORK |
 		CLONE_PARENT | CLONE_THREAD | CLONE_NEWNS | CLONE_SYSVSEM |
 		CLONE_SETTLS | CLONE_IO;
-	ASSERT(!(clone_flags & not_support), "clone_flags 0x%x contain non-support flags\n");
+	ASSERT(!(clone_flags & not_support), regs, "clone_flags 0x%x contain non-support flags\n");
 }
 
 extern SCOPE int tracing;
@@ -64,11 +64,11 @@ do_child_fork(unsigned long clone_flags,
 	int err;
 
 	INJ_TRACE("do child fork\n");
-	checkflags(clone_flags);
+	checkflags(clone_flags, regs);
 
 	/* close current logger in child */
 	err = INTERNAL_SYSCALL(close, 1, logger_fd);
-	ASSERT(err == 0, "close current logger %s failed\n", logger_filename);
+	ASSERT(err == 0, regs, "close current logger %s failed\n", logger_filename);
 
 	if (!injector_opts.trace_fork) {
 		/* don't trace child, no checkpoint and log */
@@ -95,16 +95,16 @@ do_child_fork(unsigned long clone_flags,
 	/* open new logger */
 	int fd;
 	fd = INTERNAL_SYSCALL(open, 3, logger_filename, O_WRONLY|O_APPEND|O_CREAT, 0664);
-	ASSERT(fd > 0, "open new logger file %s failed: %d\n", logger_filename, fd);
+	ASSERT(fd > 0, regs, "open new logger file %s failed: %d\n", logger_filename, fd);
 
 	/* dup logger_fd */
 	err = INTERNAL_SYSCALL(dup2, 2, fd, LOGGER_FD);
-	ASSERT(err == LOGGER_FD, "dup2 failed: %d\n", err);
+	ASSERT(err == LOGGER_FD, regs, "dup2 failed: %d\n", err);
 	INJ_TRACE("dup fd to %d\n", err);
 
 	/* close it */
 	err = INTERNAL_SYSCALL(close, 1, fd);
-	ASSERT(err == 0, "close failed: %d\n", err);
+	ASSERT(err == 0, regs, "close failed: %d\n", err);
 	INJ_TRACE("close %d\n", fd);
 
 	logger_fd = LOGGER_FD;
@@ -120,7 +120,7 @@ do_parent_fork(unsigned long clone_flags,
 		uintptr_t parent_tidptr,
 		uintptr_t child_tidptr)
 {
-	checkflags(clone_flags);
+	checkflags(clone_flags, regs);
 	/* do nothing */
 	return;
 }

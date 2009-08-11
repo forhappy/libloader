@@ -20,7 +20,7 @@ replay_waitpid(const struct syscall_regs * regs)
 {
 	int32_t eax = read_int32();
 	uintptr_t stat_addr = read_uint32();
-	ASSERT(stat_addr == regs->ecx, "stat_addr inconsistent\n");
+	ASSERT(stat_addr == regs->ecx, regs, "stat_addr inconsistent\n");
 	if (stat_addr != 0)
 		read_mem(stat_addr, sizeof(int));
 	return eax;

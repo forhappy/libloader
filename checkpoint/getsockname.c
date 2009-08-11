@@ -3,7 +3,7 @@
 #ifndef SYSCALL_PRINTER
 
 int SCOPE
-post_getsockname(int fd, uint32_t usockaddr, uint32_t usockaddr_len, int retval)
+post_getsockname(int fd, uint32_t usockaddr, uint32_t usockaddr_len, int retval, const struct syscall_regs * regs)
 {
 	if (retval < 0)
 		return 0;
@@ -16,7 +16,7 @@ post_getsockname(int fd, uint32_t usockaddr, uint32_t usockaddr_len, int retval)
 }
 
 int SCOPE
-replay_getsockname(int fd, uint32_t usockaddr, uint32_t usockaddr_len, int retval)
+replay_getsockname(int fd, uint32_t usockaddr, uint32_t usockaddr_len, int retval, const struct syscall_regs * regs)
 {
 	if (retval < 0)
 		return retval;

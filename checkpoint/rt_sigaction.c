@@ -50,7 +50,7 @@ pre_rt_sigaction(const struct syscall_regs * regs)
 
 	/* check sa_flags, whether the handler use itself restorer */
 	ASSERT(!(d.sa_flags & SA_RESTORER) || (d.sa_restorer == (void*)wrapped_rt_sigreturn),
-			"handler for signal %d use itself's restorer, doesn't support\n");
+			regs, "handler for signal %d use itself's restorer, doesn't support\n");
 
 	/* now update sa_flags and sa_restorer */
 	d.sa_flags |= SA_RESTORER;
@@ -121,14 +121,14 @@ replay_rt_sigaction(const struct syscall_regs * regs)
 	int32_t eax = read_int32();
 	if (eax == 0) {
 		int sigsetsize = read_int32();
-		ASSERT(sigsetsize == regs->esi, "");
-		ASSERT(sigsetsize == sizeof(k_sigset_t), "!@@#1\n");
+		ASSERT(sigsetsize == regs->esi, regs, "");
+		ASSERT(sigsetsize == sizeof(k_sigset_t), regs, "!@@#1\n");
 
 		uintptr_t oact = read_uint32();
-		ASSERT(oact == regs->edx, "");
+		ASSERT(oact == regs->edx, regs, "");
 		
 		uintptr_t act = read_uint32();
-		ASSERT(act == regs->ecx, "");
+		ASSERT(act == regs->ecx, regs, "");
 
 		if (oact != 0)
 			read_mem(oact, sizeof(struct k_sigaction));

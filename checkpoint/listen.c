@@ -3,13 +3,13 @@
 #ifndef SYSCALL_PRINTER
 
 int SCOPE
-post_listen(int fd, int backlog, int retval)
+post_listen(int fd, int backlog, int retval, const struct syscall_regs * regs)
 {
 	return 0;
 }
 
 int SCOPE
-replay_listen(int fd, int backlog, int retval)
+replay_listen(int fd, int backlog, int retval, const struct syscall_regs * regs)
 {
 	return retval;
 }

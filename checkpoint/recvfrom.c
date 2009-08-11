@@ -5,7 +5,7 @@
 int SCOPE
 post_recvfrom(int fd, uint32_t ubuf, uint32_t size,
 		uint32_t flags, uint32_t addr,
-		uint32_t addr_len, int retval)
+		uint32_t addr_len, int retval, const struct syscall_regs * regs)
 {
 	/* if addr and addr_len error, retval < 0, but
 	 * data will still be copied into buffer */
@@ -28,7 +28,7 @@ post_recvfrom(int fd, uint32_t ubuf, uint32_t size,
 int SCOPE
 replay_recvfrom(int fd, uint32_t ubuf, uint32_t size,
 		uint32_t flags, uint32_t addr,
-		uint32_t addr_len, int retval)
+		uint32_t addr_len, int retval, const struct syscall_regs * regs)
 {
 	read_mem(ubuf, size);
 	if (retval >= 0) {

@@ -51,10 +51,10 @@ replay_ioctl(const struct syscall_regs * regs)
 	struct syscall_regs saved_regs;
 	read_obj(saved_regs);
 	/* check */
-	ASSERT(saved_regs.eax == regs->eax, "");
-	ASSERT(saved_regs.ebx == regs->ebx, "");
-	ASSERT(saved_regs.ecx == regs->ecx, "");
-	ASSERT(saved_regs.edx == regs->edx, "");
+	ASSERT(saved_regs.eax == regs->eax, regs, "");
+	ASSERT(saved_regs.ebx == regs->ebx, regs, "");
+	ASSERT(saved_regs.ecx == regs->ecx, regs, "");
+	ASSERT(saved_regs.edx == regs->edx, regs, "");
 
 	int fd = regs->ebx;
 	int cmd = regs->ecx;

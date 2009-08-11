@@ -29,7 +29,7 @@ replay_set_thread_area(const struct syscall_regs * regs)
 		int32_t ret;
 		ret = INTERNAL_SYSCALL(set_thread_area, 1,
 				regs->ebx);
-		ASSERT(ret == eax, "!@#@\n");
+		ASSERT(ret == eax, regs, "!@#@\n");
 #endif
 	}
 	return eax;

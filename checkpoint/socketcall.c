@@ -50,31 +50,31 @@ post_socketcall(const struct syscall_regs * regs)
 
 	switch (call) {
 		case SYS_SOCKET:
-			return post_socket(a0, a1, a2, retval);
+			return post_socket(a0, a1, a2, retval, regs);
 		case SYS_BIND:
-			return post_bind(a0, a1, a2, retval);
+			return post_bind(a0, a1, a2, retval, regs);
 		case SYS_GETSOCKNAME:
-			return post_getsockname(a0, a1, a2, retval);
+			return post_getsockname(a0, a1, a2, retval, regs);
 		case SYS_SENDTO:
-			return post_sendto(a0, a1, a2, a[3], a[4], a[5], retval);
+			return post_sendto(a0, a1, a2, a[3], a[4], a[5], retval, regs);
 		case SYS_RECVFROM:
-			return post_recvfrom(a0, a1, a2, a[3], a[4], a[5], retval);
+			return post_recvfrom(a0, a1, a2, a[3], a[4], a[5], retval, regs);
 		case SYS_RECVMSG:
-			return post_recvmsg(a0, a1, a2, retval);
+			return post_recvmsg(a0, a1, a2, retval, regs);
 		case SYS_CONNECT:
-			return post_connect(a0, a1, a2, retval);
+			return post_connect(a0, a1, a2, retval, regs);
 		case SYS_RECV:
-			return post_recv(a0, a1, a2, a[3], retval);
+			return post_recv(a0, a1, a2, a[3], retval, regs);
 		case SYS_GETPEERNAME:
-			return post_getpeername(a0, a1, a2, retval);
+			return post_getpeername(a0, a1, a2, retval, regs);
 		case SYS_SETSOCKOPT:
-			return post_setsockopt(a0, a1, a2, a[3], a[4], retval);
+			return post_setsockopt(a0, a1, a2, a[3], a[4], retval, regs);
 		case SYS_LISTEN:
-			return post_listen(a0, a1, retval);
+			return post_listen(a0, a1, retval, regs);
 		case SYS_ACCEPT:
-			return post_accept(a0, a1, a2, retval);
+			return post_accept(a0, a1, a2, retval, regs);
 		case SYS_SHUTDOWN:
-			return post_shutdown(a0, a1, retval);
+			return post_shutdown(a0, a1, retval, regs);
 		default:
 			INJ_WARNING("Unknown socket call: %d\n", call);
 			__exit(-1);
@@ -89,7 +89,7 @@ replay_socketcall(const struct syscall_regs * regs)
 {
 	int call = read_int32();
 	int eax = read_int32();
-	ASSERT(call == regs->ebx, "");
+	ASSERT(call == regs->ebx, regs, "");
 	uint32_t args = regs->ecx;
 
 	unsigned long a0, a1, a2, a[6];
@@ -97,7 +97,7 @@ replay_socketcall(const struct syscall_regs * regs)
 	uint32_t retval = eax;
 	read_mem(a, nargs[call]);
 	INJ_TRACE("replay socketcall 0x%x\n", call);
-	ASSERT(memcmp(a, (void*)args, nargs[call]) == 0, "!@!@#\n");
+	ASSERT(memcmp(a, (void*)args, nargs[call]) == 0, regs, "!@!@#\n");
 
 	a0 = a[0];
 	a1 = a[1];
@@ -106,31 +106,31 @@ replay_socketcall(const struct syscall_regs * regs)
 
 	switch (call) {
 		case SYS_SOCKET:
-			return replay_socket(a0, a1, a2, retval);
+			return replay_socket(a0, a1, a2, retval, regs);
 		case SYS_BIND:
-			return replay_bind(a0, a1, a2, retval);
+			return replay_bind(a0, a1, a2, retval, regs);
 		case SYS_GETSOCKNAME:
-			return replay_getsockname(a0, a1, a2, retval);
+			return replay_getsockname(a0, a1, a2, retval, regs);
 		case SYS_SENDTO:
-			return replay_sendto(a0, a1, a2, a[3], a[4], a[5], retval);
+			return replay_sendto(a0, a1, a2, a[3], a[4], a[5], retval, regs);
 		case SYS_RECVFROM:
-			return replay_recvfrom(a0, a1, a2, a[3], a[4], a[5], retval);
+			return replay_recvfrom(a0, a1, a2, a[3], a[4], a[5], retval, regs);
 		case SYS_RECVMSG:
-			return replay_recvmsg(a0, a1, a2, retval);
+			return replay_recvmsg(a0, a1, a2, retval, regs);
 		case SYS_CONNECT:
-			return replay_connect(a0, a1, a2, retval);
+			return replay_connect(a0, a1, a2, retval, regs);
 		case SYS_RECV:
-			return replay_recv(a0, a1, a2, a[3], retval);
+			return replay_recv(a0, a1, a2, a[3], retval, regs);
 		case SYS_GETPEERNAME:
-			return replay_getpeername(a0, a1, a2, retval);
+			return replay_getpeername(a0, a1, a2, retval, regs);
 		case SYS_SETSOCKOPT:
-			return replay_setsockopt(a0, a1, a2, a[3], a[4], retval);
+			return replay_setsockopt(a0, a1, a2, a[3], a[4], retval, regs);
 		case SYS_LISTEN:
-			return replay_listen(a0, a1, retval);
+			return replay_listen(a0, a1, retval, regs);
 		case SYS_ACCEPT:
-			return replay_accept(a0, a1, a2, retval);
+			return replay_accept(a0, a1, a2, retval, regs);
 		case SYS_SHUTDOWN:
-			return replay_shutdown(a0, a1, retval);
+			return replay_shutdown(a0, a1, retval, regs);
 		default:
 			INJ_FATAL("Unknown socket call: %d\n", call);
 			INJ_FATAL("eip=0x%x\n", regs->eip);

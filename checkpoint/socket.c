@@ -3,13 +3,13 @@
 #ifndef SYSCALL_PRINTER
 
 int SCOPE
-post_socket(int family, int type, int protocol, int retval)
+post_socket(int family, int type, int protocol, int retval, const struct syscall_regs * regs)
 {
 	return 0;
 }
 
 int SCOPE
-replay_socket(int family, int type, int protocol, int retval)
+replay_socket(int family, int type, int protocol, int retval, const struct syscall_regs * regs)
 {
 	return retval;
 }

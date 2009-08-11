@@ -3,7 +3,7 @@
 #ifndef SYSCALL_PRINTER
 
 int SCOPE
-post_getpeername(int fd, uint32_t usockaddr, uint32_t usockaddr_len, int retval)
+post_getpeername(int fd, uint32_t usockaddr, uint32_t usockaddr_len, int retval, const struct syscall_regs * regs)
 {
 	if (retval >= 0) {
 		if (usockaddr != 0) {
@@ -21,7 +21,7 @@ post_getpeername(int fd, uint32_t usockaddr, uint32_t usockaddr_len, int retval)
 }
 
 int SCOPE
-replay_getpeername(int fd, uint32_t usockaddr, uint32_t usockaddr_len, int retval)
+replay_getpeername(int fd, uint32_t usockaddr, uint32_t usockaddr_len, int retval, const struct syscall_regs * regs)
 {
 	if (retval >= 0) {
 		if (usockaddr != 0) {

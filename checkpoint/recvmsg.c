@@ -22,7 +22,7 @@ struct msghdr {
 #ifndef SYSCALL_PRINTER
 
 int SCOPE
-post_recvmsg(int fd, uint32_t msg, uint32_t flags, int retval)
+post_recvmsg(int fd, uint32_t msg, uint32_t flags, int retval, const struct syscall_regs * regs)
 {
 	/* don't check retval, save everything */
 
@@ -51,7 +51,7 @@ post_recvmsg(int fd, uint32_t msg, uint32_t flags, int retval)
 }
 
 int SCOPE
-replay_recvmsg(int fd, uint32_t msg, uint32_t flags, int retval)
+replay_recvmsg(int fd, uint32_t msg, uint32_t flags, int retval, const struct syscall_regs * regs)
 {
 	/* don't check retval, save everything */
 

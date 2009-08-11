@@ -52,20 +52,21 @@ post_futex(const struct syscall_regs * regs)
 int SCOPE
 replay_futex(const struct syscall_regs * regs)
 {
-int32_t eax = read_int32();
-if (eax < 0)
-	return eax;
+	int32_t eax = read_int32();
+	if (eax < 0)
+		return eax;
 
-uint32_t uaddr = regs->ebx;
-int op = regs->ecx;
-uint32_t uaddr2 =regs->edi;
+	uint32_t uaddr = regs->ebx;
+	int op = regs->ecx;
+	uint32_t uaddr2 =regs->edi;
 
-int cmd;
-read_obj(cmd);
-ASSERT(cmd == (op & FUTEX_CMD_MASK), "futex cmd inconsistent: should be 0x%x, actually 0x%x\n",
-		cmd, op & FUTEX_CMD_MASK);
+	int cmd;
+	read_obj(cmd);
+	ASSERT(cmd == (op & FUTEX_CMD_MASK), regs, 
+			"futex cmd inconsistent: should be 0x%x, actually 0x%x\n",
+			cmd, op & FUTEX_CMD_MASK);
 
-/* read uaddr */
+	/* read uaddr */
 	read_mem(uaddr, sizeof(uint32_t));
 	switch (cmd) {
 		case FUTEX_REQUEUE:

@@ -40,7 +40,7 @@ post_clone(const struct syscall_regs * regs)
 		/* write the flags */
 		write_obj(clone_flags);
 		if (clone_flags & CLONE_PARENT_SETTID) {
-			ASSERT(parent_tidptr != 0, "!@!@#$%^@#$\n");
+			ASSERT(parent_tidptr != 0, regs, "!@!@#$%^@#$\n");
 			write_mem(parent_tidptr, sizeof(long));
 		}
 
@@ -61,7 +61,7 @@ replay_clone(const struct syscall_regs * regs)
 	if (eax > 0) {
 		uint32_t clone_flags;
 		read_obj(clone_flags);
-		ASSERT(clone_flags == regs->ebx, "clone flags inconsistent\n");
+		ASSERT(clone_flags == regs->ebx, regs, "clone flags inconsistent\n");
 		if (clone_flags & CLONE_PARENT_SETTID) {
 			uintptr_t parent_tidptr = regs->edx;
 			read_mem(parent_tidptr, sizeof(long));

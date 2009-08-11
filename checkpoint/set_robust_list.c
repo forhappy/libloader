@@ -22,7 +22,7 @@ replay_set_robust_list(const struct syscall_regs * regs)
 		int32_t ret;
 		ret = INTERNAL_SYSCALL(set_robust_list, 2,
 				regs->ebx, regs->ecx);
-		ASSERT(ret == eax, "!@!@#\n");
+		ASSERT(ret == eax, regs, "!@!@#\n");
 #endif
 	}
 	return eax;
