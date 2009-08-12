@@ -204,4 +204,7 @@ struct rt_sigframe
 	char retcode[8];
 };
 
+extern SCOPE void
+unhook_sighandlers(void);
+
 #endif

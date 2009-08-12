@@ -6,6 +6,7 @@
 #include "syscalls.h"
 #include <unistd.h>
 #include <fcntl.h> /* for open */
+#include "signal_defs.h"	/* for unhook_sighandlers */
 
 #define CSIGNAL		0x000000ff	/* signal mask to be sent at exit */
 #define CLONE_VM	0x00000100	/* set if VM shared between processes */
@@ -72,8 +73,8 @@ do_child_fork(unsigned long clone_flags,
 
 	if (!injector_opts.trace_fork) {
 		/* don't trace child, no checkpoint and log */
-		/* FIXME */
 		/* we need to remove sigaction's restorer */
+		unhook_sighandlers();
 		tracing = 0;
 		return;
 	}

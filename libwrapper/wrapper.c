@@ -12,6 +12,7 @@
 #include "injector_utils.h"
 #include "injector_debug.h"
 #include "pthread_defs.h"
+#include "signal_defs.h"
 
 extern void __vsyscall();
 
@@ -276,9 +277,9 @@ injector_entry(struct syscall_regs r,
 	old_self_pid = self_pid = INTERNAL_SYSCALL(getpid, 0);
 
 	if (injector_opts.untraced) {
-		/* FIXME */
 		/* We need to restore sighandler's restorer here */
 		tracing = 0;
+		unhook_sighandlers();
 		return;
 	}
 

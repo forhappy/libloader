@@ -165,5 +165,33 @@ do_wrapped_sigreturn(struct sigframe frame)
 	return;
 }
 
+#define SA_RESTORER	0x04000000
+extern void wrapped_rt_sigreturn(void);
+extern void wrapped_sigreturn(void);
+void SCOPE
+unhook_sighandlers(void)
+{
+	struct k_sigaction * acts = state_vector.sigactions;
+	/* for each signal, we remove the SA_RESTORER flag and reset it */
+	for (int i = 0; i < K_NSIG; i++) {
+		int err;
+		struct k_sigaction act;
+		err = INTERNAL_SYSCALL(rt_sigaction, 4,
+				i, NULL, &act, sizeof(act));
+		ASSERT(err != 0, NULL, "rt_sigaction %d failed\n", i);
+		if (act.sa_flags & SA_RESTORER) {
+#define ckr(x)	(act.sa_restorer == (void*)(x))
+			if (ckr(wrapped_rt_sigreturn) || ckr(wrapped_sigreturn)) {
+#undef ckr
+				act.sa_flags &= (~(SA_RESTORER));
+				err = INTERNAL_SYSCALL(rt_sigaction, 4,
+						i, &act, NULL, sizeof(act));
+				ASSERT(err != 0, NULL, "rt_sigaction %d failed\n", i);
+				memcpy(&acts[i], &act, sizeof(act));
+			}
+		}
+	}
+}
+
 // vim:ts=4:sw=4
 
