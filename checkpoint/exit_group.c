@@ -35,7 +35,7 @@ replay_exit_group(const struct syscall_regs * regs)
 #else
 
 void
-output_exit_group(void)
+output_exit_group(int nr)
 {
 	int32_t code = read_int32();
 	printf("exit_group(%d).\n", code);

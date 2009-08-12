@@ -59,7 +59,7 @@ replay_stat64(const struct syscall_regs * regs)
 #else
 
 void
-output_stat64(void)
+output_stat64(int nr)
 {
 	int32_t ret = read_eax();
 	if (ret >= 0)

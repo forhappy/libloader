@@ -19,7 +19,7 @@ replay_link(const struct syscall_regs * regs)
 #else
 
 void
-output_link(void)
+output_link(int nr)
 {
 	printf("link:\t0x%x\n", read_eax());
 }

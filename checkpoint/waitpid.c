@@ -28,7 +28,7 @@ replay_waitpid(const struct syscall_regs * regs)
 #else
 
 void
-output_waitpid(void)
+output_waitpid(int nr)
 {
 	printf("waitpid:\t%d\n", read_eax());
 	uintptr_t stat_addr = read_uint32();

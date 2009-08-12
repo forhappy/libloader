@@ -82,7 +82,7 @@ replay_futex(const struct syscall_regs * regs)
 #else
 
 void
-output_futex(void)
+output_futex(int nr)
 {
 	int eax = read_eax();
 	printf("futex:\t0x%x\n", eax);

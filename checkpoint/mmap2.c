@@ -114,7 +114,7 @@ replay_mmap2(const struct syscall_regs * regs)
 #else
 
 void
-output_mmap2(void)
+output_mmap2(int nr)
 {
 	int32_t addr = read_eax();
 	printf("mmap2:\t0x%x\n", addr);

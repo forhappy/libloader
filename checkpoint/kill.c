@@ -19,7 +19,7 @@ replay_kill(const struct syscall_regs * regs)
 #else
 
 void
-output_kill(void)
+output_kill(int nr)
 {
 	printf("kill:\t%d\n", read_eax());
 }

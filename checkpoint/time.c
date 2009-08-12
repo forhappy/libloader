@@ -32,7 +32,7 @@ replay_time(const struct syscall_regs * regs)
 #else
 
 void
-output_time(void)
+output_time(int nr)
 {
 	printf("time:\t%d\n", read_eax());
 

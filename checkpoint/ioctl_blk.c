@@ -71,6 +71,8 @@ output_blk_ioctl(int fd, uint32_t cmd, uint32_t arg)
 
 	int32_t eax = read_int32();
 
+	printf("\tretval: %d\n", eax);
+
 	if (eax < 0)
 		return;
 

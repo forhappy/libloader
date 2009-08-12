@@ -17,7 +17,7 @@ replay_fcntl64(const struct syscall_regs * regs)
 #else
 
 void
-output_fcntl64(void)
+output_fcntl64(int nr)
 {
 	printf("fcntl64:\t%d\n", read_eax());
 }

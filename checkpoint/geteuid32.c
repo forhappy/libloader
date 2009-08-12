@@ -19,7 +19,7 @@ replay_geteuid32(const struct syscall_regs * regs)
 #else
 
 void
-output_geteuid32(void)
+output_geteuid32(int nr)
 {
 	printf("geteuid32:\t0x%x\n", read_eax());
 }

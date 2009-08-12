@@ -19,7 +19,7 @@ replay_getppid(const struct syscall_regs * regs)
 #else
 
 void
-output_getppid(void)
+output_getppid(int nr)
 {
 	printf("getppid:\t%d\n", read_eax());
 }

@@ -19,7 +19,7 @@ replay_getgid32(const struct syscall_regs * regs)
 #else
 
 void
-output_getgid32(void)
+output_getgid32(int nr)
 {
 	printf("getgid32:\t0x%x\n", read_eax());
 }

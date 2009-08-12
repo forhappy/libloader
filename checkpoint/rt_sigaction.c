@@ -140,7 +140,7 @@ replay_rt_sigaction(const struct syscall_regs * regs)
 
 extern int finished;
 void
-output_rt_sigaction(void)
+output_rt_sigaction(int nr)
 {
 	int16_t sigflag = read_int16();
 	if (sigflag != -1) {

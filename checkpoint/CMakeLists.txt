@@ -1,9 +1,9 @@
 
 SET(HANDLERS
+	simple.c
 	brk.c
 	uname.c
 	mmap2.c
-	access.c
 	open.c
 	fstat64.c
 	close.c
@@ -63,7 +63,6 @@ SET(HANDLERS
 	clone.c
 	kill.c
 	getppid.c
-	alarm.c
 	waitpid.c
 	link.c
 	send.c
@@ -72,6 +71,9 @@ SET(HANDLERS
 	wait4.c
 	socketpair.c
 	ioctl_blk.c
+	setrlimit.c
+	mknod.c
+	mkdir.c
 	)
 
 ADD_LIBRARY(checkpoint

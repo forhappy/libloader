@@ -63,7 +63,7 @@ replay_gettimeofday(const struct syscall_regs * regs)
 #else
 
 void
-output_gettimeofday(void)
+output_gettimeofday(int nr)
 {
 	int32_t ret = read_eax();
 	if (ret >= 0) {

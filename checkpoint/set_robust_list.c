@@ -32,7 +32,7 @@ replay_set_robust_list(const struct syscall_regs * regs)
 #else
 
 void
-output_set_robust_list(void)
+output_set_robust_list(int nr)
 {
 	printf("set_robust_list:\t%d\n", read_eax());
 }

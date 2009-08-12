@@ -62,7 +62,7 @@ replay_open(const struct syscall_regs * regs)
 #else
 
 void
-output_open(void)
+output_open(int nr)
 {
 	printf("open:\t%d\n", read_eax());
 }

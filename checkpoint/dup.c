@@ -19,7 +19,7 @@ replay_dup(const struct syscall_regs * regs)
 #else
 
 void
-output_dup(void)
+output_dup(int nr)
 {
 	printf("dup:\t%d\n", read_eax());
 }

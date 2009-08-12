@@ -27,7 +27,7 @@ replay_writev(const struct syscall_regs * regs)
 #else
 
 void
-output_writev(void)
+output_writev(int nr)
 {
 	int32_t ret = read_eax();
 	printf("writev:\t%d\n", ret);

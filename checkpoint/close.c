@@ -27,7 +27,7 @@ replay_close(const struct syscall_regs * regs)
 #else
 
 void
-output_close(void)
+output_close(int nr)
 {
 	printf("close:\t%d\n", read_eax());
 }

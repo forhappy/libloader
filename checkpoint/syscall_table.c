@@ -6,6 +6,8 @@
 #include "checkpoint.h"
 #include "syscalls.h"
 
+#define mkstr(x)	#x
+
 SCOPE int
 dummy(const struct syscall_regs * regs)
 {
@@ -15,16 +17,20 @@ dummy(const struct syscall_regs * regs)
 #ifndef SYSCALL_PRINTER
 # define def_syscall_entry(name, pre)	\
 	[__NR_##name] = {pre, &post_##name, &replay_##name}
+# define def_simple_syscall_entry(name)	\
+	[__NR_##name] = {NULL, &post_simple, &replay_simple}
 #else
 # define def_syscall_entry(name, pre)	\
-	[__NR_##name] = {&output_##name}
+	[__NR_##name] = {&output_##name, mkstr(name)}
+# define def_simple_syscall_entry(name)	\
+	[__NR_##name] = {&output_simple, mkstr(name)}
 #endif
 
 SCOPE struct syscall_tabent syscall_table[] = {
 	def_syscall_entry(brk, NULL),
 	def_syscall_entry(uname, NULL),
 	def_syscall_entry(mmap2, NULL),
-	def_syscall_entry(access, NULL),
+	def_simple_syscall_entry(access),
 	def_syscall_entry(open, NULL),
 	def_syscall_entry(fstat64, NULL),
 	def_syscall_entry(close, NULL),
@@ -70,12 +76,17 @@ SCOPE struct syscall_tabent syscall_table[] = {
 	def_syscall_entry(clone, NULL),
 	def_syscall_entry(kill, NULL),
 	def_syscall_entry(getppid, NULL),
-	def_syscall_entry(alarm, NULL),
+	def_simple_syscall_entry(alarm),
 	def_syscall_entry(waitpid, NULL),
 	def_syscall_entry(link, NULL),
 	def_syscall_entry(dup, NULL),
 	def_syscall_entry(dup2, NULL),
 	def_syscall_entry(wait4, NULL),
+	def_syscall_entry(setrlimit, NULL),
+	def_syscall_entry(mknod, NULL),
+	def_syscall_entry(mkdir, NULL),
+	def_simple_syscall_entry(creat),
+	def_simple_syscall_entry(rmdir),
 #ifndef SYSCALL_PRINTER
 	[NR_SYSCALLS]	= {NULL, NULL, NULL},
 #else

@@ -83,7 +83,7 @@ replay_ioctl(const struct syscall_regs * regs)
 #else
 
 void
-output_ioctl(void)
+output_ioctl(int nr)
 {
 	struct syscall_regs r;
 	read_regs(r);

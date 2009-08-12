@@ -37,7 +37,7 @@ replay_uname(const struct syscall_regs * regs)
 #else
 
 void
-output_uname(void)
+output_uname(int nr)
 {
 	int32_t ret = read_eax();
 	if (ret >= 0)

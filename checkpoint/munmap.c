@@ -27,7 +27,7 @@ replay_munmap(const struct syscall_regs * regs)
 #else
 
 void
-output_munmap(void)
+output_munmap(int nr)
 {
 	printf("munmap:\t%d\n", read_eax());
 }

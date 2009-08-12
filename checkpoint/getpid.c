@@ -19,7 +19,7 @@ replay_getpid(const struct syscall_regs * regs)
 #else
 
 void
-output_getpid(void)
+output_getpid(int nr)
 {
 	printf("getpid:\t%d\n", read_eax());
 }

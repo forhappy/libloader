@@ -28,7 +28,7 @@ replay_mprotect(const struct syscall_regs * regs)
 #else
 
 void
-output_mprotect(void)
+output_mprotect(int nr)
 {
 	printf("mprotect:\t%d\n", read_eax());
 }

@@ -72,7 +72,7 @@ replay_clone(const struct syscall_regs * regs)
 #else
 
 void
-output_clone(void)
+output_clone(int nr)
 {
 	int32_t eax = read_eax();
 	printf("clone:\t%d\n", eax);

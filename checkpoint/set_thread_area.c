@@ -38,7 +38,7 @@ replay_set_thread_area(const struct syscall_regs * regs)
 #else
 
 void
-output_set_thread_area(void)
+output_set_thread_area(int nr)
 {
 	printf("set_thread_area:\t%d\n", read_eax());
 }

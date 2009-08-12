@@ -26,7 +26,7 @@ replay_read(const struct syscall_regs * regs)
 #else
 
 void
-output_read(void)
+output_read(int nr)
 {
 	int32_t ret = read_eax();
 	if (ret > 0)

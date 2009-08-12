@@ -30,7 +30,7 @@ struct syscall_regs {
 
 typedef int (*syscall_handler_t)(const const struct syscall_regs * r);
 #ifdef SYSCALL_PRINTER
-typedef void (*syscall_output_t)(void);
+typedef void (*syscall_output_t)(int nr);
 #endif
 struct syscall_tabent {
 #ifndef SYSCALL_PRINTER
@@ -39,6 +39,7 @@ struct syscall_tabent {
 	syscall_handler_t replay_handler;
 #else
 	syscall_output_t output_handler;
+	char syscall_name[16];
 #endif
 };
 

@@ -36,7 +36,7 @@ replay_nanosleep(const struct syscall_regs * regs)
 #else
 
 void
-output_nanosleep(void)
+output_nanosleep(int nr)
 {
 	int32_t res;
 	res = read_eax();

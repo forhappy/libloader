@@ -36,7 +36,7 @@ replay__llseek(const struct syscall_regs * regs)
 #else
 
 void
-output__llseek(void)
+output__llseek(int nr)
 {
 	int retval = read_eax();
 	uint32_t presult;

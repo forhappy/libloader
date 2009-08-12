@@ -66,7 +66,7 @@ replay_wait4(const struct syscall_regs * regs)
 #else
 
 void
-output_wait4(void)
+output_wait4(int nr)
 {
 	printf("wait4:\t%d\n", read_eax());
 	uintptr_t stat_addr = read_uint32();

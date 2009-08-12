@@ -43,7 +43,7 @@ replay_poll(const struct syscall_regs * regs)
 #else
 
 void
-output_poll(void)
+output_poll(int nr)
 {
 	int eax = read_eax();
 	printf("poll:\t0x%x\n", eax);

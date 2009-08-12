@@ -24,7 +24,7 @@ replay_pipe(const struct syscall_regs * regs)
 #else
 
 void
-output_pipe(void)
+output_pipe(int nr)
 {
 	int32_t eax = read_int32();
 	if (eax >= 0)

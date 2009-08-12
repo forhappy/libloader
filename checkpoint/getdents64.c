@@ -27,7 +27,7 @@ replay_getdents64(const struct syscall_regs * regs)
 #else
 
 void
-output_getdents64(void)
+output_getdents64(int nr)
 {
 	int32_t ret;
 	ret = read_eax();

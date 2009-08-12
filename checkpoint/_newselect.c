@@ -65,7 +65,7 @@ replay__newselect(const struct syscall_regs * regs)
 #else
 
 void
-output__newselect(void)
+output__newselect(int nr)
 {
 	int retval;
 	retval = read_eax();

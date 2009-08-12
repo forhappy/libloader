@@ -28,7 +28,7 @@ replay_brk(const struct syscall_regs * regs)
 #else
 
 void
-output_brk(void)
+output_brk(int nr)
 {
 	printf("brk:\t0x%x\n", read_eax());
 }

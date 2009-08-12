@@ -60,7 +60,7 @@ replay_fstat64(const struct syscall_regs * regs)
 #else
 
 void
-output_fstat64(void)
+output_fstat64(int nr)
 {
 	int32_t ret;
 	ret = read_eax();

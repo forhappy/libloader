@@ -20,7 +20,7 @@ replay_unlink(const struct syscall_regs * regs)
 #else
 
 void
-output_unlink(void)
+output_unlink(int nr)
 {
 	printf("unlink:\t0x%x\n", read_eax());
 }

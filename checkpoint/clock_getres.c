@@ -35,7 +35,7 @@ replay_clock_getres(const struct syscall_regs * regs)
 #else
 
 void
-output_clock_getres(void)
+output_clock_getres(int nr)
 {
 	int ret = read_eax();
 	printf("clock_getres:\t0x%x\n", ret);

@@ -75,7 +75,7 @@ printer_main(void)
 				case __NR_rt_sigaction:
 				case __NR_ioctl:
 				case __NR_exit_group:
-						syscall_table[nr].output_handler();
+						syscall_table[nr].output_handler(nr);
 			}
 
 		} CATCH (exp) {

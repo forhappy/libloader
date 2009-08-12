@@ -29,15 +29,15 @@ __BEGIN_DECLS
 #else
 #define define_pre_handler(name)
 #define define_post_handler(name)	\
-	extern SCOPE void output_##name(void)
+	extern SCOPE void output_##name(int nr)
 #endif
 
 extern SCOPE int logger_fd;
+define_post_handler(simple);
 
 define_post_handler(brk);
 define_post_handler(uname);
 define_post_handler(mmap2);
-define_post_handler(access);
 define_post_handler(open);
 define_post_handler(fstat64);
 define_post_handler(close);
@@ -99,13 +99,15 @@ define_post_handler(clone);
 
 define_post_handler(kill);
 define_post_handler(getppid);
-define_post_handler(alarm);
 define_post_handler(waitpid);
 define_post_handler(link);
 
 define_post_handler(dup);
 define_post_handler(dup2);
 define_post_handler(wait4);
+define_post_handler(setrlimit);
+define_post_handler(mknod);
+define_post_handler(mkdir);
 
 __END_DECLS
 

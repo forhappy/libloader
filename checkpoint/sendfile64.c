@@ -19,7 +19,7 @@ replay_sendfile64(const struct syscall_regs * regs)
 #else
 
 void
-output_sendfile64(void)
+output_sendfile64(int nr)
 {
 	int32_t ret = read_eax();
 	printf("sendfile64:\t%d\n", ret);

@@ -161,7 +161,7 @@ replay_socketcall(const struct syscall_regs * regs)
 #else
 
 void
-output_socketcall(void)
+output_socketcall(int nr)
 {
 
 	int call;

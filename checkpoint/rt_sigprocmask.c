@@ -131,7 +131,7 @@ replay_rt_sigprocmask(const struct syscall_regs * regs)
 #else
 
 void
-output_rt_sigprocmask(void)
+output_rt_sigprocmask(int nr)
 {
 	int32_t ret = read_eax();
 	if (ret == 0) {

@@ -27,7 +27,7 @@ replay_set_tid_address(const struct syscall_regs * regs)
 #else
 
 void
-output_set_tid_address(void)
+output_set_tid_address(int nr)
 {
 	printf("set_tid_address:\t%d\n", read_eax());
 }

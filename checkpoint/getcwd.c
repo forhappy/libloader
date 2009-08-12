@@ -23,7 +23,7 @@ replay_getcwd(const struct syscall_regs * regs)
 #else
 
 void
-output_getcwd(void)
+output_getcwd(int nr)
 {
 	int32_t eax = read_eax();
 	printf("getcwd:\t0x%x\n", eax);

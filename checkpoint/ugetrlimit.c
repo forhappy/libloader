@@ -33,7 +33,7 @@ replay_ugetrlimit(const struct syscall_regs * regs)
 #else
 
 void
-output_ugetrlimit(void)
+output_ugetrlimit(int nr)
 {
 	int32_t ret = read_eax();
 	if (ret == 0)

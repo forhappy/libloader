@@ -92,7 +92,7 @@ replay_sigprocmask(const struct syscall_regs * regs)
 #else
 
 void
-output_sigprocmask(void)
+output_sigprocmask(int nr)
 {
 	int32_t ret = read_eax();
 	if (ret == 0) {

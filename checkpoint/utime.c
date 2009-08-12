@@ -20,7 +20,7 @@ replay_utime(const struct syscall_regs * regs)
 #else
 
 void
-output_utime(void)
+output_utime(int nr)
 {
 	printf("utime:\t0x%x\n", read_eax());
 }

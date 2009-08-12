@@ -58,7 +58,7 @@ replay_getrusage(const struct syscall_regs * regs)
 #else
 
 void
-output_getrusage(void)
+output_getrusage(int nr)
 {
 	int32_t ret = read_eax();
 	if (ret >= 0) {

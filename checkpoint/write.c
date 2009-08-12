@@ -24,7 +24,7 @@ replay_write(const struct syscall_regs * regs)
 #else
 
 void
-output_write(void)
+output_write(int nr)
 {
 	int32_t ret = read_eax();
 	printf("write:\t%d\n", ret);
