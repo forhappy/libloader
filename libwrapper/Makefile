@@ -1,8 +1,8 @@
 all: clean libwrapper.so # test_libwrapper
 	cp ./libwrapper.so ../
 
-CFLAGS= -g -std=gnu99 -Wall -nostartfiles -nodefaultlibs -nostdlib -fno-builtin -fvisibility=hidden -fPIC \
-	-DIN_INJECTOR -I../  -I.
+CFLAGS += -g -std=gnu99 -Wall -nostartfiles -nodefaultlibs -nostdlib -fno-builtin -fvisibility=hidden -fPIC \
+	-DIN_INJECTOR $(RELAX_SIGNAL) -I../  -I.
 
 libwrapper.so: entry.o wrapper.o signal.o libprintf.os libcheckpoint.os
 	ld -shared -e show_help_entry $^ -o $@

@@ -54,20 +54,24 @@ SCOPE char ckpt_filename[128] = "";
  * asm here for atomic. */
 SCOPE volatile int __syscall_reenter_counter = 0;
 
-
+#ifndef RELAX_SIGNAL
 static k_sigset_t blockall_mask = {
 	.sig = {0xffffffffUL, 0xffffffffUL},
 };
-#define DISABLE_SIGNAL() do { \
+# define DISABLE_SIGNAL() do { \
 	INTERNAL_SYSCALL(rt_sigprocmask, 4, SIG_SETMASK, &blockall_mask, NULL, sizeof(k_sigset_t));\
 } while(0)
-#define ENABLE_SIGNAL() do { \
+# define ENABLE_SIGNAL() do { \
 	INTERNAL_SYSCALL(rt_sigprocmask, 4, SIG_SETMASK, &state_vector.sigmask, NULL, sizeof(k_sigset_t));\
 } while(0)
+#else
+# define DISABLE_SIGNAL() do{ }while(0)
+# define ENABLE_SIGNAL() do{ }while(0)
+#endif
 
 /* each time a syscall entered, if it is not a reenter syscall, it will reset
  * __signaled to 0. sigreturn handler reset this var to signum, so the resumed
- * syscall can know it has been disturbed. */
+ * syscaDISABLE_SIGNALll can know it has been disturbed. */
 SCOPE volatile int __signaled = 0;
 
 SCOPE const struct syscall_regs * signal_regs;
