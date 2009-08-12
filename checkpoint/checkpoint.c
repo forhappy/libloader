@@ -312,6 +312,7 @@ do_make_checkpoint(int ckpt_fd, int maps_fd, int cmdline_fd, int environ_fd,
 	INJ_TRACE("edi in ckpt: 0x%x\n", s->edi);
 	INJ_TRACE("esp in ckpt: 0x%x\n", s->esp);
 	INJ_TRACE("ebp in ckpt: 0x%x\n", s->ebp);
+	INJ_TRACE("eip in ckpt: 0x%x\n", s->eip);
 
 	/* write state vector */
 	/* before we write the vector, we call brk, to make sure each

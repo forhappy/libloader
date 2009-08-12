@@ -72,6 +72,8 @@ do_child_fork(unsigned long clone_flags,
 
 	if (!injector_opts.trace_fork) {
 		/* don't trace child, no checkpoint and log */
+		/* FIXME */
+		/* we need to remove sigaction's restorer */
 		tracing = 0;
 		return;
 	}

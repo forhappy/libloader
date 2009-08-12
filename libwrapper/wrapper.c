@@ -42,9 +42,34 @@ show_help(void)
 SCOPE char logger_filename[128] = "";
 SCOPE char ckpt_filename[128] = "";
 
-SCOPE volatile enum syscall_status syscall_status = OUT_OF_SYSCALL;
 
-SCOPE const struct syscall_regs * current_regs;
+#define SIG_BLOCK          1	/* for blocking signals */
+#define SIG_UNBLOCK        2	/* for unblocking signals */
+#define SIG_SETMASK        3	/* for setting the signal mask */
+
+/* this counter is used for signal processing. when sigreturn called, the
+ * processing check the counter, if it is 0, then we know the signal doesn't
+ * break a syscall. if it is not 0, then signal disturbs a syscall. we use
+ * asm here for atomic. */
+SCOPE volatile int __syscall_reenter_counter = 0;
+
+
+static k_sigset_t blockall_mask = {
+	.sig = {0xffffffffUL, 0xffffffffUL},
+};
+#define DISABLE_SIGNAL() do { \
+	INTERNAL_SYSCALL(rt_sigprocmask, 4, SIG_SETMASK, &blockall_mask, NULL, sizeof(k_sigset_t));\
+} while(0)
+#define ENABLE_SIGNAL() do { \
+	INTERNAL_SYSCALL(rt_sigprocmask, 4, SIG_SETMASK, &state_vector.sigmask, NULL, sizeof(k_sigset_t));\
+} while(0)
+
+/* each time a syscall entered, if it is not a reenter syscall, it will reset
+ * __signaled to 0. sigreturn handler reset this var to signum, so the resumed
+ * syscall can know it has been disturbed. */
+SCOPE volatile int __signaled = 0;
+
+SCOPE const struct syscall_regs * signal_regs;
 
 static inline int
 is_fork_syscall(int nr)
@@ -58,6 +83,8 @@ is_fork_syscall(int nr)
 	return 0;
 }
 
+/* before we call real vsyscall, we must restore register
+ * state */
 #define call_syscall(__r, __retval) \
 		asm volatile(	\
 				"pushl %%eax\n"	\
@@ -100,68 +127,80 @@ wrapped_syscall(const struct syscall_regs r)
 		return;
 	}
 
-	if (!replay) {
-		/* we save current regs file for signal checkpoint use. */
-		current_regs = &r;
+	/* we must set signal_regs very early. if we set it
+	 * inside ENTER/EXIT_SYSCALL, a signal may happen before this assignment. */
+	/* we must check the reenter flag. normally this flag should be 0, but
+	 * if a signal breaks a syscall, this flag is not 0. the signal_regs
+	 * cannot be overwritten by a new syscall. */
+	if (!IS_BREAK_SYSCALL())
+		signal_regs = &r;
 
+	/* if a signal happened after this gate and before EXIT_SYSCALL,
+	 * we know this syscall is disturbed, when sigprocess making ckpts,
+	 * it needs to adjust registers. */
+	ENTER_SYSCALL();
+
+	/* don't allow reenter syscall override __signaled. */
+	if (!IS_REENTER_SYSCALL())
+		__signaled = 0;
+	else
+		ASSERT(__signaled == 0, &r, "reenter syscall signaled by signal %d\n",
+				__signaled);
+
+	if (!replay) {
 		uint32_t syscall_nr = r.orig_eax;
 		INJ_SILENT("wrapped_syscall: %d\n", syscall_nr);
-		before_syscall(&r);
-		syscall_status = IN_SYSCALL;
-		/* before we call real vsyscall, we must restore register
-		 * state */
-		uint32_t retval;
 
+		/* don't allow signal inside before_syscall.
+		 * if signal happened inside it, the logger may be disturbed. */
+		DISABLE_SIGNAL();
+		/* recheck the signal flag. if this syscall is disturbed after the
+		 * ENTER_SYSCALL and before before_syscall, don't do the before
+		 * work. if we do the before work, the before info will write to the new log,
+		 * after call_syscall we do it again. */
+		if (!(__signaled > 0))
+			before_syscall(&r);
+		ENABLE_SIGNAL();
+
+		uint32_t retval;
 
 		call_syscall(r, retval);
 
+		DISABLE_SIGNAL();
+		if (__signaled > 0) {
+			ASSERT(!IS_REENTER_SYSCALL(), &r, "reenter syscall signaled by %d\n", __signaled);
 
-		/* syscall_status == OUT_OF_SYSCALL, this means we come back here by
-		 * load a ckpt. this shouldn't happen, think about SA_RESTORER. */
-		ASSERT(syscall_status != OUT_OF_SYSCALL, &r, "ckeck point comes to a wrong place\n");
-
-		if (syscall_status >= SIGNALED) {
-			/* last syscall is disturbed by a signal, the logger has been switched */
+			/* last syscall has beed disturbed by a signal, the logger has been switched */
 			/* we redo before_syscall. most of syscall has no real pre_handler. */
 			if (syscall_table[syscall_nr].pre_handler != NULL) {
 				INJ_WARNING("syscall %d interrupted by signal %d, logger may inconsistent\n",
-						syscall_nr, syscall_status - SIGNALED);
+						syscall_nr, __signaled);
 			}
 			int32_t real_eax = retval;
 			((struct syscall_regs*)(&r))->eax = syscall_nr;
 			before_syscall(&r);
 			((struct syscall_regs*)(&r))->eax = real_eax;
-
-			/* we still need to write this flag */
-			int16_t f = -1;
-			/* if this is a fork don't write the tag */
-			if (!(is_fork_syscall(syscall_nr) && (retval == 0))) {
-				int err;
-				err = INTERNAL_SYSCALL(write, 3, logger_fd, &f, sizeof(f));
-				ASSERT(err == sizeof(f), &r, "write signal tag failed: %d\n", err);
-				logger_sz += err;
-			}
-		} else if (syscall_status == IN_SYSCALL){
-			/* write a flag to indicate syscall not be distrubed */
-			/* if this syscall distrubed, the next data in logger
-			 * may be a syscall_nr (if signal processing use syscall) or a -2
-			 * (write by wrapped_(rt_)sigreturn). when replay, if see this -1,
-			 * we know this syscall ends normally. */
-			int16_t f = -1;
-			if (!(is_fork_syscall(syscall_nr) && (retval == 0))) {
-				int err;
-				err = INTERNAL_SYSCALL(write, 3, logger_fd, &f, sizeof(f));
-				ASSERT(err == sizeof(f), &r, "write signal tag failed: %d\n", err);
-				logger_sz += err;
-			}
-		} else {
-			INJ_FATAL("!@#!#$^%#%@#$\n");
-			INTERNAL_SYSCALL(exit, 1, -1);
 		}
 
+		/* write a flag to indicate syscall not be disturbed */
+		/* if this syscall disturbed, the next data in logger
+		 * may be a syscall_nr (if signal processing use syscall) or a -2
+		 * (write by wrapped_(rt_)sigreturn). when replay, if see this -1,
+		 * we know this syscall ends normally. */
+		int16_t f = -1;
+		if (!(is_fork_syscall(syscall_nr) && (retval == 0))) {
+			int err;
+			err = INTERNAL_SYSCALL(write, 3, logger_fd, &f, sizeof(f));
+			ASSERT(err == sizeof(f), &r, "write signal tag failed: %d\n", err);
+			logger_sz += err;
+		}
+		/* don't allow signal in after_syscall. if signal happens
+		 * in it, the syscall handler may only write a part of log into
+		 * log file. when ckpt is made and resume, it will write the left,
+		 * makes the log file inconsistent. */
 		after_syscall(&r);
+
 		INJ_SILENT("wrapped_syscall: %d over, retval=%d\n", syscall_nr, r.eax);
-		syscall_status = OUT_OF_SYSCALL;
 
 		/* in the assembly code, we have modify the 'eax'. */
 
@@ -190,8 +229,12 @@ wrapped_syscall(const struct syscall_regs r)
 			/* logger_sz have been reset in do_make_checkpoint */
 			/* logger_sz = 0; */
 		}
-
+		ENABLE_SIGNAL();
+		EXIT_SYSCALL();
 	} else {
+
+		/* this gate is useless in replay */
+		EXIT_SYSCALL();
 		INJ_SILENT("replay syscall, eax=%d\n", r.eax);
 		uint32_t retval;
 		retval = replay_syscall(&r);
@@ -233,6 +276,8 @@ injector_entry(struct syscall_regs r,
 	old_self_pid = self_pid = INTERNAL_SYSCALL(getpid, 0);
 
 	if (injector_opts.untraced) {
+		/* FIXME */
+		/* We need to restore sighandler's restorer here */
 		tracing = 0;
 		return;
 	}
@@ -259,6 +304,10 @@ injector_entry(struct syscall_regs r,
 	INJ_TRACE("close %d\n", fd);
 
 	logger_fd = LOGGER_FD;
+
+	/* save the sigprocmask */
+	INTERNAL_SYSCALL(rt_sigprocmask, 4,
+			0, NULL, &state_vector.sigmask, sizeof(state_vector.sigmask));
 
 	/* :NOTICE: */
 	/* We MUST adjust esp here. when loader call injector, it pushs
@@ -305,11 +354,8 @@ restore_state(void)
 	/* don't restore sigaction now */
 
 	/* sigmask */
-	/* don't restore sigmask now */
+	/* restore sigmask now */
 
-#define SIG_BLOCK          1	/* for blocking signals */
-#define SIG_UNBLOCK        2	/* for unblocking signals */
-#define SIG_SETMASK        3	/* for setting the signal mask */
 	INTERNAL_SYSCALL(rt_sigprocmask, 4,
 			SIG_SETMASK, &state_vector.sigmask, NULL, sizeof(state_vector.sigmask));
 }
@@ -451,8 +497,14 @@ debug_entry(struct syscall_regs r,
 	memcpy(&fpustate_struct, &state_vector.fpustate, sizeof(fpustate_struct));
 	restore_i387(&fpustate_struct);
 
-	/* restore syscall_status to OUT_OF_SYSCALL */
-	syscall_status = OUT_OF_SYSCALL;
+	/* restore __signaled and reenter counter */
+	ASSERT(__syscall_reenter_counter <= 1, &r,
+			"__syscall_reenter_counter=%d\n", __syscall_reenter_counter);
+	__syscall_reenter_counter = 0;
+
+	if (__signaled != 0)
+		INJ_FORCE("checkpoint resume from signal %d\n", __signaled);
+	__signaled = 0;
 
 	/* spin */
 	if (!injector_opts.nowait) {

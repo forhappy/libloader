@@ -161,13 +161,15 @@ extern SCOPE int self_pid;
 extern SCOPE char logger_filename[];
 extern SCOPE char ckpt_filename[];
 
-enum syscall_status {
-	OUT_OF_SYSCALL = 0,
-	IN_SYSCALL = 1,
-	SIGNALED,
-};
+extern SCOPE volatile int __syscall_reenter_counter;
+/* ENTER_SYSCALL and EXIT_SYSCALL are 2 gates. if checkpoint happened between
+ * those 2 gates, we know it breaks a syscall, the ckpt need to be adjusted. */
+#define ENTER_SYSCALL()	asm volatile ("incl %[counter]\n" : : [counter] "m" (__syscall_reenter_counter))
+#define EXIT_SYSCALL()	asm volatile ("decl %[counter]\n" : : [counter] "m" (__syscall_reenter_counter))
+#define IS_BREAK_SYSCALL()	(__syscall_reenter_counter > 0)
+#define IS_REENTER_SYSCALL()	(__syscall_reenter_counter > 1)
 
-extern SCOPE volatile enum syscall_status syscall_status;
+extern SCOPE volatile int __signaled;
 __END_DECLS
 
 #endif

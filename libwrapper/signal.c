@@ -21,10 +21,8 @@ extern SCOPE char ckpt_filename[128];
 extern SCOPE pid_t self_pid;
 
 /* this var is inited each time we enter a syscall */
-extern const struct syscall_regs * current_regs;
+extern const struct syscall_regs * signal_regs;
 
-/* defined in injector.h */
-/* extern SCOPE volatile enum syscall_status syscall_status; */
 
 static void
 do_sigreturn(int signum, struct sigcontext * ctx, struct _fpstate * fpstate)
@@ -69,7 +67,7 @@ do_sigreturn(int signum, struct sigcontext * ctx, struct _fpstate * fpstate)
 	 * then when we run gdbloader, the checkpoint will return to
 	 * wrapped_syscall, and everything become inconsistent.
 	 *
-	 * here we use the current_regs (set each time when it go into a syscall).
+	 * here we use the signal_regs (set each time when it go into a syscall).
 	 * then in replay, we start just before the syscalling.
 	 * we have to choise:
 	 *
@@ -80,8 +78,8 @@ do_sigreturn(int signum, struct sigcontext * ctx, struct _fpstate * fpstate)
 	 *    adjustment. this is easy, but when gdb attached, user don't know
 	 *    the call stack, and this method need relocation.
 	 * */
-	if (syscall_status == OUT_OF_SYSCALL) {
-		INJ_WARNING("break no syscall\n");
+	if (!IS_BREAK_SYSCALL()) {
+		INJ_WARNING("breaks no syscall\n");
 #define copy_reg(x)	r.e##x = ctx->x
 		copy_reg(ax);
 		copy_reg(bx);
@@ -97,7 +95,7 @@ do_sigreturn(int signum, struct sigcontext * ctx, struct _fpstate * fpstate)
 		r.orig_eax = 0;
 	} else {
 		INJ_WARNING("break syscall\n");
-		memcpy(&r, current_regs, sizeof(r));
+		memcpy(&r, signal_regs, sizeof(r));
 		r.eip -= 7;
 		r.esp += 4;
 		r.orig_eax = ctx->ax;
@@ -113,6 +111,12 @@ do_sigreturn(int signum, struct sigcontext * ctx, struct _fpstate * fpstate)
 	copy_sreg(fs);
 	copy_sreg(gs);
 #undef copy_sreg
+
+	/* we set __signaled here, then when we resume from the ckpt, we will know we
+	 * resume from a signal. */
+	/* __signaled flag is important, the wrapper.c's code know whether this syscall
+	 * is disturbed depend on it. */
+	__signaled = signum;
 
 	/* from kernel's code: arch/x86/kernel/signal_32.c, restore_sigcontext,
 	 * frame.fpstate is actually struct i387_fxsave_struct, although their
@@ -135,10 +139,6 @@ do_sigreturn(int signum, struct sigcontext * ctx, struct _fpstate * fpstate)
 	INJ_TRACE("close %d\n", fd);
 
 	logger_fd = LOGGER_FD;
-
-	/* we reset syscall_status to SIGNALED, make the syscall wrapper know there's a signal
-	 * distrub current syscall */
-	syscall_status = SIGNALED;
 
 	/* logger_sz has been reset in do_make_checkpoint */
 	logger_sz = 0;
