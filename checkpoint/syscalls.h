@@ -73,20 +73,13 @@ define_post_handler(_newselect);
 define_post_handler(_llseek);
 
 define_post_handler(clock_getres);
-define_post_handler(utime);
 define_post_handler(lstat64);
-define_post_handler(unlink);
 
 define_post_handler(futex);
 
 define_post_handler(clock_gettime);
 
-define_post_handler(getuid32);
-define_post_handler(getpid);
 define_post_handler(getcwd);
-define_post_handler(geteuid32);
-define_post_handler(getegid32);
-define_post_handler(getgid32);
 define_post_handler(poll);
 
 define_post_handler(writev);
@@ -98,16 +91,11 @@ define_post_handler(pipe);
 define_post_handler(clone);
 
 define_post_handler(kill);
-define_post_handler(getppid);
 define_post_handler(waitpid);
-define_post_handler(link);
 
 define_post_handler(dup);
 define_post_handler(dup2);
 define_post_handler(wait4);
-define_post_handler(setrlimit);
-define_post_handler(mknod);
-define_post_handler(mkdir);
 
 __END_DECLS
 

@@ -38,18 +38,11 @@ SET(HANDLERS
 	recv.c
 	_llseek.c
 	clock_getres.c
-	utime.c
 	lstat64.c
 	getpeername.c
-	unlink.c
 	futex.c
 	clock_gettime.c
-	getuid32.c
-	getpid.c
 	getcwd.c
-	geteuid32.c
-	getegid32.c
-	getgid32.c
 	setsockopt.c
 	listen.c
 	poll.c
@@ -62,18 +55,13 @@ SET(HANDLERS
 	pipe.c
 	clone.c
 	kill.c
-	getppid.c
 	waitpid.c
-	link.c
 	send.c
 	dup.c
 	dup2.c
 	wait4.c
 	socketpair.c
 	ioctl_blk.c
-	setrlimit.c
-	mknod.c
-	mkdir.c
 	)
 
 ADD_LIBRARY(checkpoint

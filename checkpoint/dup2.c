@@ -13,6 +13,9 @@ post_dup2(const struct syscall_regs * regs)
 int SCOPE
 replay_dup2(const struct syscall_regs * regs)
 {
+	/* we may need to do the dup in replay.
+	 * if one mmap a dupped fd, following mmap
+	 * may fail. */
 	int32_t eax = read_int32();
 	return eax;
 }

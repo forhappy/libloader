@@ -14,8 +14,6 @@ post_open(const struct syscall_regs * regs)
 	return 0;
 }
 
-//static char dev_zero_str[] = "/dev/zero";
-
 int SCOPE
 replay_open(const struct syscall_regs * regs)
 {
