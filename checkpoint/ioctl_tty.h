@@ -3,6 +3,7 @@
 
 #include <linux/posix_types.h>
 #include "syscalls.h"
+#include "ioctl.h"
 
 
 #define TCGETS		0x5401
@@ -319,7 +320,7 @@ pre_tty_ioctl(int fd, uint32_t cmd, uint32_t arg);
 
 /* regs used for replay_trap */
 extern SCOPE int
-post_tty_ioctl(int fd, uint32_t cmd, uint32_t arg, int32_t retval);
+post_tty_ioctl(int fd, uint32_t cmd, uint32_t arg, const struct syscall_regs * regs);
 
 extern SCOPE int
 replay_tty_ioctl(int fd, uint32_t cmd, uint32_t arg,

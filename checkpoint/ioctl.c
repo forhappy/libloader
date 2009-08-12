@@ -1,6 +1,7 @@
 #include "syscalls.h"
 #include "ioctl.h"
 #include "ioctl_tty.h"
+#include "ioctl_blk.h"
 
 #ifndef SYSCALL_PRINTER
 
@@ -14,11 +15,14 @@ pre_ioctl(const struct syscall_regs * regs)
 	int cmd = regs->ecx;
 	int arg = regs->edx;
 
-	if (_IOC_TYPE(cmd) == 'T') {
-		return pre_tty_ioctl(fd, cmd, arg);
-	} else {
-		INJ_ERROR("no such ioctl command: 0x%x\n", cmd);
-		__exit(-1);
+	switch (_IOC_TYPE(cmd)) {
+		case 'T':
+			return pre_tty_ioctl(fd, cmd, arg);
+		case 0x12:
+			return pre_blk_ioctl(fd, cmd, arg);
+		default:
+			INJ_ERROR("no such ioctl command: 0x%x\n", cmd);
+			__exit(-1);
 	}
 
 	return 0;
@@ -35,11 +39,14 @@ post_ioctl(const struct syscall_regs * regs)
 
 	write_eax(regs);
 
-	if (_IOC_TYPE(cmd) == 'T') {
-		return post_tty_ioctl(fd, cmd, arg, regs->eax);
-	} else {
-		INJ_ERROR("no such ioctl command: 0x%x\n", cmd);
-		__exit(-1);
+	switch (_IOC_TYPE(cmd)) {
+		case 'T':
+			return post_tty_ioctl(fd, cmd, arg, regs);
+		case 0x12:
+			return post_blk_ioctl(fd, cmd, arg, regs);
+		default:
+			INJ_ERROR("no such ioctl command: 0x%x\n", cmd);
+			__exit(-1);
 	}
 
 	return 0;
@@ -60,11 +67,14 @@ replay_ioctl(const struct syscall_regs * regs)
 	int cmd = regs->ecx;
 	int arg = regs->edx;
 
-	if (_IOC_TYPE(cmd) == 'T') {
-		return replay_tty_ioctl(fd, cmd, arg, regs);
-	} else {
-		INJ_ERROR("no such ioctl command: 0x%x\n", cmd);
-		__exit(-1);
+	switch (_IOC_TYPE(cmd)) {
+		case 'T':
+			return replay_tty_ioctl(fd, cmd, arg, regs);
+		case 0x12:
+			return replay_blk_ioctl(fd, cmd, arg, regs);
+		default:
+			INJ_ERROR("no such ioctl command: 0x%x\n", cmd);
+			__exit(-1);
 	}
 
 	return 0;
@@ -83,12 +93,14 @@ output_ioctl(void)
 	printf("ioctl:\t fd=%d, cmd=0x%x, arg=0x%x\n",
 			fd, cmd, arg);
 
-	if (_IOC_TYPE(cmd) == 'T') {
-		output_tty_ioctl(fd, cmd, arg);
-		return;
-	} else {
-		INJ_ERROR("no such ioctl command: 0x%x\n", cmd);
-		THROW(EXCEPTION_FATAL, "unsupport ioctl cmd %x", cmd);
+	switch (_IOC_TYPE(cmd)) {
+		case 'T':
+			return output_tty_ioctl(fd, cmd, arg);
+		case 0x12:
+			return output_blk_ioctl(fd, cmd, arg);
+		default:
+			INJ_ERROR("no such ioctl command: 0x%x\n", cmd);
+			__exit(-1);
 	}
 }
 

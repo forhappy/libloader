@@ -14,6 +14,8 @@ post_open(const struct syscall_regs * regs)
 	return 0;
 }
 
+//static char dev_zero_str[] = "/dev/zero";
+
 int SCOPE
 replay_open(const struct syscall_regs * regs)
 {
@@ -30,13 +32,15 @@ replay_open(const struct syscall_regs * regs)
 			INJ_WARNING("open file %s error: retval=%d, should be %d, open /dev/zero instead\n",
 				regs->ebx, ret, eax);
 
-			uint32_t flags = flags & (~(O_CREAT));
-			ret = INTERNAL_SYSCALL(open, 3, "/dev/zero", flags, regs->edx);
+			uint32_t new_flags = flags & (~(O_CREAT));
+			ret = INTERNAL_SYSCALL(open, 3, "/dev/zero", new_flags, regs->edx);
+			ASSERT(ret >= 0, regs, "open /dev/zero with f=0x%x, m=0x%x failed: %d\n",
+					new_flags, regs->edx, ret);
 		}
 
 		/* if still < 0, error... */
-		ASSERT(ret >= 0, regs, "open file %s with flags=0x%x, mode=0x%x still error\n",
-				regs->ebx, flags, regs->edx);
+		ASSERT(ret >= 0, regs, "open file %s with flags=0x%x, mode=0x%x still error: %d\n",
+				regs->ebx, flags, regs->edx, ret);
 
 		/* dup fd and close the original one */
 		if (ret != eax) {

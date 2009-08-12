@@ -70,6 +70,8 @@ SET(HANDLERS
 	dup.c
 	dup2.c
 	wait4.c
+	socketpair.c
+	ioctl_blk.c
 	)
 
 ADD_LIBRARY(checkpoint

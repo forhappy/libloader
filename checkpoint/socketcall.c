@@ -77,6 +77,8 @@ post_socketcall(const struct syscall_regs * regs)
 			return post_shutdown(a0, a1, retval, regs);
 		case SYS_SEND:
 			return post_send(a0, a1, a2, a[3], retval, regs);
+		case SYS_SOCKETPAIR:
+			return post_socketpair(a0, a1, a2, a[3], retval, regs);
 		default:
 			INJ_WARNING("Unknown socket call: %d\n", call);
 			__exit(-1);
@@ -135,6 +137,8 @@ replay_socketcall(const struct syscall_regs * regs)
 			return replay_shutdown(a0, a1, retval, regs);
 		case SYS_SEND:
 			return replay_send(a0, a1, a2, a[3], retval, regs);
+		case SYS_SOCKETPAIR:
+			return replay_socketpair(a0, a1, a2, a[3], retval, regs);
 		default:
 			INJ_FATAL("Unknown socket call: %d\n", call);
 			INJ_FATAL("eip=0x%x\n", regs->eip);
@@ -219,6 +223,9 @@ output_socketcall(void)
 			return;
 		case SYS_SEND:
 			output_send(a0, a1, a2, a[3], retval);
+			return;
+		case SYS_SOCKETPAIR:
+			output_socketpair(a0, a1, a2, a[3], retval);
 			return;
 		default:
 			THROW(EXCEPTION_FATAL, "Unknown socket number: %d", call);

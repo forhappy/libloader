@@ -13,7 +13,8 @@ pre_tty_ioctl(int fd, uint32_t cmd, uint32_t arg)
 }
 
 SCOPE int
-post_tty_ioctl(int fd, uint32_t cmd, uint32_t arg, int32_t retval)
+post_tty_ioctl(int fd, uint32_t cmd, uint32_t arg,
+		const struct syscall_regs * regs)
 {
 	switch (cmd) {
 		case TCGETS:
@@ -46,14 +47,14 @@ replay_tty_ioctl(int fd, uint32_t cmd, uint32_t arg,
 		/* signal distrub me */
 		seek_logger(-2, SEEK_END);
 		int16_t sig = read_int16();
-		INJ_WARNING("ioctl 0x%x distrubed by signal %d, this logger has over. switch a ckpt.\n",
+		INJ_WARNING("ioctl_tty 0x%x distrubed by signal %d, this logger has over. switch a ckpt.\n",
 				cmd, -sig);
 #ifdef IN_INJECTOR
 		replay_trap(regs);
 #endif
 	}
 
-	/* write eax is done in  */
+	/* write eax is done in ioctl.c */
 	int32_t eax = read_int32();
 	switch (cmd) {
 		case TCGETS:
@@ -89,6 +90,9 @@ output_tty_ioctl(int fd, uint32_t cmd, uint32_t arg)
 		finished = 1;
 		return;
 	}
+
+	printf("\tretval: %d\n", read_eax());
+
 	switch (cmd) {
 		case TCGETS:
 			if (arg != 0)
@@ -107,7 +111,6 @@ output_tty_ioctl(int fd, uint32_t cmd, uint32_t arg)
 			THROW(EXCEPTION_FATAL, "unsupport ioctl 0x%x", cmd);
 	}
 
-	printf("\tretval: %d\n", read_eax());
 	return;
 }
 
