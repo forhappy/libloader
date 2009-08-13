@@ -5,22 +5,24 @@
 int SCOPE
 post_recvfrom(int fd, uint32_t ubuf, uint32_t size,
 		uint32_t flags, uint32_t addr,
-		uint32_t addr_len, int retval, const struct syscall_regs * regs)
+		uint32_t paddr_len, int retval, const struct syscall_regs * regs)
 {
-	/* if addr and addr_len error, retval < 0, but
+	/* if addr and paddr_len error, retval < 0, but
 	 * data will still be copied into buffer */
-	write_mem(ubuf, size);
+	/* however, if the size too large, this will make logger file
+	 * size increase too quickly. */
 	if (retval >= 0) {
+		write_mem(ubuf, retval);
 		if (addr != 0) {
-			if (addr_len == 0) {
-				INJ_WARNING("that shouldn't happen\n");
-				__exit(-1);
-			}
+			ASSERT(paddr_len != 0, regs, "that shouldn't happen\n");
+
 			uint32_t l;
-			__dup_mem(&l, addr_len, sizeof(l));
+			__dup_mem(&l, paddr_len, sizeof(l));
 			write_obj(l);
 			write_mem(addr, l);
 		}
+	} else {
+		/* we can write garbage data here */
 	}
 	return 0;
 }
@@ -28,19 +30,15 @@ post_recvfrom(int fd, uint32_t ubuf, uint32_t size,
 int SCOPE
 replay_recvfrom(int fd, uint32_t ubuf, uint32_t size,
 		uint32_t flags, uint32_t addr,
-		uint32_t addr_len, int retval, const struct syscall_regs * regs)
+		uint32_t paddr_len, int retval, const struct syscall_regs * regs)
 {
-	read_mem(ubuf, size);
 	if (retval >= 0) {
+		read_mem(ubuf, retval);
 		if (addr != 0) {
-			if (addr_len == 0) {
-				INJ_WARNING("that shouldn't happen\n");
-				__exit(-1);
-			}
-
-			read_mem(addr_len, sizeof(uint32_t));
+			ASSERT(paddr_len != 0, regs, "that shouldn't happen\n");
+			read_mem(paddr_len, sizeof(uint32_t));
 			uint32_t l;
-			__dup_mem(&l, addr_len, sizeof(l));
+			__dup_mem(&l, paddr_len, sizeof(l));
 			read_mem(addr, l);
 		}
 	}
@@ -53,12 +51,12 @@ replay_recvfrom(int fd, uint32_t ubuf, uint32_t size,
 void SCOPE
 output_recvfrom(int fd, uint32_t ubuf, uint32_t size,
 		uint32_t flags, uint32_t addr,
-		uint32_t addr_len, int retval)
+		uint32_t paddr_len, int retval)
 {
-	printf("recvfrom(fd=%d, ubuf=0x%x, size=%d, flags=0x%x, addr=0x%x, addr_len=%d):\t%d\n",
-			fd, ubuf, size, flags, addr, addr_len, retval);
-	skip(size);
+	printf("recvfrom(fd=%d, ubuf=0x%x, size=%d, flags=0x%x, addr=0x%x, paddr_len=0x%x):\t%d\n",
+			fd, ubuf, size, flags, addr, paddr_len, retval);
 	if (retval >= 0) {
+		skip(retval);
 		if (addr != 0) {
 			uint32_t l;
 			read_obj(l);

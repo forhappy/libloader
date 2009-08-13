@@ -99,22 +99,22 @@ asm (".L__X'%ebx = 1\n\t"
 
 #define INTERNAL_SYSCALL_0_5(name, enter_kernel, nr, args...) \
 	({								\
-	 	register int32_t retval;				\
+	 	register int32_t __retval;				\
 	 	EXTRAVAR_##nr						\
 		asm volatile (						\
 			LOADARGS_##nr					\
 			"movl %1, %%eax\n"				\
 			enter_kernel					\
 			RESTOREARGS_##nr				\
-			: "=a" (retval)					\
+			: "=a" (__retval)					\
 			: "i" (__NR_##name)		\
 			  ASMFMT_##nr(args) : "memory", "cc");		\
-	 	retval;							\
+	 	__retval;							\
 	 })
 
 #define __INTERNAL_SYSCALL_6(name, enter_kernel, arg1, arg2, arg3, arg4, arg5, arg6)	\
 	     ({								\
-	      	register int32_t retval;				\
+	      	register int32_t __retval;				\
 		int32_t _xv1, _xv2;					\
 		_xv2 = arg6;						\
 		asm volatile (						\
@@ -126,12 +126,12 @@ asm (".L__X'%ebx = 1\n\t"
 			enter_kernel					\
 			"popl %%ebp\n"					\
 			"movl %3, %%ebx\n"				\
-			: "=a" (retval)					\
+			: "=a" (__retval)					\
 			: "i" (__NR_##name),		\
 			 "0" (arg1), "m" (_xv1), "c" (arg2), "d" (arg3), "S" (arg4), "D" (arg5), "m" (_xv2) \
 			: "memory", "cc" 				\
 			);						\
-		retval;							\
+		__retval;							\
 	      })
 
 #define INTERNAL_SYSCALL(name, nr, args...)	\

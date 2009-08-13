@@ -147,5 +147,16 @@ replay_socketpair(int family, int type, int protocol, uintptr_t usockvec, int re
 extern void
 output_socketpair(int family, int type, int protocol,
 		uintptr_t usockvec, int retval);
+
+extern int SCOPE
+post_sendmsg(int fd, uintptr_t msg, uint32_t flags,
+		int retval, const struct syscall_regs * regs);
+extern int SCOPE
+replay_sendmsg(int fd, uintptr_t msg, uint32_t flags,
+		int retval, const struct syscall_regs * regs);
+extern void SCOPE
+output_sendmsg(int fd, uintptr_t msg, uint32_t flags, int retval);
+
+
 #endif 
 

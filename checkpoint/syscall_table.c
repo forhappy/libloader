@@ -89,6 +89,7 @@ SCOPE struct syscall_tabent syscall_table[] = {
 	def_simple_syscall_entry(rmdir),
 	def_simple_syscall_entry(lseek),
 	def_simple_syscall_entry(msync),
+	def_simple_syscall_entry(chdir),
 #ifndef SYSCALL_PRINTER
 	[NR_SYSCALLS]	= {NULL, NULL, NULL},
 #else

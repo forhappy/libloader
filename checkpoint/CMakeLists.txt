@@ -62,6 +62,7 @@ SET(HANDLERS
 	wait4.c
 	socketpair.c
 	ioctl_blk.c
+	sendmsg.c
 	)
 
 ADD_LIBRARY(checkpoint

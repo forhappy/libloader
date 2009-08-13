@@ -78,8 +78,10 @@ extern int SCOPE logger_fd;
 extern uint32_t SCOPE logger_sz;
 
 # define __write_logger(__addr, __sz) do {	\
+	int err;				\
 	logger_sz += (__sz);			\
-	__write(logger_fd, (__addr), (__sz));	\
+	err = __write(logger_fd, (__addr), (__sz)); \
+	ASSERT(err == (__sz), regs, "write logger failed: %d != %d\n", err, (__sz));\
 } while(0)
 
 # define write_mem(addr, sz) do {	\
