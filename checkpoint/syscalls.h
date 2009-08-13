@@ -96,6 +96,8 @@ define_post_handler(waitpid);
 define_post_handler(dup);
 define_post_handler(dup2);
 define_post_handler(wait4);
+define_post_handler(setitimer);
+
 
 __END_DECLS
 

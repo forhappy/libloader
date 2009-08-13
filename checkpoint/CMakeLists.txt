@@ -63,6 +63,7 @@ SET(HANDLERS
 	socketpair.c
 	ioctl_blk.c
 	sendmsg.c
+	setitimer.c
 	)
 
 ADD_LIBRARY(checkpoint
