@@ -208,8 +208,8 @@ replay_syscall(const struct syscall_regs * regs)
 			/* read the lase 2 bytes to get the signumber */
 			seek_logger(-2, SEEK_END);
 			int16_t sig = read_int16();
-			INJ_WARNING("process distrubed by signal %d, this logger has over. switch a ckpt.\n",
-					-sig);
+			INJ_FORCE("process distrubed by signal %d, "
+					"this logger has over. switch a ckpt.\n", -sig);
 			replay_trap(regs);
 			return 0;
 		}
