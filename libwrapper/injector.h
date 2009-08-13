@@ -161,15 +161,21 @@ extern SCOPE int self_pid;
 extern SCOPE char logger_filename[];
 extern SCOPE char ckpt_filename[];
 
+/* this flag default is 0, each time when a signal breaks a syscall,
+ * we add it by 1 at the beginning of signal handler. by comparing it
+ * and __syscall_reenter_counter, signal handler knows whether it
+ * breaks syscall. */
+extern SCOPE volatile int __syscall_reenter_base;
 extern SCOPE volatile int __syscall_reenter_counter;
 /* ENTER_SYSCALL and EXIT_SYSCALL are 2 gates. if checkpoint happened between
  * those 2 gates, we know it breaks a syscall, the ckpt need to be adjusted. */
 #define ENTER_SYSCALL()	asm volatile ("incl %[counter]\n" : : [counter] "m" (__syscall_reenter_counter))
 #define EXIT_SYSCALL()	asm volatile ("decl %[counter]\n" : : [counter] "m" (__syscall_reenter_counter))
-#define IS_BREAK_SYSCALL()	(__syscall_reenter_counter > 0)
+#define IS_BREAK_SYSCALL()	(__syscall_reenter_counter > __syscall_reenter_base)
 #define IS_REENTER_SYSCALL()	(__syscall_reenter_counter > 1)
 
-extern SCOPE volatile int __signaled;
+extern SCOPE int __syscall_have_written_header;
+
 __END_DECLS
 
 #endif

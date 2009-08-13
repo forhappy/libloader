@@ -13,6 +13,7 @@ struct opts {
 	char * injector_opts;
 	char * sigreturn;
 	char * rt_sigreturn;
+	char * sighandler;
 	char * ckpt_fn;	/* for gdbloader only */
 	char * pthread_so_fn;	/* libpthread.so, for gdbloader only */
 	int fix_pthread_tid;	/* whether to fix libpthread's tid, for gdbloader only */

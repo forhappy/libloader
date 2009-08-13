@@ -76,6 +76,7 @@ static uint32_t old_vdso_entry = 0;
 /* below 2 vars are for sigaction and rt_sigaction */
 uint32_t wrapped_sigreturn = 0;
 uint32_t wrapped_rt_sigreturn = 0;
+uint32_t wrapped_sighandler = 0;
 
 static void main_clup(struct cleanup * cleanup)
 {
@@ -362,6 +363,10 @@ currf2_main(int argc, char * argv[])
 			opts->rt_sigreturn);
 	CTHROW(wrapped_rt_sigreturn != 0, "symbol \"%s\" not found",
 			opts->rt_sigreturn);
+	wrapped_sighandler = elf_get_symbol_address(injector.h,
+			opts->sighandler);
+	CTHROW(wrapped_sighandler != 0, "symbol \"%s\" not found",
+			opts->sighandler);
 
 
 	/* relocate injector */

@@ -10,9 +10,11 @@
 #ifndef IN_INJECTOR
 extern SCOPE uint32_t wrapped_sigreturn;
 extern SCOPE uint32_t wrapped_rt_sigreturn;
+extern SCOPE uint32_t wrapped_sighandler;
 #else
 extern void wrapped_sigreturn(void);
 extern void wrapped_rt_sigreturn(void);
+extern void wrapped_sighandler(void);
 #endif
 
 #define SIG_DFL	((void*)(0))	/* default signal handling */
@@ -36,14 +38,16 @@ int SCOPE
 pre_rt_sigaction(const struct syscall_regs * regs)
 {
 	/* if the signal handler is not the SIG_DFL or SIG_IGN, we need to
-	 * reset the restore flag, make the target call my wrapper after signal
-	 * handler exit. */
+	 * reset the handler entry, make the target call my wrapper. */
 	uintptr_t act = regs->ecx;
 	struct k_sigaction d;
 	/* check act */
 	if (act == 0)
 		return 0;
 	__dup_mem(&d, act, sizeof(d));
+
+	/* save new handler */
+	state_vector.sigactions[regs->ebx] = d;
 
 	if ((d.sa_handler == SIG_IGN) || (d.sa_handler == SIG_DFL))
 		return 0;
@@ -52,53 +56,52 @@ pre_rt_sigaction(const struct syscall_regs * regs)
 	ASSERT(!(d.sa_flags & SA_RESTORER) || (d.sa_restorer == (void*)wrapped_rt_sigreturn),
 			regs, "handler for signal %d use itself's restorer, doesn't support\n");
 
-	/* now update sa_flags and sa_restorer */
-	d.sa_flags |= SA_RESTORER;
-
-	/* rt_sigaction and rt_sigreturn are not partners. see kernel code:
-	 * do_signal, if sa_flags has SA_SIGINFO, it setup a rt_frame and use
-	 * rt_sigreturn, if not, it use sigreturn. */
-	if (d.sa_flags & SA_SIGINFO)
-		d.sa_restorer = (void*)wrapped_rt_sigreturn;
-	else
-		d.sa_restorer = (void*)wrapped_sigreturn;
-
-	/* update mem */
+	/* update sa_handler */
+	d.sa_handler = (void*)wrapped_sighandler;
+	/* disable all signals */
+	memset(&d.sa_mask, 0xff, sizeof(d.sa_mask));
 	__upd_mem(act, &d, sizeof(d));
 
+	/* we don't set restorer, we do it in wrapped_sighandler */
 	return 0;
 }
-
-
 
 int SCOPE
 post_rt_sigaction(const struct syscall_regs * regs)
 {
 	write_eax(regs);
-	if (regs->eax == 0) {
-		void * d = &state_vector.sigactions[regs->ebx];
-		uintptr_t act = regs->ecx;
-		uintptr_t oact = regs->edx;
-		int sigsetsize = regs->esi;
+	/* rt_sigaction cannot fail... */
+	ASSERT(regs->eax >= 0, regs, "rt_sigaction failed, we cannot handle...\n");
 
-		write_obj(sigsetsize);
-		write_obj(oact);
-		write_obj(act);
+	uintptr_t act = regs->ecx;
+	uintptr_t oact = regs->edx;
+	int sigsetsize = regs->esi;
 
-		if (sigsetsize != sizeof(k_sigset_t)) {
-			INJ_WARNING("esi (%d) != %d\n",
-					sigsetsize, sizeof(k_sigset_t));
-			return 0;
+	write_obj(sigsetsize);
+	write_obj(oact);
+	write_obj(act);
+
+	/* we need copy modified act back */
+	struct k_sigaction * s = &state_vector.sigactions[regs->ebx];
+	if (act != 0)
+		__upd_mem(act, s, sizeof(*s));
+
+	if (sigsetsize != sizeof(k_sigset_t)) {
+		INJ_WARNING("esi (%d) != %d\n",
+				sigsetsize, sizeof(k_sigset_t));
+		return 0;
+	}
+
+	if (oact != 0) {
+		/* we modify the result */
+		struct k_sigaction d;
+		__dup_mem(&d, oact, sizeof(d));
+		if (d.sa_handler == (void*)wrapped_sighandler) {
+			struct k_sigaction * p = &(state_vector.sigactions[regs->ebx]);
+			d = *p;
+			__upd_mem(oact, &d, sizeof(d));
 		}
-
-		if (act != 0)
-			__dup_mem(d, act, sizeof(struct k_sigaction));
-
-		if (oact != 0) {
-			if (act == 0)
-				__dup_mem(d, oact, sizeof(struct k_sigaction));
-			write_mem(oact, sizeof(struct k_sigaction));
-		}
+		write_mem(oact, sizeof(struct k_sigaction));
 	}
 	return 0;
 }
@@ -132,6 +135,11 @@ replay_rt_sigaction(const struct syscall_regs * regs)
 
 		if (oact != 0)
 			read_mem(oact, sizeof(struct k_sigaction));
+
+		/* we need trace sighandler even in replay */
+		if (act != 0)
+			__dup_mem(&state_vector.sigactions[regs->ebx], act,
+					sizeof(struct k_sigaction));
 	}
 	return eax;
 }

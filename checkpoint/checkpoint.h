@@ -25,6 +25,7 @@
 # include "injector_debug.h"
 #endif
 
+
 __BEGIN_DECLS
 
 #ifndef IN_INJECTOR
@@ -165,26 +166,6 @@ struct user_desc {
 	unsigned int  useable:1;
 };
 
-#define K_NSIG	(64)
-#define _NSIG_WORDS	(2)
-
-typedef struct {
-	unsigned long sig[_NSIG_WORDS];
-} k_sigset_t;
-
-/* 
- * this k_sigaction is not the same as kernel's k_sigaction, which is:
- * struct k_sigaction {
- *	struct sigaction sa;
- * }
- * although they are equal internally.
- */
-struct k_sigaction {
-	void * sa_handler;
-	unsigned long sa_flags;
-	void * sa_restorer;
-	k_sigset_t sa_mask;		/* mask last for extensibility */
-};
 
 struct robust_list {
 	struct robust_list *next;
@@ -220,6 +201,7 @@ struct i387_fxsave_struct {
 	uint32_t	padding[24];
 };
 
+#include "libwrapper/signal_defs.h"
 /* struct i387_fxsave_struct will be embed into state vector, don't
  * use aligned option here. use it in defenition */
 

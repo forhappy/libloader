@@ -3,28 +3,6 @@
 
 #ifndef SYSCALL_PRINTER
 
-#define SIG_BLOCK          0	/* for blocking signals */
-#define SIG_UNBLOCK        1	/* for unblocking signals */
-#define SIG_SETMASK        2	/* for setting the signal mask */
-#ifndef SIGSTOP
-# define SIGSTOP		(19)
-#endif
-
-#ifndef SIGKILL
-# define SIGKILL		(9)
-#endif
-#define sigmask(sig)	(1UL << ((sig) - 1))
-
-static inline void sigaddsetmask(k_sigset_t *set, unsigned long mask)
-{
-	set->sig[0] |= mask;
-}
-
-static inline void sigdelsetmask(k_sigset_t *set, unsigned long mask)
-{
-	set->sig[0] &= ~mask;
-}
-
 int SCOPE
 post_sigprocmask(const struct syscall_regs * regs)
 {

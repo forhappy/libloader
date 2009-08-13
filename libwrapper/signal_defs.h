@@ -34,6 +34,7 @@ typedef s32		__s32;
 
 typedef int		__kernel_pid_t;
 typedef long		__kernel_clock_t;
+typedef int		__kernel_timer_t;
 
 typedef unsigned int	__kernel_uid32_t;
 typedef unsigned int	__kernel_gid32_t;
@@ -41,6 +42,7 @@ typedef unsigned int	__kernel_gid32_t;
 typedef __kernel_uid32_t	uid_t;
 typedef __kernel_gid32_t	gid_t;
 typedef __kernel_clock_t	clock_t;
+typedef __kernel_timer_t	k_timer_t;
 
 typedef union sigval {
 	int sival_int;
@@ -101,7 +103,7 @@ typedef struct siginfo {
 
 		/* POSIX.1b timers */
 		struct {
-			timer_t _tid;		/* timer id */
+			k_timer_t _tid;		/* timer id */
 			int _overrun;		/* overrun count */
 			char _pad[sizeof( __ARCH_SI_UID_T) - sizeof(int)];
 			sigval_t _sigval;	/* same as below */
@@ -174,12 +176,19 @@ typedef struct sigaltstack {
 	size_t ss_size;
 } stack_t;
 
+#define K_NSIG	(64)
+#define _NSIG_WORDS	(2)
+
+typedef struct {
+	unsigned long sig[_NSIG_WORDS];
+} k_sigset_t;
+
 struct ucontext {
 	unsigned long	  uc_flags;
 	struct ucontext  *uc_link;
 	stack_t		  uc_stack;
 	struct sigcontext uc_mcontext;
-	sigset_t	  uc_sigmask;	/* mask last for extensibility */
+	k_sigset_t	  uc_sigmask;	/* mask last for extensibility */
 };
 
 struct sigframe
@@ -203,6 +212,88 @@ struct rt_sigframe
 	struct _fpstate fpstate;
 	char retcode[8];
 };
+
+#define SIG_BLOCK          0	/* for blocking signals */
+#define SIG_UNBLOCK        1	/* for unblocking signals */
+#define SIG_SETMASK        2	/* for setting the signal mask */
+
+/* 
+ * this k_sigaction is not the same as kernel's k_sigaction, which is:
+ * struct k_sigaction {
+ *	struct sigaction sa;
+ * }
+ * although they are equal internally.
+ */
+struct k_sigaction {
+	void * sa_handler;
+	unsigned long sa_flags;
+	void * sa_restorer;
+	k_sigset_t sa_mask;		/* mask last for extensibility */
+};
+
+#define _SIG_SET_BINOP(name, op)					\
+static inline void name(k_sigset_t *r, const k_sigset_t *a, const k_sigset_t *b) \
+{									\
+	extern void _NSIG_WORDS_is_unsupported_size(void);		\
+	unsigned long a0, a1, a2, a3, b0, b1, b2, b3;			\
+									\
+	switch (_NSIG_WORDS) {						\
+	    case 4:							\
+		a3 = a->sig[3]; a2 = a->sig[2];				\
+		b3 = b->sig[3]; b2 = b->sig[2];				\
+		r->sig[3] = op(a3, b3);					\
+		r->sig[2] = op(a2, b2);					\
+	    case 2:							\
+		a1 = a->sig[1]; b1 = b->sig[1];				\
+		r->sig[1] = op(a1, b1);					\
+	    case 1:							\
+		a0 = a->sig[0]; b0 = b->sig[0];				\
+		r->sig[0] = op(a0, b0);					\
+		break;							\
+	    default:							\
+		_NSIG_WORDS_is_unsupported_size();			\
+	}								\
+}
+
+#define _sig_or(x,y)	((x) | (y))
+_SIG_SET_BINOP(sigorsets, _sig_or)
+#define _sig_and(x,y)	((x) & (y))
+_SIG_SET_BINOP(sigandsets, _sig_and)
+#define _sig_nand(x,y)	((x) & ~(y))
+_SIG_SET_BINOP(signandsets, _sig_nand)
+
+#ifdef __i386__
+# define _NSIG_BPW	32
+#else
+# define _NSIG_BPW	64
+#endif
+static inline void sigaddset(k_sigset_t *set, int _sig)
+{
+	unsigned long sig = _sig - 1;
+	if (_NSIG_WORDS == 1)
+		set->sig[0] |= 1UL << sig;
+	else
+		set->sig[sig / _NSIG_BPW] |= 1UL << (sig % _NSIG_BPW);
+}
+
+static inline void sigaddsetmask(k_sigset_t *set, unsigned long mask)
+{
+	set->sig[0] |= mask;
+}
+
+static inline void sigdelsetmask(k_sigset_t *set, unsigned long mask)
+{
+	set->sig[0] &= ~mask;
+}
+#ifndef SIGKILL
+# define SIGKILL (9)
+#endif
+#ifndef SIGSTOP
+# define SIGSTOP (19)
+#endif
+#ifndef sigmask
+# define sigmask(sig)	(1UL << ((sig) - 1))
+#endif
 
 extern SCOPE void
 unhook_sighandlers(void);

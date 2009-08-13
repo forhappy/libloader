@@ -149,4 +149,34 @@ wrapped_rt_sigreturn:
 	nop
 	.size wrapped_rt_sigreturn, .-.LSTART_rt_sigreturn
 
+.globl wrapped_sighandler
+.type wrapped_sighandler, @function
+__ALIGN
+wrapped_sighandler:
+	pushl $0x0123		/* this is placeholder for retcode */
+	pushl %esp
+	pushl $0		/* eip, useless here */
+	pushl $0		/* orig_eax, placeholder */
+	pushf
+	pushl %ebp
+	pushl %edi
+	pushl %esi
+	pushl %edx
+	pushl %ecx
+	pushl %ebx
+	pushl %eax
+	/* when make ckpt or other use,
+           do_wrapped_sighandler should add argument's esp by 4 for the retcode. */
+	call do_wrapped_sighandler
+	popl %eax
+	popl %ebx
+	popl %ecx
+	popl %edx
+	popl %esi
+	popl %edi
+	popl %ebp
+	popf
+	addl $0xC, %esp
+	/* we must reset the retcode in do_wrapped_sighandler. */
+	ret
 

@@ -23,9 +23,11 @@ static struct argp_option options[] = {
 	{"statevect",	'v', "statevect",	0, "state_vect's symbol, \'state_vector\' by default"},
 	{"loggersize",	's', "size",		0, "logger size threshold, 10MB by default, at least 4kB"},
 	{"sigreturn",	-1, "sigreturn sym",
-		0,  "wrapped_sigreturn symbol, \"wrapped_sigreturn\" by default"},
+		0, "wrapped_sigreturn symbol, \"wrapped_sigreturn\" by default"},
 	{"rt_sigreturn", -2, "rt_sigaction sym", 
 		0, "wrapped_rt_sigreturn symbol, \"wrapped_rt_sigreturn\" by default"},
+	{"sighandler",   -5, "sighandler proxy sym",
+		0, "wrapped_sighandler symbol, \"wrapped_sighandler\" by default"},
 	{"tracefork",	'f', NULL,			0, "trace fork, default: off"},
 	{"injopts",		-3, "opts sym",	0, "injector opts symbol, \"injector_opts\" by default"},
 	{"untraced",	-4, NULL,			0, "start untraced running. traced by default. "
@@ -43,6 +45,7 @@ static struct opts opts = {
 	.injector_opts	= "injector_opts",
 	.sigreturn		= "wrapped_sigreturn",
 	.rt_sigreturn	= "wrapped_rt_sigreturn",
+	.sighandler		= "wrapped_sighandler",
 	.logger_threshold	= 10 << 20,
 	.trace_fork		= 0,
 	.untraced		= 0,
@@ -67,6 +70,9 @@ parse_opt(int key, char *arg, struct argp_state *state)
 			return 0;
 		case -2:
 			opts.rt_sigreturn = arg;
+			return 0;
+		case -5:
+			opts.sighandler = arg;
 			return 0;
 		case 's':
 			{
