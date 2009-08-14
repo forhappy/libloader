@@ -210,8 +210,10 @@ do_wrapped_sighandler(volatile struct syscall_regs handler_regs,
 
 	/* check whether inside a syscall */
 	if (IS_BREAK_SYSCALL()) {
-		INJ_WARNING("syscall %d is broken by this signal\n",
-				signal_regs->orig_eax);
+		INJ_WARNING("syscall %d is broken by this signal: %d > %d\n",
+				signal_regs->orig_eax,
+				__syscall_reenter_counter,
+				__syscall_reenter_base);
 		per_frame_info->is_break = 1;
 		/* the pointer of signal_regs is valid only in this func.
 		 * but the content of signal_regs is on stack, valid
@@ -271,9 +273,11 @@ do_wrapped_sigreturn(struct sigframe frame)
 	/* in running phase, when we do sigreturn, if the syscall is break, then we must
 	 * restore the __syscall_reenter_counter and __syscall_reenter_base. sometime a syscall
 	 * can be break more than once. when it break a 2nd time, those 2 flags has been override. */
-	__syscall_reenter_base -= 1;
-	/* also, signal_regs should be reset */
-	signal_regs = regs;
+	if (per_frame_info->is_break) {
+		__syscall_reenter_base -= 1;
+		/* also, signal_regs should be reset */
+		signal_regs = regs;
+	}
 }
 
 void SCOPE
@@ -291,8 +295,10 @@ do_wrapped_rt_sigreturn(struct rt_sigframe frame)
 		if (per_frame_info->is_break)
 			before_syscall(regs);
 	}
-	__syscall_reenter_base -= 1;
-	signal_regs = regs;
+	if (per_frame_info->is_break) {
+		__syscall_reenter_base -= 1;
+		signal_regs = regs;
+	}
 }
 
 /* regs is used only for ASSERT */

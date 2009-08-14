@@ -128,7 +128,7 @@ extern uint32_t SCOPE logger_sz;
 
 
 # define write_syscall_nr(nr)	do {	\
-	uint32_t x_nr;	\
+	uint16_t x_nr;	\
 	x_nr = (nr);	\
 	__write_logger(&(x_nr), sizeof(x_nr));	\
 } while(0)

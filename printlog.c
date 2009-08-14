@@ -41,43 +41,61 @@ seek_logger(int off, int origin)
 }
 
 
+static void
+skip_signal(void)
+{
+	/* skip: */
+	int32_t frame_sz = read_int32();
+	if ((frame_sz != sizeof(struct sigframe)) &&
+			(frame_sz != sizeof(struct rt_sigframe)))
+	{
+		THROW(EXCEPTION_FATAL, "frame_sz %d, strange...", frame_sz);
+	}
+	/* skip frame */
+	skip(frame_sz);
+	/* skip 2 regs */
+	skip(sizeof(struct syscall_regs));
+	skip(sizeof(struct syscall_regs));
+	/* skip rt_sigaction */
+	skip(sizeof(struct k_sigaction));
+}
+
 int finished = 0;
 static void
 printer_main(void)
 {
 	finished = 0;
 	while (!finished) {
-		uint32_t nr = 0;
+		int16_t nr = 0;
 
 		volatile struct exception exp;
 		TRY_CATCH(exp, MASK_RESOURCE_LOST) {
 			read_logger(&nr, sizeof(nr));
 
 			SYS_TRACE("syscall nr %u\n", nr);
-			if (nr > NR_SYSCALLS)
-				THROW(EXCEPTION_FATAL, "no handler for syscall %u", nr);
+			if ((nr > NR_SYSCALLS) || (nr < 0)) {
+				if (-nr - 1 > 64)
+					THROW(EXCEPTION_FATAL, "no handler for syscall %u", nr);
+				else {
+					printf("raise signal %d\n", -nr - 1);
+					skip_signal();
+					continue;
+				}
+			}
 
 			if (syscall_table[nr].output_handler == NULL)
 				THROW(EXCEPTION_FATAL, "no handler for syscall %u", nr);
+
+			if (nr == __NR_exit_group) {
+				syscall_table[nr].output_handler(nr);
+				continue;
+			}
 
 			int16_t sigflag;
 			read_logger(&sigflag, sizeof(sigflag));
 			if (sigflag != -1) {
 				printf("process distrubed by signal %d\n", -sigflag-1);
-				/* skip: */
-				int32_t frame_sz = read_int32();
-				if ((frame_sz != sizeof(struct sigframe)) &&
-						(frame_sz != sizeof(struct rt_sigframe)))
-				{
-					THROW(EXCEPTION_FATAL, "frame_sz %d, strange...", frame_sz);
-				}
-				/* skip frame */
-				skip(frame_sz);
-				/* skip 2 regs */
-				skip(sizeof(struct syscall_regs));
-				skip(sizeof(struct syscall_regs));
-				/* skip rt_sigaction */
-				skip(sizeof(struct k_sigaction));
+				skip_signal();
 			} else {
 				syscall_table[nr].output_handler(nr);
 			}

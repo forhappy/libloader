@@ -184,7 +184,7 @@ replay_syscall(const struct syscall_regs * regs)
 			"no such syscall: %d\n", regs->orig_eax);
 
 	/* read from logger, check */
-	int32_t nr = read_int32();
+	int16_t nr = read_int16();
 	if (nr != regs->orig_eax) {
 		if ((nr < 0) && (nr > - K_NSIG - 1)) {
 			INJ_FORCE("target has been interrupted by signal %d, you need switch ckpt\n", -nr-1);
@@ -201,6 +201,12 @@ replay_syscall(const struct syscall_regs * regs)
 	if (syscall_table[regs->orig_eax].replay_handler == NULL) {
 		INJ_FATAL("no such syscall post-handler: %d\n", regs->orig_eax);
 		replay_trap(regs);
+	}
+
+	if (regs->orig_eax == __NR_exit_group) {
+		/* it is special. if exit break by signal (that shouldn't happen, but
+		 * our inject code may), it never return. */
+		syscall_table[regs->orig_eax].replay_handler(regs);
 	}
 
 	/* if the syscall use pre_handler, then it need to check signal itself. */
