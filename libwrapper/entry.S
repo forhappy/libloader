@@ -155,6 +155,7 @@ __ALIGN
 wrapped_sighandler:
 	pushl $0x0123		/* this is placeholder for retcode */
 	pushl %esp
+	addl $4, (%esp)		/* add saved esp by 4, make the value correct */
 	pushl $0		/* eip, useless here */
 	pushl $0		/* orig_eax, placeholder */
 	pushf
@@ -165,8 +166,7 @@ wrapped_sighandler:
 	pushl %ecx
 	pushl %ebx
 	pushl %eax
-	/* when make ckpt or other use,
-           do_wrapped_sighandler should add argument's esp by 4 for the retcode. */
+	/* when make ckpt or other use */
 	call do_wrapped_sighandler
 	popl %eax
 	popl %ebx

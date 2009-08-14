@@ -25,7 +25,7 @@ pid_t SCOPE old_self_pid = 0;
  * bytes. if we use local var, we need special align work */
 struct i387_fxsave_struct SCOPE fpustate_struct __attribute__((aligned(16)));
 
-static int replay = 0;
+int SCOPE replay = 0;
 int SCOPE tracing = 0;
 
 SCOPE void
@@ -50,12 +50,6 @@ SCOPE char ckpt_filename[128] = "";
  * asm here for atomic. */
 SCOPE volatile int __syscall_reenter_counter = 0;
 SCOPE volatile int __syscall_reenter_base = 0;
-
-/* this flag is used for signal processing. if both __syscall_reenter_counter
- * and __syscall_have_write_header > 0, we know a signal break a syscall and the
- * syscall header has written to the log. if __syscall_reenter_counter > 0 but
- * __syscall_have_write_header == 0, we know the header has not been written.*/
-SCOPE int __syscall_have_written_header = 0;
 
 #ifndef RELAX_SIGNAL
 static k_sigset_t blockall_mask = {
@@ -138,13 +132,6 @@ wrapped_syscall(const struct syscall_regs r)
 	 * override. (the signal handler will save this regs before any new syscall, and
 	 * the restorer needn't it). */
 	signal_regs = &r;
-
-	/* we reset this flag before we ENTER_SYSCALL. even if we break right after this
-	 * assignment, we are broken outside from a syscall, make a ckpt here is safe.
-	 * if we reset this flag after ENTER_SYSCALL, and a signal raise right before
-	 * the assignment, the ckeckpoint handler will think we have written syscall header.
-	 * it is not true.  */
-	__syscall_have_written_header = 0;
 	
 	/* if a signal raise outside a syscall, those 2 values should same. if not, thay are
 	 * different. */
@@ -155,18 +142,18 @@ wrapped_syscall(const struct syscall_regs r)
 	 * it needs to adjust registers. */
 
 
+	/* don't allow signal inside before_syscall.
+	 * if signal happened inside it, the logger may be disturbed. */
+	/* disable dignal before enter_syscall make sure the sysall's header
+	 * is written into log when potential signal raise */
+	DISABLE_SIGNAL();
 	ENTER_SYSCALL();
 
 	if (!replay) {
 		uint32_t syscall_nr = r.orig_eax;
 		INJ_SILENT("wrapped_syscall: %d\n", syscall_nr);
 
-		/* don't allow signal inside before_syscall.
-		 * if signal happened inside it, the logger may be disturbed. */
-		DISABLE_SIGNAL();
 		before_syscall(&r);
-		/* set the flag for signal handler */
-		__syscall_have_written_header = 1;
 		ENABLE_SIGNAL();
 
 		uint32_t retval;
@@ -224,12 +211,12 @@ wrapped_syscall(const struct syscall_regs r)
 			/* logger_sz have been reset in do_make_checkpoint */
 			/* logger_sz = 0; */
 		}
-		ENABLE_SIGNAL();
 		EXIT_SYSCALL();
+		ENABLE_SIGNAL();
 	} else {
-
 		/* this gate is useless in replay */
 		EXIT_SYSCALL();
+		ENABLE_SIGNAL();
 		INJ_SILENT("replay syscall, eax=%d\n", r.eax);
 		uint32_t retval;
 		retval = replay_syscall(&r);
@@ -349,10 +336,7 @@ restore_state(void)
 	/* don't restore sigaction now */
 
 	/* sigmask */
-	/* restore sigmask now */
-
-	INTERNAL_SYSCALL(rt_sigprocmask, 4,
-			SIG_SETMASK, &state_vector.sigmask, NULL, sizeof(state_vector.sigmask));
+	/* don't restore sigmask now */
 }
 
 static void

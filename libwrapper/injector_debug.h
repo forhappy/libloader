@@ -109,6 +109,10 @@ extern SCOPE void message_out(int prefix, enum debug_level, enum debug_component
 				INJ_FATAL("eip=0x%x\n", (__regs)->eip); \
 				INJ_FATAL("esp=0x%x\n", (__regs)->esp);	\
 				INJ_FATAL("ebp=0x%x\n", (__regs)->ebp); \
+				/* unblock all signals */			\
+				k_sigset_t __set;					\
+				memset(&__set, 0, sizeof(__set));	\
+				INTERNAL_SYSCALL(rt_sigprocmask, 4, SIG_SETMASK, &__set, NULL, sizeof(__set));\
 				asm volatile (						\
 						"movl %0, %%esp\n"			\
 						"movl %1, %%ebp\n" : : "m" ((__regs)->esp), "m" ((__regs)->ebp));\

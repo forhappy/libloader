@@ -58,7 +58,6 @@ define_post_handler(ugetrlimit);
 define_post_handler(write);
 define_post_handler(nanosleep);
 
-define_pre_handler(ioctl);
 define_post_handler(ioctl);
 
 define_post_handler(fcntl64);

@@ -109,18 +109,6 @@ post_rt_sigaction(const struct syscall_regs * regs)
 int SCOPE
 replay_rt_sigaction(const struct syscall_regs * regs)
 {
-	/* we need to check signal first */
-	int16_t flag = read_int16();
-	if (flag != -1) {
-		/* signal distrub me */
-		seek_logger(-2, SEEK_END);
-		int16_t sig = read_int16();
-		INJ_WARNING("rt_sigaction distrubed by signal %d, this logger has over. switch a ckpt.\n",
-				-sig);
-#ifdef IN_INJECTOR
-		replay_trap(regs);
-#endif
-	}
 	int32_t eax = read_int32();
 	if (eax == 0) {
 		int sigsetsize = read_int32();
@@ -150,12 +138,6 @@ extern int finished;
 void
 output_rt_sigaction(int nr)
 {
-	int16_t sigflag = read_int16();
-	if (sigflag != -1) {
-		printf("rt_sigaction distrubed by signal\n");
-		finished = 1;
-		return;
-	}
 	int32_t ret = read_eax();
 	if (ret == 0) {
 		int sigsetsize;

@@ -173,6 +173,9 @@ after_syscall(const struct syscall_regs * regs)
 
 #ifdef IN_INJECTOR
 
+extern void SCOPE ATTR(noreturn)
+replay_sigaction(int signum, const struct syscall_regs * regs);
+
 SCOPE uint32_t
 replay_syscall(const struct syscall_regs * regs)
 {
@@ -181,8 +184,12 @@ replay_syscall(const struct syscall_regs * regs)
 			"no such syscall: %d\n", regs->orig_eax);
 
 	/* read from logger, check */
-	uint32_t nr = read_uint32();
+	int32_t nr = read_int32();
 	if (nr != regs->orig_eax) {
+		if ((nr < 0) && (nr > - K_NSIG - 1)) {
+			INJ_FORCE("target has been interrupted by signal %d, you need switch ckpt\n", -nr-1);
+			replay_trap(regs);
+		}
 		INJ_FATAL("logger mismatch: new syscall should be 0x%x, but actually %d\n",
 				nr, regs->orig_eax);
 		/* int3 traps gdb */
@@ -195,27 +202,36 @@ replay_syscall(const struct syscall_regs * regs)
 		INJ_FATAL("no such syscall post-handler: %d\n", regs->orig_eax);
 		replay_trap(regs);
 	}
-	
+
 	/* if the syscall use pre_handler, then it need to check signal itself. */
-	if (syscall_table[regs->orig_eax].pre_handler == NULL) {
-		/* we check the signal flag for those syscall. if we read a -1,
-		 * there's no signal happen. else, we let user switch ckpt */
-		int16_t f = read_int16();
-		if (f == -1) {
-			/* no signal happen */
-			return (uint32_t)(syscall_table[regs->orig_eax].replay_handler(regs));
-		} else {
-			/* read the lase 2 bytes to get the signumber */
-			seek_logger(-2, SEEK_END);
-			int16_t sig = read_int16();
-			INJ_FORCE("process distrubed by signal %d, "
-					"this logger has over. switch a ckpt.\n", -sig);
-			replay_trap(regs);
-			return 0;
-		}
-	} else {
-		/* this replay_handler can handle the flag */
+	/* WRONG: now pre_handlers are not allow to write anything to log.  */
+
+	/* we check the signal flag for those syscall. if we read a -1,
+	 * there's no signal happen. else, we let user switch ckpt */
+	int16_t f = read_int16();
+	if (f == -1) {
+		/* no signal happen */
 		return (uint32_t)(syscall_table[regs->orig_eax].replay_handler(regs));
+	} else {
+		/* the syscall has been interrupted by signam - f - 1 */
+		if (-f - 1 < K_NSIG) {
+			INJ_FORCE("signal %d raise in syscall %d\n", -f - 1, nr);
+		} else {
+			INJ_FATAL("corrupted logger: signal flag is 0x%x\n", (uint16_t)f);
+			__exit(-1);
+		}
+
+		/* never return */
+		replay_sigaction(-f - 1, regs);
+#if 0
+		/* read the lase 2 bytes to get the signumber */
+		seek_logger(-2, SEEK_END);
+		int16_t sig = read_int16();
+		INJ_FORCE("process distrubed by signal %d, "
+				"this logger has over. switch a ckpt.\n", -sig);
+		replay_trap(regs);
+#endif
+		return 0;
 	}
 }
 

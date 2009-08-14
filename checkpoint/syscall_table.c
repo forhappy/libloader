@@ -47,7 +47,7 @@ SCOPE struct syscall_tabent syscall_table[] = {
 	def_syscall_entry(ugetrlimit, NULL),
 	def_syscall_entry(write, NULL),
 	def_syscall_entry(nanosleep, NULL),
-	def_syscall_entry(ioctl, pre_ioctl),
+	def_syscall_entry(ioctl, NULL),
 	def_syscall_entry(fcntl64, NULL),
 	def_syscall_entry(getdents64, NULL),
 	def_syscall_entry(exit_group, pre_exit_group),

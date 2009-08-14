@@ -41,9 +41,6 @@
 #define BLKTRACESTOP _IO(0x12,117)
 #define BLKTRACETEARDOWN _IO(0x12,118)
 
-extern SCOPE int
-pre_blk_ioctl(int fd, uint32_t cmd, uint32_t arg);
-
 /* regs used for replay_trap */
 extern SCOPE int
 post_blk_ioctl(int fd, uint32_t cmd, uint32_t arg, const struct syscall_regs * regs);

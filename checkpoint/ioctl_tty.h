@@ -315,9 +315,6 @@ struct ktermios {
 #define	TCSAFLUSH	2
 
 
-extern SCOPE int
-pre_tty_ioctl(int fd, uint32_t cmd, uint32_t arg);
-
 /* regs used for replay_trap */
 extern SCOPE int
 post_tty_ioctl(int fd, uint32_t cmd, uint32_t arg, const struct syscall_regs * regs);

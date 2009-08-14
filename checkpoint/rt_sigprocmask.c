@@ -69,10 +69,6 @@ replay_rt_sigprocmask(const struct syscall_regs * regs)
 			if (oset)
 				read_mem(oset, sigsetsize);
 		}
-#ifdef IN_INJECTOR
-		INTERNAL_SYSCALL(rt_sigprocmask, 3,
-				regs->ebx, regs->ecx, regs->edx);
-#endif
 	}
 	return ret;
 }

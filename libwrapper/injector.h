@@ -174,8 +174,6 @@ extern SCOPE volatile int __syscall_reenter_counter;
 #define IS_BREAK_SYSCALL()	(__syscall_reenter_counter > __syscall_reenter_base)
 #define IS_REENTER_SYSCALL()	(__syscall_reenter_counter > 1)
 
-extern SCOPE int __syscall_have_written_header;
-
 __END_DECLS
 
 #endif

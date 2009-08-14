@@ -1,6 +1,7 @@
 
 #include "checkpoint/checkpoint.h"
 #include "checkpoint/syscall_table.h"
+#include "libwrapper/signal_defs.h"
 
 #include "exception.h"
 #include "debug.h"
@@ -11,7 +12,8 @@
 #include <string.h>
 #include <asm/unistd.h>
 
-FILE * log_fp = NULL;
+
+static FILE * log_fp = NULL;
 
 void
 read_logger(void * buffer, int sz)
@@ -57,27 +59,28 @@ printer_main(void)
 
 			if (syscall_table[nr].output_handler == NULL)
 				THROW(EXCEPTION_FATAL, "no handler for syscall %u", nr);
-			switch (nr) {
-				default:
-					{
-						int16_t sigflag;
-						read_logger(&sigflag, sizeof(sigflag));
-						if (sigflag != -1) {
-							int16_t sig;
-							seek_logger(-2, SEEK_END);
-							read_logger(&sig, sizeof(sig));
-							printf("process distrubed by signal %d\n", -sig);
-							finished = 1;
-							continue;
-						}
-					}
-					/* check for signal */
-				case __NR_rt_sigaction:
-				case __NR_ioctl:
-				case __NR_exit_group:
-						syscall_table[nr].output_handler(nr);
-			}
 
+			int16_t sigflag;
+			read_logger(&sigflag, sizeof(sigflag));
+			if (sigflag != -1) {
+				printf("process distrubed by signal %d\n", -sigflag-1);
+				/* skip: */
+				int32_t frame_sz = read_int32();
+				if ((frame_sz != sizeof(struct sigframe)) &&
+						(frame_sz != sizeof(struct rt_sigframe)))
+				{
+					THROW(EXCEPTION_FATAL, "frame_sz %d, strange...", frame_sz);
+				}
+				/* skip frame */
+				skip(frame_sz);
+				/* skip 2 regs */
+				skip(sizeof(struct syscall_regs));
+				skip(sizeof(struct syscall_regs));
+				/* skip rt_sigaction */
+				skip(sizeof(struct k_sigaction));
+			} else {
+				syscall_table[nr].output_handler(nr);
+			}
 		} CATCH (exp) {
 			case EXCEPTION_NO_ERROR:
 				break;

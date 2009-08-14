@@ -6,33 +6,11 @@
 #ifndef SYSCALL_PRINTER
 
 int SCOPE
-pre_ioctl(const struct syscall_regs * regs)
-{
-	write_regs(regs);
-	INJ_TRACE("ioctl: fd=%d, cmd=0x%x, arg=0x%x\n",
-			regs->ebx, regs->ecx, regs->edx);
-	int fd = regs->ebx;
-	int cmd = regs->ecx;
-	int arg = regs->edx;
-
-	switch (_IOC_TYPE(cmd)) {
-		case 'T':
-			return pre_tty_ioctl(fd, cmd, arg);
-		case 0x12:
-			return pre_blk_ioctl(fd, cmd, arg);
-		default:
-			INJ_ERROR("no such ioctl command: 0x%x\n", cmd);
-			__exit(-1);
-	}
-
-	return 0;
-}
-
-int SCOPE
 post_ioctl(const struct syscall_regs * regs)
 {
 	INJ_TRACE("ioctl: fd=%d, cmd=0x%x, arg=0x%x\n",
 			regs->ebx, regs->ecx, regs->edx);
+	write_regs(regs);
 	int fd = regs->ebx;
 	int cmd = regs->ecx;
 	int arg = regs->edx;
@@ -58,7 +36,7 @@ replay_ioctl(const struct syscall_regs * regs)
 	struct syscall_regs saved_regs;
 	read_obj(saved_regs);
 	/* check */
-	ASSERT(saved_regs.eax == regs->eax, regs, "");
+	ASSERT(saved_regs.eax == regs->orig_eax, regs, "");
 	ASSERT(saved_regs.ebx == regs->ebx, regs, "");
 	ASSERT(saved_regs.ecx == regs->ecx, regs, "");
 	ASSERT(saved_regs.edx == regs->edx, regs, "");

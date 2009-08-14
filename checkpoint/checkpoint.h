@@ -146,6 +146,11 @@ extern uint32_t SCOPE logger_sz;
 	__write_logger(&d, sizeof(d));\
 } while(0)
 
+# define write_int16(x) do { \
+	int16_t d = (x);	\
+	__write_logger(&d, sizeof(d));\
+} while(0)
+
 # define write_obj(x) do { \
 	__write_logger(&(x), sizeof(x));\
 } while(0)

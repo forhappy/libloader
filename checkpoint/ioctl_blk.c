@@ -8,12 +8,6 @@
 #ifndef SYSCALL_PRINTER
 
 SCOPE int
-pre_blk_ioctl(int fd, uint32_t cmd, uint32_t arg)
-{
-	return 0;
-}
-
-SCOPE int
 post_blk_ioctl(int fd, uint32_t cmd, uint32_t arg,
 		const struct syscall_regs * regs)
 {

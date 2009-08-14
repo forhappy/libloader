@@ -10,6 +10,9 @@ int SCOPE
 pre_exit_group(const struct syscall_regs * regs)
 {
 	/* save ebx */
+	/* write the 'no signal' flag */
+	int16_t f = -1;
+	write_obj(f);
 	write_obj(regs->ebx);
 	return 0;
 }
