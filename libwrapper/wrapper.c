@@ -48,8 +48,8 @@ SCOPE char ckpt_filename[128] = "";
  * processing check the counter, if it is 0, then we know the signal doesn't
  * break a syscall. if it is not 0, then signal disturbs a syscall. we use
  * asm here for atomic. */
-SCOPE volatile int __syscall_reenter_counter = 0;
-SCOPE volatile int __syscall_reenter_base = 0;
+SCOPE volatile int16_t __syscall_reenter_counter = 0;
+SCOPE volatile int16_t __syscall_reenter_base = 0;
 
 #ifndef RELAX_SIGNAL
 static k_sigset_t blockall_mask = {

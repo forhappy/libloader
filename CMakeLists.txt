@@ -61,6 +61,9 @@ ADD_EXECUTABLE(testerrno
 ADD_EXECUTABLE(testmath
 	testmath.c)
 
+ADD_EXECUTABLE(testsignal
+	testsignal.c)
+
 SET_TARGET_PROPERTIES(target testerrno testmath
 	PROPERTIES COMPILE_FLAGS "-g")
 

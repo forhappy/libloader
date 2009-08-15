@@ -94,7 +94,7 @@ printer_main(void)
 			int16_t sigflag;
 			read_logger(&sigflag, sizeof(sigflag));
 			if (sigflag != -1) {
-				printf("process distrubed by signal %d\n", -sigflag-1);
+				printf("process %d distrubed by signal %d\n", nr, -sigflag-1);
 				skip_signal();
 			} else {
 				syscall_table[nr].output_handler(nr);

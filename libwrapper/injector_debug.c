@@ -72,20 +72,20 @@ get_level_name(enum debug_level level)
 static void
 turn_red(void)
 {
-	fdprintf(STDOUT_FILENO_INJ, "%c[1;31m", 0x1b);
+	fdprintf(STDERR_FILENO_INJ, "%c[1;31m", 0x1b);
 }
 
 static void
 turn_blue(void)
 {
-	fdprintf(STDOUT_FILENO_INJ, "%c[1;34m", 0x1b);
+	fdprintf(STDERR_FILENO_INJ, "%c[1;34m", 0x1b);
 }
 
 
 static void
 turn_normal(void)
 {
-	fdprintf(STDOUT_FILENO_INJ, "%c[m", 0x1b);
+	fdprintf(STDERR_FILENO_INJ, "%c[m", 0x1b);
 }
 
 #ifdef debug_out
@@ -105,11 +105,11 @@ vdebug_out(int prefix, enum debug_level level, enum debug_component comp,
 				turn_red();
 		}
 		if (prefix) {
-			fdprintf(STDOUT_FILENO_INJ, "[%s %s@%s:%d]\t", get_comp_name(comp),
+			fdprintf(STDERR_FILENO_INJ, "[%s %s@%s:%d]\t", get_comp_name(comp),
 					get_level_name(level), func_name, line_no);
 		}
 
-		vfdprintf(STDOUT_FILENO_INJ, fmt, ap);
+		vfdprintf(STDERR_FILENO_INJ, fmt, ap);
 
 		if (level >= WARNING)
 			turn_normal();
@@ -137,8 +137,8 @@ vmessage_out(int prefix, enum debug_level l, enum debug_component c, char * fmt,
 		turn_red();
 
 	if (prefix)
-		fdprintf(STDOUT_FILENO_INJ, "%s: ", get_level_name(l));
-	vfdprintf(STDOUT_FILENO_INJ, fmt, ap);
+		fdprintf(STDERR_FILENO_INJ, "%s: ", get_level_name(l));
+	vfdprintf(STDERR_FILENO_INJ, fmt, ap);
 
 	if (l >= WARNING)
 		turn_normal();

@@ -170,7 +170,8 @@ write_frame_to_log(void * f, struct k_sigaction * act,
 
 struct per_frame_info{
 	uintptr_t psyscall_regs;
-	uint16_t syscall_nr;
+	int8_t old_reenter_counter;
+	int8_t old_reenter_base;
 	uint8_t is_break;
 } ATTR(packed);
 
@@ -208,6 +209,10 @@ do_wrapped_sighandler(volatile struct syscall_regs handler_regs,
 	sigaddset(&mask, signum);
 	sigorsets(pm, pm, &mask);
 
+	/* we save the reenter_counter and reenter_base info per_frame_info */
+	per_frame_info->old_reenter_counter = __syscall_reenter_counter;
+	per_frame_info->old_reenter_base = __syscall_reenter_base;
+
 	/* check whether inside a syscall */
 	if (IS_BREAK_SYSCALL()) {
 		INJ_WARNING("syscall %d is broken by this signal: %d > %d\n",
@@ -218,7 +223,6 @@ do_wrapped_sighandler(volatile struct syscall_regs handler_regs,
 		/* the pointer of signal_regs is valid only in this func.
 		 * but the content of signal_regs is on stack, valid
 		 * in sigreturn. */
-		per_frame_info->syscall_nr = signal_regs->orig_eax;
 		per_frame_info->psyscall_regs = (uint32_t)signal_regs;
 
 		/* all important info, such as retcode, has been written. */

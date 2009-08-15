@@ -165,14 +165,22 @@ extern SCOPE char ckpt_filename[];
  * we add it by 1 at the beginning of signal handler. by comparing it
  * and __syscall_reenter_counter, signal handler knows whether it
  * breaks syscall. */
-extern SCOPE volatile int __syscall_reenter_base;
-extern SCOPE volatile int __syscall_reenter_counter;
+extern SCOPE volatile int16_t __syscall_reenter_base;
+extern SCOPE volatile int16_t __syscall_reenter_counter;
+
 /* ENTER_SYSCALL and EXIT_SYSCALL are 2 gates. if checkpoint happened between
  * those 2 gates, we know it breaks a syscall, the ckpt need to be adjusted. */
-#define ENTER_SYSCALL()	asm volatile ("incl %[counter]\n" : : [counter] "m" (__syscall_reenter_counter))
-#define EXIT_SYSCALL()	asm volatile ("decl %[counter]\n" : : [counter] "m" (__syscall_reenter_counter))
-#define IS_BREAK_SYSCALL()	(__syscall_reenter_counter > __syscall_reenter_base)
-#define IS_REENTER_SYSCALL()	(__syscall_reenter_counter > 1)
+#define ENTER_SYSCALL() \
+	asm volatile ("incw %[counter]\n" \
+			: : [counter] "m" \
+			(__syscall_reenter_counter))
+#define EXIT_SYSCALL()	\
+	asm volatile ("decw %[counter]\n" \
+			: : [counter] "m" \
+			(__syscall_reenter_counter))
+
+#define IS_BREAK_SYSCALL() (__syscall_reenter_counter > __syscall_reenter_base)
+#define IS_REENTER_SYSCALL() (__syscall_reenter_counter > 1)
 
 __END_DECLS
 
