@@ -92,6 +92,7 @@ SCOPE struct syscall_tabent syscall_table[] = {
 	def_simple_syscall_entry(chdir),
 	def_simple_syscall_entry(setsid),
 	def_syscall_entry(setitimer, NULL),
+	def_simple_syscall_entry(getpgrp),
 #ifndef SYSCALL_PRINTER
 	[NR_SYSCALLS]	= {NULL, NULL, NULL},
 #else

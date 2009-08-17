@@ -112,37 +112,53 @@ replay_socketcall(const struct syscall_regs * regs)
 
 	switch (call) {
 		case SYS_SOCKET:
-			return replay_socket(a0, a1, a2, retval, regs);
+			replay_socket(a0, a1, a2, retval, regs);
+			break;
 		case SYS_BIND:
-			return replay_bind(a0, a1, a2, retval, regs);
+			replay_bind(a0, a1, a2, retval, regs);
+			break;
 		case SYS_GETSOCKNAME:
-			return replay_getsockname(a0, a1, a2, retval, regs);
+			replay_getsockname(a0, a1, a2, retval, regs);
+			break;
 		case SYS_SENDTO:
-			return replay_sendto(a0, a1, a2, a[3], a[4], a[5], retval, regs);
+			replay_sendto(a0, a1, a2, a[3], a[4], a[5], retval, regs);
+			break;
 		case SYS_RECVFROM:
-			return replay_recvfrom(a0, a1, a2, a[3], a[4], a[5], retval, regs);
+			replay_recvfrom(a0, a1, a2, a[3], a[4], a[5], retval, regs);
+			break;
 		case SYS_RECVMSG:
-			return replay_recvmsg(a0, a1, a2, retval, regs);
+			replay_recvmsg(a0, a1, a2, retval, regs);
+			break;
 		case SYS_CONNECT:
-			return replay_connect(a0, a1, a2, retval, regs);
+			replay_connect(a0, a1, a2, retval, regs);
+			break;
 		case SYS_RECV:
-			return replay_recv(a0, a1, a2, a[3], retval, regs);
+			replay_recv(a0, a1, a2, a[3], retval, regs);
+			break;
 		case SYS_GETPEERNAME:
-			return replay_getpeername(a0, a1, a2, retval, regs);
+			replay_getpeername(a0, a1, a2, retval, regs);
+			break;
 		case SYS_SETSOCKOPT:
-			return replay_setsockopt(a0, a1, a2, a[3], a[4], retval, regs);
+			replay_setsockopt(a0, a1, a2, a[3], a[4], retval, regs);
+			break;
 		case SYS_LISTEN:
-			return replay_listen(a0, a1, retval, regs);
+			replay_listen(a0, a1, retval, regs);
+			break;
 		case SYS_ACCEPT:
-			return replay_accept(a0, a1, a2, retval, regs);
+			replay_accept(a0, a1, a2, retval, regs);
+			break;
 		case SYS_SHUTDOWN:
-			return replay_shutdown(a0, a1, retval, regs);
+			replay_shutdown(a0, a1, retval, regs);
+			break;
 		case SYS_SEND:
-			return replay_send(a0, a1, a2, a[3], retval, regs);
+			replay_send(a0, a1, a2, a[3], retval, regs);
+			break;
 		case SYS_SOCKETPAIR:
-			return replay_socketpair(a0, a1, a2, a[3], retval, regs);
+			replay_socketpair(a0, a1, a2, a[3], retval, regs);
+			break;
 		case SYS_SENDMSG:
-			return replay_sendmsg(a0, a1, a2, retval, regs);
+			replay_sendmsg(a0, a1, a2, retval, regs);
+			break;
 		default:
 			INJ_FATAL("Unknown socket call: %d\n", call);
 			INJ_FATAL("eip=0x%x\n", regs->eip);
@@ -155,9 +171,7 @@ replay_socketcall(const struct syscall_regs * regs)
 			asm volatile ("int3\n");
 			__exit(-1);
 	}
-
-	__exit(-1);
-	return eax;
+	return retval;
 }
 
 

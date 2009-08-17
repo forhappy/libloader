@@ -35,7 +35,7 @@ replay_getpeername(int fd, uint32_t usockaddr, uint32_t usockaddr_len, int retva
 			read_mem(usockaddr, l);
 		}
 	}
-	return 0;
+	return retval;
 }
 
 

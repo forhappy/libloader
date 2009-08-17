@@ -116,10 +116,12 @@ replay_rt_sigaction(const struct syscall_regs * regs)
 		ASSERT(sigsetsize == sizeof(k_sigset_t), regs, "!@@#1\n");
 
 		uintptr_t oact = read_uint32();
-		ASSERT(oact == regs->edx, regs, "");
+		ASSERT(oact == regs->edx, regs, "oact inconsistent: 0x%x != 0x%x\n",
+				regs->edx, oact);
 		
 		uintptr_t act = read_uint32();
-		ASSERT(act == regs->ecx, regs, "");
+		ASSERT(act == regs->ecx, regs, "act inconsistent: 0x%x != 0x%x\n",
+				regs->ecx, act);
 
 		if (oact != 0)
 			read_mem(oact, sizeof(struct k_sigaction));
@@ -151,8 +153,11 @@ output_rt_sigaction(int nr)
 			if (oact != 0)
 				skip(sizeof(struct k_sigaction));
 		}
+		printf("rt_sigaction(act=0x%x, oact=0x%x):\t%d\n",
+				act, oact, ret);
+	} else {
+		printf("rt_sigaction:\t%d\n", ret);
 	}
-	printf("rt_sigaction:\t%d\n", ret);
 }
 #endif
 
