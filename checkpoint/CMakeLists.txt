@@ -64,6 +64,7 @@ SET(HANDLERS
 	ioctl_blk.c
 	sendmsg.c
 	setitimer.c
+	epoll_wait.c
 	)
 
 ADD_LIBRARY(checkpoint
