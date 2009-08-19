@@ -174,7 +174,7 @@ after_syscall(const struct syscall_regs * regs)
 #ifdef IN_INJECTOR
 
 extern void SCOPE ATTR(noreturn)
-replay_sigaction(int signum, const struct syscall_regs * regs);
+replay_sighandler(int signum, const struct syscall_regs * regs);
 
 SCOPE uint32_t
 replay_syscall(const struct syscall_regs * regs)
@@ -228,7 +228,7 @@ replay_syscall(const struct syscall_regs * regs)
 		}
 
 		/* never return */
-		replay_sigaction(-f - 1, regs);
+		replay_sighandler(-f - 1, regs);
 #if 0
 		/* read the lase 2 bytes to get the signumber */
 		seek_logger(-2, SEEK_END);

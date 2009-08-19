@@ -25,6 +25,12 @@ post_tty_ioctl(int fd, uint32_t cmd, uint32_t arg,
 			return 0;
 		case FIONBIO:
 			return 0;
+		case TCGETA:
+			if (arg != 0)
+				write_mem(arg, sizeof(struct termio));
+			return 0;
+		case TCSETA:
+			return 0;
 		default:
 			INJ_WARNING("doesn't know such tty ioctl: 0x%x\n", cmd);
 			__exit(-1);
@@ -53,6 +59,12 @@ replay_tty_ioctl(int fd, uint32_t cmd, uint32_t arg,
 				read_mem(arg, sizeof(int));
 			return eax;
 		case FIONBIO:
+			return eax;
+		case TCGETA:
+			if (arg != 0)
+				read_mem(arg, sizeof(struct termio));
+			return eax;
+		case TCSETA:
 			return eax;
 		default:
 			INJ_WARNING("doesn't know such tty ioctl: 0x%x\n", cmd);
@@ -85,6 +97,12 @@ output_tty_ioctl(int fd, uint32_t cmd, uint32_t arg)
 				skip(sizeof(int));
 			break;
 		case FIONBIO:
+			break;
+		case TCGETA:
+			if (arg != 0)
+				skip(sizeof(struct termio));
+			break;
+		case TCSETA:
 			break;
 		default:
 			INJ_WARNING("Unknown tty ioctl cmd 0x%x\n", cmd);

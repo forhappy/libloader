@@ -217,7 +217,8 @@ extern SCOPE struct state_vector {
 	uint32_t clear_child_tid;
 	uint32_t robust_list;
 	struct user_desc thread_area[GDT_ENTRY_TLS_ENTRIES];
-	struct k_sigaction sigactions[K_NSIG];
+	/* signal 0 is no use */
+	struct k_sigaction sigactions[K_NSIG+1];
 	k_sigset_t sigmask;
 	/* add user regs into state_vector, this is for only
 	 * checkpoints use */

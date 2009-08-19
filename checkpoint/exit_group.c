@@ -5,7 +5,7 @@
 #endif
 
 extern void SCOPE ATTR(noreturn)
-replay_sigaction(int signum, const struct syscall_regs * regs);
+replay_sighandler(int signum, const struct syscall_regs * regs);
 #ifndef SYSCALL_PRINTER
 
 int SCOPE
@@ -39,7 +39,7 @@ replay_exit_group(const struct syscall_regs * regs)
 		INTERNAL_SYSCALL(exit_group, 1, regs->ebx);
 	} else {
 		INJ_FORCE("signal %d raise before exit_group\n", -f - 1);
-		replay_sigaction(-f - 1, regs);
+		replay_sighandler(-f - 1, regs);
 	}
 #endif
 	return 0;

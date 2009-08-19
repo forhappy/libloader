@@ -14,6 +14,7 @@
 #include <linux/user.h>
 #include <linux/ptrace.h>
 #include <stdarg.h>
+#include <signal.h>
 
 #include "debug.h"
 #include "exception.h"
@@ -229,6 +230,16 @@ ptrace_kill(void)
 	ptrace_cleanup(&pt_clup_s);
 }
 
+
+/* the loader proc run as a signal proxy,
+ * when it receive a signal, it pass it to it child */
+static void
+signal_proxy(int signum)
+{
+	if (child_pid != 0)
+		kill(child_pid, signum);
+}
+
 void
 ptrace_detach(bool_t wait)
 {
@@ -241,26 +252,38 @@ ptrace_detach(bool_t wait)
 	if (!wait)
 		return;
 
+	/* we install our signal proxy */
+	for (int i = 1; i <= SIGRTMAX; i++) {
+		signal(i, signal_proxy);
+	}
+
 	/* when we wait child, ignore the SIGINT signal */
 	signal(SIGINT, SIG_IGN);
-	child_pid = -1;
 
 	siginfo_t si;
-	err = waitid(P_PID, old_pid, &si, WEXITED);
-	if (err == -1) {
-		ERROR(PTRACE, "wait error: %s\n", strerror(errno));
-	} else {
-		TRACE(PTRACE, "target process finished\n");
-		VERBOSE(PTRACE, "target process finished with status: %o\n", si.si_status);
+	for (;;) {
+		errno = 0;
+		err = waitid(P_PID, old_pid, &si, WEXITED);
+		if (err == -1) {
+			if (errno != EINTR) {
+				THROW(EXCEPTION_FATAL, "wait error: %s", strerror(errno));
+			}
+			/* if not, a signal raise in waitid. our signal proxy should have been
+			 * resend the signal to child, we loop again. */
+		} else {
+			TRACE(PTRACE, "target process finished\n");
+			VERBOSE(PTRACE, "target process finished with status: %o\n", si.si_status);
 
-		int status = si.si_status;
-		if (WIFEXITED(status)) {
-			VERBOSE(PTRACE, "target exited normally, exit code: %d\n",
-					WEXITSTATUS(status));
-		}
-		if (WIFSIGNALED(status)) {
-			VERBOSE(PTRACE, "target signaled, term sig: %d\n",
-					WTERMSIG(status));
+			int status = si.si_status;
+			if (WIFEXITED(status)) {
+				VERBOSE(PTRACE, "target exited normally, exit code: %d\n",
+						WEXITSTATUS(status));
+			}
+			if (WIFSIGNALED(status)) {
+				VERBOSE(PTRACE, "target signaled, term sig: %d\n",
+						WTERMSIG(status));
+			}
+			break;
 		}
 	}
 	return;

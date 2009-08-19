@@ -307,10 +307,10 @@ do_wrapped_rt_sigreturn(struct rt_sigframe frame)
 
 /* regs is used only for ASSERT */
 void SCOPE ATTR(noreturn)
-replay_sigaction(int signum, const struct syscall_regs * regs)
+replay_sighandler(int signum, const struct syscall_regs * regs)
 {
 	INJ_FORCE("target receive signal %d, use sighandler\n", signum);
-	/* replay_sigaction load sigframe, handler regs and syscall regs,
+	/* replay_sighandler load sigframe, handler regs and syscall regs,
 	 * build stack and adjust sigframe, then restore handler regs and
 	 * ret to signal handler. never return. */
 
@@ -352,7 +352,7 @@ replay_sigaction(int signum, const struct syscall_regs * regs)
 		INJ_WARNING("current regs is different from logged\n");
 		/* at least the stack have to be same */
 		ASSERT(_signal_regs.esp == signal_regs->esp, regs,
-				"stack different, cannot continue\n");
+				"stack is different, cannot continue\n");
 	}
 
 	/* adjust frame according to signal_regs */

@@ -41,13 +41,24 @@ pre_rt_sigaction(const struct syscall_regs * regs)
 	 * reset the handler entry, make the target call my wrapper. */
 	uintptr_t act = regs->ecx;
 	struct k_sigaction d;
+
+	/* check sig */
+	int signo = regs->ebx;
+	if ((signo == SIGKILL) || (signo == SIGSTOP)) {
+		/* sigaction should fail, do nothing */
+		return 0;
+	}
+
+	if ((signo < 1) || (signo > K_NSIG))
+		return 0;
+
 	/* check act */
 	if (act == 0)
 		return 0;
 	__dup_mem(&d, act, sizeof(d));
 
 	/* save new handler */
-	state_vector.sigactions[regs->ebx] = d;
+	state_vector.sigactions[signo] = d;
 
 	if ((d.sa_handler == SIG_IGN) || (d.sa_handler == SIG_DFL))
 		return 0;
@@ -70,7 +81,13 @@ int SCOPE
 post_rt_sigaction(const struct syscall_regs * regs)
 {
 	write_eax(regs);
-	/* rt_sigaction cannot fail... */
+	int signo = regs->ebx;
+	if ((signo == SIGKILL) || (signo == SIGSTOP))
+		return 0;
+	if ((signo < 1) || (signo > K_NSIG))
+		return 0;
+
+	/* rt_sigaction should not fail... */
 	ASSERT(regs->eax >= 0, regs, "rt_sigaction failed, we cannot handle...\n");
 
 	uintptr_t act = regs->ecx;
