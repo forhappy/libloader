@@ -120,7 +120,9 @@ load_ckpt_file(char * fn)
 
 		s->regions[s->nr_regions - 1] = mr;
 		p += sz_m;
-		p += mr->end - mr->start;
+		/* no vdso in ckpt */
+		if (strncmp("[vdso]", mr->fn, 6) != 0)
+			p += mr->end - mr->start;
 		sz_m = *(uint32_t *)p;
 		p += sizeof(sz_m);
 	}

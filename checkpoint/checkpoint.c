@@ -422,12 +422,20 @@ do_make_checkpoint(int ckpt_fd, int maps_fd, int cmdline_fd, int environ_fd,
 
 		f_pos += m.fn_len;
 
+		/* don't save vdso. in some old system, vdso is mapped at the
+		 * top of mem space */
+		if (strncmp("[vdso]", p + l, 6) == 0) {
+			p = readline(maps_fd);
+			continue;
+		}
+
 		/* Write memory */
 		/* if the region is not writable, use mprotect to reset the PROT */
 		if (m.prot & PROT_READ) {
 			err = __write(ckpt_fd, start, end-start);
 			if (err != end - start) {
-				INJ_WARNING("write memregion failed: err=%d\n", err);
+				INJ_WARNING("write memregion 0x%x-0x%x failed: err=%d\n",
+						start, end, err);
 			}
 		} else {
 			uint32_t old_prot = m.prot;

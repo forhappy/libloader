@@ -152,11 +152,11 @@ inject_memory(void)
 		 * memory into it */
 		/* don't update stack here. although in most case the stack
 		 * is the last region we meet, there are some special situations.
-		 * for example in compat memlayout. the stack may be polluted by pervious
-		 * ptrace_push operation. */
+		 * for example in compat memlayout. the stack may be polluted by
+		 * pervious ptrace_push operation. */
 		if (strcmp(r->fn, "[stack]") == 0)
 			stack_r = r;
-		else
+		else if (strcmp(r->fn, "[vdso]") != 0)	/* chkp don't contain vdso */
 			ptrace_updmem(r->f_pos + cf->ckpt_img,
 					r->start,
 					r->end - r->start);
