@@ -52,31 +52,11 @@ unhook_sighandlers(void)
 static void
 do_make_signal_ckpt(int signum, struct syscall_regs * regs)
 {
-	int err;
-	/* generate timestamp for new ckpt */
-	struct timeval tv;
-	err = INTERNAL_SYSCALL(gettimeofday, 2, &tv, NULL);
-	ASSERT(err == 0, NULL, "gettimeofday failed: %d\n", err);
-
-	snprintf(ckpt_filename, 128, LOGGER_DIRECTORY"/%d-%u-%u.ckpt",
-			self_pid, tv.tv_sec, tv.tv_usec);
-	
 	/* before we close current logger, we write a int16_t -signum into logger.
 	 * this num should become last 2 bytes in logger.
 	 * see comment in wrapper.c - wrapped_syscall */
-	{
-		int16_t f = - signum - 1;
-		INTERNAL_SYSCALL(write, 3, logger_fd, &f, sizeof(f));
-	}
-
-	/* close current logger */
-	err = INTERNAL_SYSCALL(close, 1, logger_fd);
-	ASSERT(err == 0, NULL, "close logger file %s failed\n", logger_filename);
-
-	/* write logger_filename before we make ckpt, so when replay
-	 * target will get correct logger filename */
-	snprintf(logger_filename, 128, LOGGER_DIRECTORY"/%d-%u-%u.log",
-			self_pid, tv.tv_sec, tv.tv_usec);
+	int16_t f = - signum - 1;
+	INTERNAL_SYSCALL(write, 3, logger_fd, &f, sizeof(f));
 
 	struct syscall_regs r;
 	memset(&r, '\0', sizeof(r));
@@ -84,28 +64,11 @@ do_make_signal_ckpt(int signum, struct syscall_regs * regs)
 	/* we can use ctx's regs directly. */
 	r = *regs;
 
-	make_checkpoint(ckpt_filename, &r,
-			NULL, NULL);
+	/* we set keep_old to TRUE */
+	make_checkpoint(&r, NULL, NULL, TRUE);
 
-	/* create new logger file */
-	int fd;
-	fd = INTERNAL_SYSCALL(open, 3, logger_filename, O_WRONLY|O_APPEND|O_CREAT, 0664);
-	ASSERT(fd > 0, &r, "open new logger file %s failed: %d\n", logger_filename, fd);
-
-	/* the old logger should have been closed */
-	err = INTERNAL_SYSCALL(dup2, 2, fd, LOGGER_FD);
-	ASSERT(err == LOGGER_FD, &r, "dup2 failed: %d\n", err);
-	INJ_TRACE("dup fd to %d\n", err);
-
-	err = INTERNAL_SYSCALL(close, 1, fd);
-	ASSERT(err == 0, &r, "close failed: %d\n", err);
-	INJ_TRACE("close %d\n", fd);
-
-	logger_fd = LOGGER_FD;
-
+	/* logger file create in make_checkpoint */
 	/* logger_sz has been reset in do_make_checkpoint */
-	logger_sz = 0;
-
 	INJ_WARNING("process receive signal %d, a new ckpt %s is made\n",
 			signum, ckpt_filename);
 }

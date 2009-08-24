@@ -79,12 +79,12 @@ do_child_fork(unsigned long clone_flags,
 		return;
 	}
 
-
 	self_pid = old_self_pid = INTERNAL_SYSCALL(getpid, 0);
 
-	/* in child process, reset ckpt name and logger name before make ckpt. */
-	snprintf(logger_filename, 128, LOGGER_DIRECTORY"/%d.log", self_pid);
-	snprintf(ckpt_filename, 128, LOGGER_DIRECTORY"/%d.ckpt", self_pid);
+	/* reset logger_filename and ckpt_filename to indicate that there are no
+	 * old ckpt and log */
+	logger_filename[0] = '\0';
+	ckpt_filename[0] = '\0';
 
 	struct syscall_regs r;
 	memcpy(&r, regs, sizeof(r));
@@ -93,27 +93,7 @@ do_child_fork(unsigned long clone_flags,
 	r.esp = stack_start;
 	/* don't touch eip */
 	save_i387(&fpustate_struct);
-	make_checkpoint(ckpt_filename, &r, &fpustate_struct, NULL);
-
-	/* open new logger */
-	int fd;
-	fd = INTERNAL_SYSCALL(open, 3, logger_filename, O_WRONLY|O_APPEND|O_CREAT, 0664);
-	ASSERT(fd > 0, regs, "open new logger file %s failed: %d\n", logger_filename, fd);
-
-	/* dup logger_fd */
-	err = INTERNAL_SYSCALL(dup2, 2, fd, LOGGER_FD);
-	ASSERT(err == LOGGER_FD, regs, "dup2 failed: %d\n", err);
-	INJ_TRACE("dup fd to %d\n", err);
-
-	/* close it */
-	err = INTERNAL_SYSCALL(close, 1, fd);
-	ASSERT(err == 0, regs, "close failed: %d\n", err);
-	INJ_TRACE("close %d\n", fd);
-
-	logger_fd = LOGGER_FD;
-
-	/* logger_sz has been reset in do_make_checkpoint */
-	logger_sz = 0;
+	make_checkpoint(&r, &fpustate_struct, NULL, TRUE);
 }
 
 SCOPE void

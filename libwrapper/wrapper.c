@@ -189,7 +189,6 @@ wrapped_syscall(const struct syscall_regs r)
 		/* don't switch when signal processing */
 		if ((logger_sz > injector_opts.logger_threshold) &&
 				(!IS_REENTER_SYSCALL())) {
-			int err;
 
 			/* we need to remake ckpt */
 			INJ_TRACE("make ckpt: eip=0x%x\n", r.eip);
@@ -199,17 +198,10 @@ wrapped_syscall(const struct syscall_regs r)
 			((struct syscall_regs*)(&r))->esp += 4;
 			/* save fpustate */
 			save_i387(&fpustate_struct);
-			make_checkpoint(ckpt_filename, (struct syscall_regs *)(&r),
-					&fpustate_struct, NULL);
+			/* don't keep the old ckpt and log */
+			make_checkpoint((struct syscall_regs *)(&r),
+					&fpustate_struct, NULL, FALSE);
 			((struct syscall_regs*)(&r))->esp -= 4;
-
-			/* truncate logger file */
-			err = INTERNAL_SYSCALL(ftruncate, 2, logger_fd, 0);
-			ASSERT(err == 0, &r, "ftruncate failed: %d\n", err);
-
-			/* reset logger_sz */
-			/* logger_sz have been reset in do_make_checkpoint */
-			/* logger_sz = 0; */
 		}
 		EXIT_SYSCALL();
 		ENABLE_SIGNAL();
@@ -234,8 +226,6 @@ injector_entry(struct syscall_regs r,
 		uint32_t old_vdso_ventry,
 		uint32_t main_addr)
 {
-	int err;
-
 	/* build STDOUT_FILENO_INJ and STDERR_FILENO_INJ */
 	/* all INJ_XXXX messages are wrote to console through
 	 * STDOUT_FILENO_INJ and STDERR_FILENO_INJ, not the original
@@ -266,26 +256,16 @@ injector_entry(struct syscall_regs r,
 
 	tracing = 1;
 
+	/* initiate logger and ckpt filename. there's no ckpt now. */
+	/* the logger_filename should be reset while making ckpt. */
 	snprintf(logger_filename, 128, LOGGER_DIRECTORY"/%d.log", self_pid);
 	INJ_TRACE("logger fn: %s\n", logger_filename);
+	/* the ckpt_filename should be reset in make_checkpoint,
+	 * set it to "" to notice make_checkpoint that there's no old ckpt now */
+	ckpt_filename[0] = '\0';
 
-	snprintf(ckpt_filename, 128, LOGGER_DIRECTORY"/%d.ckpt", self_pid);
-	INJ_TRACE("ckpt fn: %s\n", ckpt_filename);
-
-	int fd = INTERNAL_SYSCALL(open, 3, logger_filename, O_WRONLY|O_APPEND, 0664);
-	INJ_TRACE("logger fd = %d\n", fd);
-	ASSERT(fd > 0, &r, "open logger failed: %d\n", fd);
-
-	/* dup the fd to LOGGER_FD */
-	err = INTERNAL_SYSCALL(dup2, 2, fd, LOGGER_FD);
-	ASSERT(err == LOGGER_FD, &r, "dup2 failed: %d\n", err);
-	INJ_TRACE("dup fd to %d\n", err);
-
-	err = INTERNAL_SYSCALL(close, 1, fd);
-	ASSERT(err == 0, &r, "close failed: %d\n", err);
-	INJ_TRACE("close %d\n", fd);
-
-	logger_fd = LOGGER_FD;
+	/* we haven't open it */
+	logger_fd = -1;
 
 	/* save the sigprocmask */
 	INTERNAL_SYSCALL(rt_sigprocmask, 4,
@@ -297,11 +277,10 @@ injector_entry(struct syscall_regs r,
 	 */
 	save_i387(&fpustate_struct);
 	r.esp += 8;
-	make_checkpoint(ckpt_filename, &r, &fpustate_struct, NULL);
+	/* don't keep the old ckpt */
+	make_checkpoint(&r, &fpustate_struct, NULL, FALSE);
 	r.esp -= 8;
 
-	err = INTERNAL_SYSCALL(ftruncate, 2, logger_fd, 0);
-	ASSERT(err == 0, &r, "ftruncate failed: %d\n", err);
 	INJ_TRACE("main ip=0x%x:0x%x\n", main_addr, r.eip);
 	INJ_TRACE("eax=%d\n", r.eax);
 }

@@ -331,9 +331,10 @@ replay_trap(const struct syscall_regs * regs)
 
 extern struct i387_fxsave_struct SCOPE fpustate_struct;
 extern SCOPE void
-make_checkpoint(const char * ckpt_fn, struct syscall_regs * r,
+make_checkpoint(struct syscall_regs * r,
 		struct i387_fxsave_struct * fpustate,
-		struct seg_regs * seg_regs);
+		struct seg_regs * seg_regs,
+		int keep_old);
 #endif
 
 extern SCOPE int
