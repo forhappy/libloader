@@ -556,11 +556,13 @@ make_checkpoint(struct syscall_regs * r,
 
 	/* don't use normal fork. */
 	/* we don't set SIGCHLD in the 1st param. */
+#if 0
 	int32_t new_pid = INTERNAL_SYSCALL(clone, 5,
 			0, 0, NULL, NULL, NULL);
 	ASSERT(new_pid >= 0, r, "clone faild: %d\n", new_pid);
 
 	if (new_pid == 0) {
+#endif
 		maps_fd = INTERNAL_SYSCALL(open, 2,
 				"/proc/self/maps", O_RDONLY);
 		ASSERT(maps_fd > 0, r, "open self maps failed: %d", maps_fd);
@@ -579,9 +581,10 @@ make_checkpoint(struct syscall_regs * r,
 		INTERNAL_SYSCALL(close, 1, maps_fd);
 		INTERNAL_SYSCALL(close, 1, cmdline_fd);
 		INTERNAL_SYSCALL(close, 1, environ_fd);
-
+#if 0
 		INTERNAL_SYSCALL(exit, 1, 0);
 	}
+#endif
 
 	INTERNAL_SYSCALL(close, 1, ckpt_fd);
 	/* We open new logger file and dup the fd */
