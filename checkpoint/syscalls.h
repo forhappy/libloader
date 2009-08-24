@@ -97,6 +97,7 @@ define_post_handler(dup2);
 define_post_handler(wait4);
 define_post_handler(setitimer);
 define_post_handler(epoll_wait);
+define_post_handler(times);
 
 __END_DECLS
 

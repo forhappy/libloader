@@ -65,6 +65,7 @@ SET(HANDLERS
 	sendmsg.c
 	setitimer.c
 	epoll_wait.c
+	times.c
 	)
 
 ADD_LIBRARY(checkpoint

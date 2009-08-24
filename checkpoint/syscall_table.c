@@ -97,6 +97,7 @@ SCOPE struct syscall_tabent syscall_table[] = {
 	def_simple_syscall_entry(epoll_ctl),
 	def_syscall_entry(epoll_wait, NULL),
 	def_simple_syscall_entry(madvise),
+	def_syscall_entry(times, NULL),
 #ifndef SYSCALL_PRINTER
 	[NR_SYSCALLS]	= {NULL, NULL, NULL},
 #else
