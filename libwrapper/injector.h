@@ -67,7 +67,7 @@ asm (".L__X'%ebx = 1\n\t"
 #define LOADARGS_1 \
     "bpushl .L__X'%k2, %k2\n\t"
 #define LOADARGS_5 \
-    "movl %%ebx, %2\n\t"						\
+    "movl %%ebx, %3\n\t"						\
     "movl %2, %%ebx\n\t"
 #define LOADARGS_2	LOADARGS_1
 #define LOADARGS_3 \
@@ -78,7 +78,7 @@ asm (".L__X'%ebx = 1\n\t"
 #define RESTOREARGS_1 \
     "bpopl .L__X'%k2, %k2\n\t"
 #define RESTOREARGS_5 \
-    "movl %2, %%ebx"
+    "movl %3, %%ebx"
 #define RESTOREARGS_2	RESTOREARGS_1
 #define RESTOREARGS_3 \
     "xchgl %%edi, %%ebx\n\t"

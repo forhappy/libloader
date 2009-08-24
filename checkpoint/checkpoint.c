@@ -553,26 +553,35 @@ make_checkpoint(struct syscall_regs * r,
 	ckpt_fd = INTERNAL_SYSCALL(open, 3,
 			new_ckpt_fn, O_WRONLY|O_CREAT|O_TRUNC, 0664);
 	ASSERT(ckpt_fd > 0, r, "open ckpt file failed: %d\n", ckpt_fd);
-/* ********************************************** */
-	maps_fd = INTERNAL_SYSCALL(open, 2,
-			"/proc/self/maps", O_RDONLY);
-	ASSERT(maps_fd > 0, r, "open self maps failed: %d", maps_fd);
 
-	cmdline_fd = INTERNAL_SYSCALL(open, 2,
-			"/proc/self/cmdline", O_RDONLY);
-	ASSERT(cmdline_fd > 0, r, "open self cmdline failed: %d", cmdline_fd);
+	/* don't use normal fork. */
+	/* we don't set SIGCHLD in the 1st param. */
+	int32_t new_pid = INTERNAL_SYSCALL(clone, 5,
+			0, 0, NULL, NULL, NULL);
+	ASSERT(new_pid >= 0, r, "clone faild: %d\n", new_pid);
 
-	environ_fd = INTERNAL_SYSCALL(open, 2,
-			"/proc/self/environ", O_RDONLY);
-	ASSERT(environ_fd > 0, r, "open self environ failed: %d", environ_fd);
+	if (new_pid == 0) {
+		maps_fd = INTERNAL_SYSCALL(open, 2,
+				"/proc/self/maps", O_RDONLY);
+		ASSERT(maps_fd > 0, r, "open self maps failed: %d", maps_fd);
 
-	do_make_checkpoint(ckpt_fd, maps_fd, cmdline_fd, environ_fd, r,
-			fpustate, seg_regs);
+		cmdline_fd = INTERNAL_SYSCALL(open, 2,
+				"/proc/self/cmdline", O_RDONLY);
+		ASSERT(cmdline_fd > 0, r, "open self cmdline failed: %d", cmdline_fd);
 
-	INTERNAL_SYSCALL(close, 1, maps_fd);
-	INTERNAL_SYSCALL(close, 1, cmdline_fd);
-	INTERNAL_SYSCALL(close, 1, environ_fd);
-/* ********************************************** */
+		environ_fd = INTERNAL_SYSCALL(open, 2,
+				"/proc/self/environ", O_RDONLY);
+		ASSERT(environ_fd > 0, r, "open self environ failed: %d", environ_fd);
+
+		do_make_checkpoint(ckpt_fd, maps_fd, cmdline_fd, environ_fd, r,
+				fpustate, seg_regs);
+
+		INTERNAL_SYSCALL(close, 1, maps_fd);
+		INTERNAL_SYSCALL(close, 1, cmdline_fd);
+		INTERNAL_SYSCALL(close, 1, environ_fd);
+
+		INTERNAL_SYSCALL(exit, 1, 0);
+	}
 
 	INTERNAL_SYSCALL(close, 1, ckpt_fd);
 	/* We open new logger file and dup the fd */
