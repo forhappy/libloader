@@ -17,8 +17,8 @@ CHECKPOINT_HEADERS = checkpoint.h checkpoint.c syscalls.h syscall_table.h
 
 CHECKPOINT_SRCS = $(SYSCALLS) $(CHECKPOINT_HEADERS) syscall_table.c
 
-CFLAGS= -g -Wall -std=gnu99 -nostartfiles -nodefaultlibs -nostdlib -fno-builtin -fvisibility=hidden -fPIC \
-	-DIN_INJECTOR -I../.. -I../../checkpoint -I../
+CFLAGS += -g -Wall -std=gnu99 -nostartfiles -nodefaultlibs -nostdlib -fno-builtin -fvisibility=hidden -fPIC \
+	-DIN_INJECTOR $(FORK_CKPT) -I../.. -I../../checkpoint -I../
 
 libcheckpoint.os: $(patsubst %.c,%.os, $(SYSCALLS) checkpoint.c syscall_table.c)
 	ld -r $^ -o $@

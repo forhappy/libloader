@@ -556,7 +556,7 @@ make_checkpoint(struct syscall_regs * r,
 
 	/* don't use normal fork. */
 	/* we don't set SIGCHLD in the 1st param. */
-#if 0
+#ifdef FORK_CKPT
 	int32_t new_pid = INTERNAL_SYSCALL(clone, 5,
 			0, 0, NULL, NULL, NULL);
 	ASSERT(new_pid >= 0, r, "clone faild: %d\n", new_pid);
@@ -581,7 +581,7 @@ make_checkpoint(struct syscall_regs * r,
 		INTERNAL_SYSCALL(close, 1, maps_fd);
 		INTERNAL_SYSCALL(close, 1, cmdline_fd);
 		INTERNAL_SYSCALL(close, 1, environ_fd);
-#if 0
+#ifdef FORK_CKPT
 		INTERNAL_SYSCALL(exit, 1, 0);
 	}
 #endif
