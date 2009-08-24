@@ -109,7 +109,19 @@ inject_memory(void)
 					(e.end != r->end) ||
 					(e.prot != r->prot) ||
 					(strcmp(e.fn, r->fn) != 0))
-				THROW(EXCEPTION_FATAL, "!@##@$!@");
+			{
+				/* if the lower end of stack inconsistent, don't care.
+				 * stack is auto expandable. */
+				/* NOT(e.fn same as r->fn and e.fn is "[stack]") */
+				if (!(!strcmp(e.fn, r->fn) && !strncmp(e.fn, "[stack]", 7))) {
+					INJ_FATAL("this region is not cleaned up:\n");
+					INJ_FATAL("\tstart : 0x%x 0x%x\n", e.start, r->start);
+					INJ_FATAL("\tend   : 0x%x 0x%x\n", e.end, r->end);
+					INJ_FATAL("\tprot  : 0x%x 0x%x\n", e.prot, r->prot);
+					INJ_FATAL("\tfn:   : \"%s\" \"%s\"\n", e.fn, r->fn);
+					THROW(EXCEPTION_FATAL, "Shouldn't happed...\n");
+				}
+			}
 		} else {
 			SYS_TRACE("\tdesired region is unmapped\n");
 			/* from the ckpt, find the file and do the map */

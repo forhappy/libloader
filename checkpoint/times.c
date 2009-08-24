@@ -15,7 +15,7 @@ post_times(const struct syscall_regs * regs)
 {
 	write_eax(regs);
 	if (regs->eax >= 0) {
-		write_mem(regs->ecx, sizeof(struct tms));
+		write_mem(regs->ebx, sizeof(struct tms));
 	}
 	return 0;
 }
@@ -25,7 +25,7 @@ replay_times(const struct syscall_regs * regs)
 {
 	int32_t eax = read_int32();	
 	if (eax >= 0) {
-		read_mem(regs->ecx, sizeof(struct tms));
+		read_mem(regs->ebx, sizeof(struct tms));
 	}
 	return eax;
 }
