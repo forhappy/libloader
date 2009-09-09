@@ -48,8 +48,8 @@ SCOPE char ckpt_filename[128] = "";
  * processing check the counter, if it is 0, then we know the signal doesn't
  * break a syscall. if it is not 0, then signal disturbs a syscall. we use
  * asm here for atomic. */
-SCOPE volatile int16_t __syscall_reenter_counter = 0;
-SCOPE volatile int16_t __syscall_reenter_base = 0;
+/* We merge the 2 counter into a structure */
+SCOPE volatile struct syscall_latch __syscall_latch = {.u.v = 0};
 
 #ifndef RELAX_SIGNAL
 static k_sigset_t blockall_mask = {
@@ -144,7 +144,7 @@ wrapped_syscall(const struct syscall_regs r)
 
 	/* don't allow signal inside before_syscall.
 	 * if signal happened inside it, the logger may be disturbed. */
-	/* disable dignal before enter_syscall make sure the sysall's header
+	/* disable signal before enter_syscall make sure the sysall's header
 	 * is written into log when potential signal raise */
 	DISABLE_SIGNAL();
 	ENTER_SYSCALL();

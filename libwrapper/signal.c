@@ -131,12 +131,11 @@ write_frame_to_log(void * f, struct k_sigaction * act,
 #undef write_frame
 }
 
-struct per_frame_info{
-	uintptr_t psyscall_regs;
-	int8_t old_reenter_counter;
-	int8_t old_reenter_base;
-	uint8_t is_break;
-} ATTR(packed);
+struct per_frame_info {
+	uintptr_t psyscall_regs;	/* 4 bytes */
+	struct syscall_latch old_latch;	/* 2 bytes */
+	uint8_t is_break;		/* 1 bytes */
+} ATTR(packed);				/* 7 bytes, less than 8 bytes */
 
 /* this function only called in running phase, not in replay phase. */
 void SCOPE
@@ -173,8 +172,7 @@ do_wrapped_sighandler(volatile struct syscall_regs handler_regs,
 	sigorsets(pm, pm, &mask);
 
 	/* we save the reenter_counter and reenter_base info per_frame_info */
-	per_frame_info->old_reenter_counter = __syscall_reenter_counter;
-	per_frame_info->old_reenter_base = __syscall_reenter_base;
+	per_frame_info->old_latch.u.v = __syscall_latch.u.v;
 
 	/* check whether inside a syscall */
 	if (IS_BREAK_SYSCALL()) {
@@ -241,7 +239,8 @@ do_wrapped_sigreturn(struct sigframe frame)
 	 * restore the __syscall_reenter_counter and __syscall_reenter_base. sometime a syscall
 	 * can be break more than once. when it break a 2nd time, those 2 flags has been override. */
 	if (per_frame_info->is_break) {
-		__syscall_reenter_base -= 1;
+		/* restore system call latch */
+		__syscall_latch.u.v = per_frame_info->old_latch.u.v;
 		/* also, signal_regs should be reset */
 		signal_regs = regs;
 	}
@@ -263,7 +262,8 @@ do_wrapped_rt_sigreturn(struct rt_sigframe frame)
 			before_syscall(regs);
 	}
 	if (per_frame_info->is_break) {
-		__syscall_reenter_base -= 1;
+		/* same, why not use old_reenter_base? */
+		__syscall_latch.u.v = per_frame_info->old_latch.u.v;
 		signal_regs = regs;
 	}
 }
