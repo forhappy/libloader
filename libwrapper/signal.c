@@ -189,6 +189,8 @@ do_wrapped_sighandler(volatile struct syscall_regs handler_regs,
 		/* all important info, such as retcode, has been written. */
 		write_frame_to_log((void*)&pretcode, pact,
 					(struct syscall_regs*)&handler_regs);
+		/* need comment */
+		__syscall_reenter_base = __syscall_reenter_counter;
 	} else {
 		INJ_WARNING("no syscall is broken\n");
 		/* make a ckpt as usual */
