@@ -1,13 +1,13 @@
 #!/bin/sh
-if [ ! -d /tmp/currf2 ]; then
-	mkdir /tmp/currf2
+if [ ! -d /tmp/snitchaser ]; then
+	mkdir /tmp/snitchaser
 fi
 
-rm -f /tmp/currf2/*
+rm -f /tmp/snitchaser/*
 rm -f ./index.html*
 
-./currf2 ./target 
+./snitchaser ./target 
 
-./gdbloader /tmp/currf2/*.ckpt ./target
+./gdbloader /tmp/snitchaser/*.ckpt ./target
 
 

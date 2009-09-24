@@ -11,6 +11,6 @@
 #cmakedefine HAVE_CLOCK_GETTIME	1
 #define LOGGER_DIRECTORY	"@LOGGER_DIRECTORY@"
 #ifdef NDEBUG
-# define CURRF2_DEBUG_OFF
+# define SNICHASER_DEBUG_OFF
 #endif
 

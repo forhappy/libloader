@@ -1,5 +1,5 @@
 /* 
- * currf2.c
+ * snitchaser.c
  * by WN @ Jun. 19, 2009
  */
 
@@ -15,7 +15,7 @@
 #include "procutils.h"
 #include "utils.h"
 #include "elfutils.h"
-#include "currf2_args.h"
+#include "snitchaser_args.h"
 #include "checkpoint/checkpoint.h"
 
 
@@ -315,7 +315,7 @@ inject_injopts(void)
 }
 
 static void
-currf2_main(int argc, char * argv[])
+snitchaser_main(int argc, char * argv[])
 {
 	int err;
 	/* check files */
@@ -433,7 +433,7 @@ currf2_main(int argc, char * argv[])
 
 	/* goto the injector '__entry' */
 
-	/* order is important, this is ABI between currf2 and injector */
+	/* order is important, this is ABI between snitchaser and injector */
 	/* put the ret val of __entry. it is also the 2nd arg */
 	ptrace_push(&main_entry, sizeof(uint32_t), FALSE);
 
@@ -460,7 +460,7 @@ main(int argc, char * argv[])
 	volatile struct exception exp;
 	TRY_CATCH(exp, MASK_ALL) {
 		make_cleanup(&main_clup_s);
-		currf2_main(argc, argv);
+		snitchaser_main(argc, argv);
 	} CATCH (exp) {
 		case EXCEPTION_NO_ERROR:
 			SYS_VERBOSE("successfully finish\n");

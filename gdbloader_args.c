@@ -3,13 +3,13 @@
 #include <error.h>
 #include <argp.h>
 #include <stdint.h>
-#include "currf2_args.h"
+#include "snitchaser_args.h"
 
 
 const char *argp_program_version = "gdbloader-0.0";
 const char *argp_program_bug_address = "<wangnan06@ict.ac.cn>";
 static char doc[] =
-	"gdbloader: load checkpoint made by currf2, then spin, make gdb can attach to it";
+	"gdbloader: load checkpoint made by snitchaser, then spin, make gdb can attach to it";
 static char args_doc[] =
 	"CKPT-FILE TARGET-EXECUTABLE";
 

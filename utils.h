@@ -6,8 +6,8 @@
 #include "debug.h"
 #include "defs.h"
 
-#ifndef CURRF2_UTILS_H
-#define CURRF2_UTILS_H
+#ifndef SNITCHASER_UTILS_H
+#define SNITCHASER_UTILS_H
 
 __BEGIN_DECLS
 

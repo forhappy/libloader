@@ -3,13 +3,13 @@
 #include <error.h>
 #include <argp.h>
 #include <stdint.h>
-#include "currf2_args.h"
+#include "snitchaser_args.h"
 
 
-const char *argp_program_version = "currf2-0.0";
+const char *argp_program_version = "snitchaser-0.0";
 const char *argp_program_bug_address = "<wangnan06@ict.ac.cn>";
 static char doc[] =
-	"currf2: continuous log/replay";
+	"snitchaser: continuous log/replay";
 static char args_doc[] =
 	"TARGET-EXECUTABLE [TARGET OPTIONS]";
 

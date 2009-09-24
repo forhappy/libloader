@@ -1,5 +1,5 @@
 /* 
- * currf2_args.h
+ * snitchaser_args.h
  */
 
 struct opts {

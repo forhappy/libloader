@@ -8,8 +8,8 @@
  * and to suitable recovery when needed.
  */
 
-#ifndef CURRF2_EXCEPTION_H
-#define CURRF2_EXCEPTION_H
+#ifndef SNITCHASER_EXCEPTION_H
+#define SNITCHASER_EXCEPTION_H
 
 #include <config.h>
 

@@ -1,6 +1,6 @@
 /* Wang Nan @ Jan 24, 2009 */
-#ifndef CURRF2_DEBUG_H
-#define CURRF2_DEBUG_H
+#ifndef SNICHASER_DEBUG_H
+#define SNICHASER_DEBUG_H
 
 #include <sys/cdefs.h>
 
@@ -37,7 +37,7 @@ enum debug_component {
 	NR_COMPONENTS
 };
 
-#ifdef CURRF2_DEBUG_C
+#ifdef SNICHASER_DEBUG_C
 
 static const char * debug_comp_name[NR_COMPONENTS] = {
 	[INJECTOR] = "INJ",
@@ -48,7 +48,7 @@ static enum debug_level debug_levels[NR_COMPONENTS] = {
 };
 #endif
 
-#ifndef CURRF2_DEBUG_OFF
+#ifndef SNICHASER_DEBUG_OFF
 extern SCOPE void debug_out(int prefix, enum debug_level level, enum debug_component comp,
 	       const char * func_name, int line_no,
 	       const char * fmt, ...);
@@ -70,7 +70,7 @@ extern SCOPE enum debug_level get_comp_level(enum debug_component comp);
 /* Below definition won't distrub the debug level, because 
  * they are all func-like macro */
 #define TRACE(comp, str...) DEBUG_MSG(TRACE, comp, str)
-#ifndef CURRF2_DEBUG_OFF
+#ifndef SNICHASER_DEBUG_OFF
 # define VERBOSE(comp, str...) DEBUG_MSG(VERBOSE, comp, str)
 # define WARNING(comp, str...) DEBUG_MSG(WARNING, comp, str)
 # define WARNING_CONT(comp, str...) DEBUG_MSG_CONT(WARNING, comp, str)

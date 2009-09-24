@@ -1,6 +1,6 @@
 /* Wang Nan @ Jan 24, 2009 */
-#ifndef CURRF2_DEBUG_H
-#define CURRF2_DEBUG_H
+#ifndef SNICHASER_DEBUG_H
+#define SNICHASER_DEBUG_H
 
 #include <sys/cdefs.h>
 #include <memory.h>
@@ -31,7 +31,7 @@ enum debug_component {
 	NR_COMPONENTS
 };
 
-#ifdef CURRF2_DEBUG_C
+#ifdef SNICHASER_DEBUG_C
 
 static const char * debug_comp_name[NR_COMPONENTS] = {
 	[SYSTEM] = "SYS ",
@@ -51,7 +51,7 @@ static enum debug_level debug_levels[NR_COMPONENTS] = {
 #endif
 
 extern void debug_init(const char * filename);
-#ifndef CURRF2_DEBUG_OFF
+#ifndef SNICHASER_DEBUG_OFF
 extern void debug_out(int prefix, enum debug_level level, enum debug_component comp,
 	       const char * func_name, int line_no,
 	       const char * fmt, ...);
@@ -74,7 +74,7 @@ extern enum debug_level get_comp_level(enum debug_component comp);
 /* Below definition won't distrub the debug level, because 
  * they are all func-like macro */
 #define TRACE(comp, str...) DEBUG_MSG(TRACE, comp, str)
-#ifndef CURRF2_DEBUG_OFF
+#ifndef SNICHASER_DEBUG_OFF
 # define VERBOSE(comp, str...) DEBUG_MSG(VERBOSE, comp, str)
 # define WARNING(comp, str...) DEBUG_MSG(WARNING, comp, str)
 # define WARNING_CONT(comp, str...) DEBUG_MSG_CONT(WARNING, comp, str)
@@ -140,7 +140,7 @@ extern void __bug_on(const char * __assertion, const char * __file,
 #endif
 
 
-#ifndef CURRF2_DEBUG_OFF
+#ifndef SNICHASER_DEBUG_OFF
 /* memory leak detection */
 extern void * __wrap_malloc(size_t size);
 extern void * __wrap_realloc(void * ptr, size_t size);
@@ -148,7 +148,7 @@ extern void __wrap_free(void * ptr);
 extern char * __wrap_strdup(const char * S);
 extern void * __wrap_calloc(size_t count, size_t eltsize);
 extern void show_mem_info();
-#ifndef CURRF2_DEBUG_C
+#ifndef SNICHASER_DEBUG_C
 # ifdef malloc
 #  undef malloc
 # endif
@@ -175,7 +175,7 @@ extern void show_mem_info();
 # endif
 # define calloc(C, S)	__wrap_calloc(C, S)
 #endif
-#else	/* CURRF2_DEBUG_OFF */
+#else	/* SNICHASER_DEBUG_OFF */
 #define show_mem_info()	do {} while(0)
 #endif
 

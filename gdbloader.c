@@ -6,7 +6,7 @@
 #include "debug.h"
 #include "exception.h"
 #include "ckptutils.h"
-#include "currf2_args.h"
+#include "snitchaser_args.h"
 #include "procutils.h"
 #include "elfutils.h"
 #include "ptraceutils.h"

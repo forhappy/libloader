@@ -3,7 +3,7 @@
 #ifndef SYSCALL_PRINTER
 
 /* 
- * in the loader, those 2 vars are defined in currf2.c;
+ * in the loader, those 2 vars are defined in snitchaser.c;
  * in the injector, those 2 vars are defined in wrapper.c;
  */
 
