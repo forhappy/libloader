@@ -263,7 +263,7 @@ ptrace_detach(bool_t wait)
 	siginfo_t si;
 	for (;;) {
 		errno = 0;
-		err = waitid(P_PID, old_pid, &si, WEXITED);
+		err = waitid(P_ALL, old_pid, &si, WEXITED);
 		if (err == -1) {
 			if (errno != EINTR) {
 				THROW(EXCEPTION_FATAL, "wait error: %s", strerror(errno));
@@ -271,6 +271,9 @@ ptrace_detach(bool_t wait)
 			/* if not, a signal raise in waitid. our signal proxy should have been
 			 * resend the signal to child, we loop again. */
 		} else {
+			if (si.si_pid != old_pid)
+				continue;
+
 			TRACE(PTRACE, "target process finished\n");
 			VERBOSE(PTRACE, "target process finished with status: %o\n", si.si_status);
 

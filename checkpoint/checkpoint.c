@@ -556,9 +556,10 @@ make_checkpoint(struct syscall_regs * r,
 
 	/* don't use normal fork. */
 	/* we don't set SIGCHLD in the 1st param. */
+#define CLONE_PARENT 0x00008000
 #ifdef FORK_CKPT
 	int32_t new_pid = INTERNAL_SYSCALL(clone, 5,
-			0, 0, NULL, NULL, NULL);
+			CLONE_PARENT, 0, NULL, NULL, NULL);
 	ASSERT(new_pid >= 0, r, "clone faild: %d\n", new_pid);
 
 	if (new_pid == 0) {
