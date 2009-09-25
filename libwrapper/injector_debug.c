@@ -11,7 +11,7 @@
 #include <stdint.h>
 #include <unistd.h>
 
-#define SNICHASER_DEBUG_C /* Debug masks */
+#define SNITCHASER_DEBUG_C /* Debug masks */
 #include "injector_debug.h"
 #include "injector_utils.h"
 
@@ -45,7 +45,7 @@ static const char *
 get_level_name(enum debug_level level)
 {
 	static char * debug_level_names[NR_DEBUG_LEVELS] = {
-#ifdef SNICHASER_DEBUG_OFF
+#ifdef SNITCHASER_DEBUG_OFF
 		[SILENT] 	= "SILENT",
 		[TRACE]		= "TRACE",
 		[VERBOSE]	= "VERBOSE",
@@ -129,7 +129,7 @@ debug_out(int prefix, enum debug_level level, enum debug_component comp,
 	va_end(ap);
 }
 
-#ifdef SNICHASER_DEBUG_OFF
+#ifdef SNITCHASER_DEBUG_OFF
 static void SCOPE
 vmessage_out(int prefix, enum debug_level l, enum debug_component c, char * fmt, va_list ap)
 {

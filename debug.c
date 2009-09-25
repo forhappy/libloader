@@ -25,7 +25,7 @@
 #include <malloc.h>
 #include <signal.h>
 
-#define SNICHASER_DEBUG_C /* Debug masks */
+#define SNITCHASER_DEBUG_C /* Debug masks */
 #include "debug.h"
 
 
@@ -36,7 +36,7 @@ static inline void print_backtrace(FILE * fp);
 static void
 debug_malloc_stats(int signum)
 {
-#ifndef SNICHASER_DEBUG_OFF
+#ifndef SNITCHASER_DEBUG_OFF
 	enum debug_level level_save = get_comp_level(MEMORY);
 	set_comp_level(MEMORY, VERBOSE);
 	show_mem_info();
@@ -157,7 +157,7 @@ static const char *
 get_level_name(enum debug_level level)
 {
 	static char * debug_level_names[NR_DEBUG_LEVELS] = {
-#ifdef SNICHASER_DEBUG_OFF
+#ifdef SNITCHASER_DEBUG_OFF
 		[SILENT] 	= "SILENT",
 		[TRACE]		= "TRACE",
 		[VERBOSE]	= "VERBOSE",
@@ -381,7 +381,7 @@ void * __wrap_realloc(void * ptr, size_t newsize)
 	return res;
 }
 
-#ifdef SNICHASER_DEBUG_OFF
+#ifdef SNITCHASER_DEBUG_OFF
 static void
 vmessage_out(int prefix, enum debug_level l, enum debug_component c, char * fmt, va_list ap)
 {
