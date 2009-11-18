@@ -16,6 +16,7 @@ IF (NOT CMAKE_COMPILER_IS_GNUCC)
 	MESSAGE(FATAL_ERROR "Only accept GCC now")
 ENDIF (NOT CMAKE_COMPILER_IS_GNUCC)
 
+SET(CMAKE_USE_RELATIVE_PATH)
 
 # detect architecture
 
@@ -34,6 +35,7 @@ set(arch_set "no")
 FOREACH (a "x86")
 	IF (ARCH STREQUAL ${a})
 		set(arch_set "yes")
+		SET(KARCH "x86")
 	ENDIF (ARCH STREQUAL ${a})
 ENDFOREACH(a)
 IF (NOT arch_set MATCHES "^yes$")
@@ -41,42 +43,71 @@ IF (NOT arch_set MATCHES "^yes$")
 ENDIF (NOT arch_set MATCHES "^yes$")
 unset(arch_set)
 
-# find kernel source
-
-SET(KERNEL_SOURCE "auto" CACHE FILEPATH "kernel source tree, 'auto' means auto-detect")
+MACRO(check_kernel varname descstr checkstr checkpathlist checkfile)
+SET(${varname} "auto" CACHE PATH ${descstr})
 set (${ks_set} "no")
-IF (KERNEL_SOURCE STREQUAL "auto")
+IF (${varname} STREQUAL "auto")
 #  1) check /lib/modules/${CMAKE_HOST_SYSTEM_VERSION}/source
 #  2) check /usr/src/linux
-	FOREACH(c "/lib/modules/${CMAKE_HOST_SYSTEM_VERSION}/source"
-			"/usr/src/linux")
+	FOREACH(c ${checkpathlist})
 		IF (NOT ks_set STREQUAL "yes")
-			MESSAGE(STATUS "check kernel source from ${c}")
-			EXECUTE_PROCESS(COMMAND stat ${c}/Kbuild
-				OUTPUT_FILE /dev/null
+			MESSAGE(STATUS "check ${checkstr} from ${c}")
+			EXECUTE_PROCESS(COMMAND stat ${c}/${checkfile}
+				OUTPUT_QUIET
 				RESULT_VARIABLE stat_res)
 			IF (stat_res STREQUAL "0")
-				SET(KERNEL_SOURCE ${c} CACHE FILEPATH "kernel source tree, 'auto' means auto-detect"
+				SET(${varname} ${c} CACHE PATH ${descstr}
 					FORCE)
 				SET(ks_set "yes")
 			ENDIF (stat_res STREQUAL "0")
 		ENDIF (NOT ks_set STREQUAL "yes")
 	ENDFOREACH (c)
-ELSE (KERNEL_SOURCE STREQUAL "auto")
-	EXECUTE_PROCESS(COMMAND stat ${KERNEL_SOURCE}/Kbuild
-		OUTPUT_FILE /dev/null
+ELSE (${varname} STREQUAL "auto")
+	EXECUTE_PROCESS(COMMAND stat ${${varname}}/${checkfile}
+		OUTPUT_QUIET
 		RESULT_VARIABLE stat_res)
 	IF (stat_res STREQUAL "0")
 		SET(ks_set "yes")
 	ENDIF (stat_res STREQUAL "0")
-ENDIF (KERNEL_SOURCE STREQUAL "auto")
-
+ENDIF (${varname} STREQUAL "auto")
 IF (NOT ks_set STREQUAL "yes")
-	MESSAGE(FATAL_ERROR "unable to find kernel source tree")
+	MESSAGE(FATAL_ERROR "unable to find ${checkstr}")
 ENDIF (NOT ks_set STREQUAL "yes")
 unset(ks_set)
 unset(stat_res)
+ENDMACRO(check_kernel varname descstr checkpath)
 
+check_kernel(KERNEL_SOURCE
+	"kernel source tree, 'auto' means auto-detect"
+	"kernel source tree"
+	"/lib/modules/${CMAKE_HOST_SYSTEM_VERSION}/source;/usr/src/linux"
+	Kbuild)
+check_kernel(KERNEL_BUILD_SOURCE
+	"kernel build tree, 'auto' means auto-detect"
+	"kernel build tree"
+	"/lib/modules/${CMAKE_HOST_SYSTEM_VERSION}/build;/usr/src/linux"
+	include/linux/autoconf.h)
+
+# build kernel related files cflags and include dir
+EXECUTE_PROCESS(COMMAND gcc -print-file-name=include
+	OUTPUT_VARIABLE gcc_inc
+	OUTPUT_STRIP_TRAILING_WHITESPACE)
+## check include2
+EXECUTE_PROCESS(COMMAND stat ${KERNEL_BUILD_SOURCE}/include2
+	OUTPUT_QUIET
+	ERROR_QUIET
+	RESULT_VARIABLE have_include2)
+IF (have_include2 STREQUAL "0")
+	# source and build tree are different
+	SET(KERNEL_CFLAGS "-nostdinc -isystem ${gcc_inc} -I${KERNEL_BUILD_SOURCE}/include -I${KERNEL_BUILD_SOURCE}/include2 -I${KERNEL_SOURCE}/include -I${KERNEL_SOURCE}/arch/${KARCH}/include -include ${KERNEL_BUILD_SOURCE}/include/linux/autoconf.h -I${KERNEL_SOURCE}/arch/${KARCH}/kernel -I${KERNEL_BUILD_SOURCE}/arch/${KARCH}/kernel -D__KERNEL__ -DCONFIG_AS_CFI=1 -DCONFIG_AS_CFI_SIGNAL_FRAME=1")
+ELSE (have_include2 STREQUAL "0")
+	SET(KERNEL_CFLAGS "-nostdinc -isystem ${gcc_inc} -I${KERNEL_BUILD_SOURCE}/include -I${KERNEL_SOURCE}/arch/${KARCH}/include -include ${KERNEL_BUILD_SOURCE}/include/linux/autoconf.h -D__KERNEL__  -DCONFIG_AS_CFI=1 -DCONFIG_AS_CFI_SIGNAL_FRAME=1")
+ENDIF (have_include2 STREQUAL "0")
+
+unset(have_include2)
+unset(gcc_inc)
+
+###########################################################
 
 SET(MARCH ${CMAKE_SYSTEM_PROCESSOR} CACHE STRING
 	"gcc -march option")
