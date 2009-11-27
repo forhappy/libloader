@@ -4,7 +4,7 @@
  */
 
 #include "checkpoint.h"
-#include <linux/user.h>
+#include <sys/user.h>
 #include <sys/mman.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -310,21 +310,21 @@ do_make_checkpoint(int ckpt_fd, int maps_fd, int cmdline_fd, int environ_fd,
 	/* 6 seg regs */
 	if (seg_regs == NULL) {
 #define loadsr(d, r) asm volatile("movl %%" #r ", %%eax" : "=a" (d))
-		loadsr(s->cs, cs);
-		loadsr(s->ds, ds);
-		loadsr(s->es, es);
-		loadsr(s->fs, fs);
-		loadsr(s->gs, gs);
-		loadsr(s->ss, ss);
+		loadsr(s->xcs, cs);
+		loadsr(s->xds, ds);
+		loadsr(s->xes, es);
+		loadsr(s->xfs, fs);
+		loadsr(s->xgs, gs);
+		loadsr(s->xss, ss);
 #undef loadsr
 	} else {
 #define loadsr(d, r) d = seg_regs->r
-		loadsr(s->cs, cs);
-		loadsr(s->ds, ds);
-		loadsr(s->es, es);
-		loadsr(s->fs, fs);
-		loadsr(s->gs, gs);
-		loadsr(s->ss, ss);
+		loadsr(s->xcs, cs);
+		loadsr(s->xds, ds);
+		loadsr(s->xes, es);
+		loadsr(s->xfs, fs);
+		loadsr(s->xgs, gs);
+		loadsr(s->xss, ss);
 #undef loadsr
 	}
 

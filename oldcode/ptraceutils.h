@@ -7,7 +7,7 @@
 #define PTRACEUTIILS_H
 
 #include <sys/cdefs.h>
-#include <linux/user.h>
+#include <sys/user.h>
 #include <stdint.h>
 #include <unistd.h>
 #include <asm/unistd.h>

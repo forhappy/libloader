@@ -11,7 +11,6 @@
 #include <sys/ptrace.h>
 #include <sys/wait.h>
 #include <sys/personality.h>
-#include <linux/user.h>
 #include <linux/ptrace.h>
 #include <stdarg.h>
 #include <signal.h>

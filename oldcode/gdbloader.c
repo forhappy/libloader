@@ -287,8 +287,8 @@ gdbloader_main(const char * target_fn)
 	SYS_TRACE("edi=0x%x\n", cf->state->regs.edi);
 	SYS_TRACE("ebp=0x%x\n", cf->state->regs.ebp);
 	SYS_TRACE("esp=0x%x\n", cf->state->regs.esp);
-	SYS_TRACE("gs=0x%x\n", cf->state->regs.gs);
-	SYS_TRACE("es=0x%x\n", cf->state->regs.es);
+//	SYS_TRACE("gs=0x%x\n", cf->state->regs.gs);
+//	SYS_TRACE("es=0x%x\n", cf->state->regs.es);
 
 	/* we push eip at the top of the new stack */
 	ptrace_push(&cf->state->regs.eip, sizeof(uint32_t), FALSE);

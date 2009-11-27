@@ -448,7 +448,7 @@ debug_entry(struct syscall_regs r,
 	asm volatile(
 		"movw %%ax, %%gs\n"
 		:
-		: "a" (state_vector.regs.gs));
+		: "a" (state_vector.regs.xgs));
 
 	/* restore fpustate */
 	/* fpustate_struct is aligned */

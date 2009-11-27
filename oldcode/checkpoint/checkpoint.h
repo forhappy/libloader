@@ -9,7 +9,7 @@
 #include <sys/cdefs.h>
 #include <stdint.h>
 #include <unistd.h>
-#include <linux/user.h>
+#include <sys/user.h>
 #include "defs.h"
 
 #ifndef IN_INJECTOR

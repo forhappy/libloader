@@ -18,6 +18,14 @@ ENDIF (NOT CMAKE_COMPILER_IS_GNUCC)
 
 SET(CMAKE_USE_RELATIVE_PATH)
 
+# set debug options
+SET(MARCH_CFLAGS "-march=${MARCH} -mtune=${MARCH}")
+SET(CMAKE_C_FLAGS "-std=gnu99 -Wall -D_GNU_SOURCE ${MARCH_CFLAGS}" CACHE
+	STRING "Flags used by the compiler during all build types." FORCE)
+SET(CMAKE_C_FLAGS_DEBUG "-g -O0 -SNITCHASER_DEBUG" CACHE
+	STRING "Flags used by the compiler during debug builds." FORCE)
+SET(CMAKE_C_FLAGS_RELEASE "-O2" CACHE
+	STRING "Flags used by the compiler during release builds." FORCE)
 # detect architecture
 
 SET(ARCH "auto" CACHE STRING "target architecture, 'auto' means auto-detect")

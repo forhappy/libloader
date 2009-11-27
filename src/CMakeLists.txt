@@ -15,6 +15,13 @@ IF (BUILD_TESTS)
 ENDIF(BUILD_TESTS)
 ENDMACRO(build_tests testlist libs)
 
+ADD_EXECUTABLE(snitchaser
+	main.c)
+
+TARGET_LINK_LIBRARIES(snitchaser
+	common
+	ptrace)
 
 ADD_SUBDIRECTORY(common)
+ADD_SUBDIRECTORY(ptrace)
 

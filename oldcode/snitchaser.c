@@ -4,7 +4,7 @@
  */
 
 #include <elf.h>
-#include <linux/user.h>
+#include <sys/user.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <fcntl.h>
