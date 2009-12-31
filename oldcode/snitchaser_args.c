@@ -99,7 +99,7 @@ parse_opt(int key, char *arg, struct argp_state *state)
 			opts.inj_so = arg;
 			return 0;
 		case 'b':
-			opts.inj_bias = strtol(arg, NULL, 0);
+			opts.inj_bias = strtoul(arg, NULL, 0);
 			return 0;
 		case 'w':
 			opts.wrap_sym = arg;

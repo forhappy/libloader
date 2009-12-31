@@ -13,6 +13,43 @@
 #include "defs.h"
 #include "injector.h"
 #include "vsprintf.h"
+
+
+
+
+#define AT_NULL   0	/* end of vector */
+#define AT_IGNORE 1	/* entry should be ignored */
+#define AT_EXECFD 2	/* file descriptor of program */
+#define AT_PHDR   3	/* program headers for program */
+#define AT_PHENT  4	/* size of program header entry */
+#define AT_PHNUM  5	/* number of program headers */
+#define AT_PAGESZ 6	/* system page size */
+#define AT_BASE   7	/* base address of interpreter */
+#define AT_FLAGS  8	/* flags */
+#define AT_ENTRY  9	/* entry point of program */
+#define AT_NOTELF 10	/* program is not ELF */
+#define AT_UID    11	/* real uid */
+#define AT_EUID   12	/* effective uid */
+#define AT_GID    13	/* real gid */
+#define AT_EGID   14	/* effective gid */
+#define AT_PLATFORM 15  /* string identifying CPU for optimizations */
+#define AT_HWCAP  16    /* arch dependent hints at CPU capabilities */
+#define AT_CLKTCK 17	/* frequency at which times() increments */
+/* AT_* values 18 through 22 are reserved */
+#define AT_SECURE 23   /* secure mode boolean */
+#define AT_BASE_PLATFORM 24	/* string identifying real platform, may
+				 * differ from AT_PLATFORM. */
+#define AT_RANDOM 25	/* address of 16 random bytes */
+
+#define AT_EXECFN  31	/* filename of program */
+
+
+
+
+
+
+
+
 #define BUFFER_SIZE     (16384)
 
 #define assert(expr) \
@@ -79,8 +116,11 @@ exit(int status)
 asm (
 ".globl _start\n\
  _start:\n\
+ 	push $0x2234\n\
  	push %esp\n\
 	call xmain\n\
+	pop %eax\n\
+	ret\n\
 "
 );
 
@@ -122,10 +162,54 @@ reexecute(uintptr_t oldesp)
 	}
 
 	/* execve */
-	INTERNAL_SYSCALL_int80(execve, 3, new_argv[0], new_argv, new_env);
+	printf("new_argv[0]=%s\n", new_argv[0]);
+	err = INTERNAL_SYSCALL_int80(execve, 3, new_argv[0], new_argv, new_env);
+	printf("err = %d\n", err);
+	exit(-1);
+	assert(err == 0);
 }
 
+static void * interp_base = NULL;
+static Elf32_Phdr * aux_phdr = NULL;
+static int  aux_nr_phdr = 0;
+
 static void
+fix_aux(void * esp)
+{
+	printf("fix aux: 0x%x\n", esp);
+	uint32_t * ptr = (void*)esp;
+	while (*ptr != 0)
+		ptr ++;
+	ptr ++;
+	while (*ptr != 0)
+		ptr++;
+	ptr ++;
+	/* begin vector */
+	int i = 0;
+	while (*ptr != AT_NULL) {
+		printf("aux %d: %d, 0x%x\n", i, ptr[0], ptr[1]);
+
+//		if (ptr[0] == AT_BASE) {
+//			assert(interp_base != NULL);
+//			ptr[1] = (uint32_t)interp_base;
+//		}
+
+		if (ptr[0] == AT_PHDR)
+			aux_phdr = (Elf32_Phdr *)ptr[1];
+		if (ptr[0] == AT_PHENT)
+			assert(ptr[1] == sizeof(*aux_phdr));
+		if (ptr[0] == AT_PHNUM)
+			aux_nr_phdr = ptr[1];
+
+		ptr += 2;
+		i ++;
+	}
+
+//	while(1);
+}
+
+
+static uintptr_t
 load_ld(uintptr_t oldesp)
 {
 	int err;
@@ -181,12 +265,15 @@ load_ld(uintptr_t oldesp)
 		total_sz = e - s;
 		printf("s=0x%x, e=0x%x, total_sz=0x%x\n",
 				s, e, total_sz);
+#if 0
 		/* roundup */
-		total_sz = (total_sz + (0x1000-1)) & (0xffffe000);
+		total_sz = (total_sz + (0x1000-1)) & (0xfffff000);
+#endif
 	}
 
-	void * map_addr;
+	void * map_addr = 0;
 	/* map the big sz then unmap */
+#if 0
 	map_addr = INTERNAL_SYSCALL_int80(mmap2, 6,
 			NULL, total_sz, PROT_READ,
 			MAP_PRIVATE, fd, 0);
@@ -195,47 +282,95 @@ load_ld(uintptr_t oldesp)
 	assert(!(((uint32_t)map_addr) & 0x1FFFUL));
 
 	printf("map_addr=0x%x\n", map_addr);
+#endif
 
-#if 0
-	/* unmap it! */
-	err = INTERNAL_SYSCALL_int80(munmap, 2,
-			map_addr, total_sz);
-	assert(err == 0);
-
-
-	/* begin mapping */
+	/* map the full image */
+	bool_t first_map = TRUE;
 	for (int i = 0; i < nr_pht; i++) {
+
 		Elf32_Phdr * p = phdrs + i;
 		if (p->p_type != PT_LOAD)
 			continue;
-		uintptr_t addr = p->p_vaddr;
-		uintptr_t off = p->p_offset;
-		uint32_t size = p->p_memsz;
+		uint32_t elf_type = MAP_PRIVATE | MAP_DENYWRITE;
+		uint32_t elf_prot = 0;
+
+		if (p->p_flags & PF_R)
+			elf_prot = PROT_READ;
+		if (p->p_flags & PF_W)
+			elf_prot |= PROT_WRITE;
+		if (p->p_flags & PF_X)
+			elf_prot |= PROT_EXEC;
+
+		if (first_map) {
+			/* FIXME! */
+			assert(p->p_offset == 0);
+			map_addr = (void*)INTERNAL_SYSCALL_int80(mmap2, 6,
+					NULL, total_sz, elf_prot, elf_type,
+					fd, 0);
+			assert((uintptr_t)map_addr < 0xc0000000UL);
+			printf("map address: 0x%x, total_sz=0x%x, map_end=0x%x\n", map_addr,
+					total_sz, (uintptr_t)map_addr + total_sz);
+			first_map = FALSE;
+			interp_base = map_addr;
+
+			uintptr_t unmap_start = (uintptr_t)map_addr + (uintptr_t)p->p_memsz;
+			unmap_start = (unmap_start + 0xfff) & 0xfffff000;
+			uintptr_t unmap_end = (uintptr_t)map_addr + total_sz;
+			unmap_end = (unmap_end + 0xfff) & 0xfffff000;
+
+			printf("unmap from 0x%x to 0x%x\n",
+					unmap_start, unmap_end);
+			INTERNAL_SYSCALL_int80(munmap, 2,
+					unmap_start,
+					unmap_end - unmap_start);
+		} else {
+			/* unmap */
+			uint32_t start, end;
+			start = p->p_vaddr + (uintptr_t)map_addr;
+			end = start + p->p_memsz;
+			start = start & 0xfffff000UL;
+			end = (end + 0x0fff) & 0xfffff000UL;
+			/* map */
+			err = INTERNAL_SYSCALL_int80(mmap2, 6,
+					start, end - start,
+					elf_prot, elf_type | MAP_FIXED,
+					fd, p->p_offset >> 12);
+			printf("map address: 0x%x\n", err);
+		}
 	}
-#endif
+
 	/* ********************************************* */
 
 
 	INTERNAL_SYSCALL_int80(close, 1, fd);
+	return (uintptr_t)(entry + map_addr);
 }
 
 
 /* must be defined as static, or ld will create textrel object */
 __attribute__((used, unused)) static int 
-xmain(uintptr_t oldesp)
+xmain(uintptr_t oldesp, volatile uintptr_t retcode)
 {
 
+	oldesp += 4;
 	printf("test vfdprintf: %p\n", xmain);
 	printf("test vfdprintf: 0x%x\n", oldesp);
+	printf("test vfdprintf: 0x%x\n", retcode);
 
 	/* check personality and reexecute */
 	reexecute(oldesp);
 
 	/* try to load /lib/ld-linux.so.2, and transfer control to it */
-	load_ld(oldesp);
+	uintptr_t entry = load_ld(oldesp);
+	printf("entry=0x%x\n", entry);
 
 
-	exit(0);
+	/* fix auxvector */
+	fix_aux((void*)oldesp);
+
+//	while(1);
+//	exit(0);
+	retcode = entry;
 	return 0;
 }
 
