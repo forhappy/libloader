@@ -1,20 +1,55 @@
+#include <stdio.h>
 
-#define out(x)	write(1, x, sizeof(x))
+#include <asm/unistd.h>
+#include "defs.h"
+#include "injector.h"
+#include "vsprintf.h"
+#define BUFFER_SIZE     (16384)
+
+static char buffer[BUFFER_SIZE];
+
+static int
+printf_int80(const char * fmt, ...)
+{
+
+	va_list args;
+	int i;
+
+	va_start(args, fmt);
+	i = vsnprintf(buffer, BUFFER_SIZE, fmt, args);
+	va_end(args);
+
+	INTERNAL_SYSCALL_int80(write, 3, 1, buffer, i);
+	return i;
+}
+
 
 
 static int
-write(int fd, char * str, int len)
+fdprintf(int fd, const char * fmt, ...)
 {
-	int ret;
-	asm volatile (
-		"xchgl %%ebx, %%esi\n"
-		"int $0x80\n"
-		"xchgl %%ebx, %%esi\n"
-		: "=a" (ret)
-		: "a" (4), "S" (fd), "c" (str), "d" (len)
-			);
-	return ret;
+
+	va_list args;
+	int i;
+
+	va_start(args, fmt);
+	i = vsnprintf(buffer, BUFFER_SIZE, fmt, args);
+	va_end(args);
+
+	INTERNAL_SYSCALL_int80(write, 3, fd, buffer, i);
+	return i;
 }
+
+static int
+vfdprintf(int fd, const char * fmt, va_list args)
+{
+	int i;
+	i = vsnprintf(buffer, BUFFER_SIZE, fmt, args);
+
+	INTERNAL_SYSCALL_int80(write, 3, fd, buffer, i);
+	return i;
+}
+
 
 static void
 exit(int status)
@@ -28,15 +63,21 @@ exit(int status)
 asm (
 ".globl _start\n\
  _start:\n\
-	call main\n\
+	call xmain\n\
 "
 );
 
+
 /* must be defined as static, or ld will create textrel object */
-static int
-main()
+__attribute__((used, unused)) static int 
+xmain()
 {
-	out("in loader\n");
+
+	fdprintf(1, "test vfdprintf: %p\n", xmain);
+	/*  */
+//	printf("aaa\n");
+//	printf("aaa %d\n", 20);
+
 	exit(0);
 	return 0;
 }
