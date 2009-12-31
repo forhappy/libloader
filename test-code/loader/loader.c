@@ -3,6 +3,13 @@
 #include <asm/unistd.h>
 #include <sys/personality.h>
 
+#include <fcntl.h>
+#include <unistd.h>
+
+#include <elf.h>
+#include <alloca.h>
+#include <sys/mman.h>
+
 #include "defs.h"
 #include "injector.h"
 #include "vsprintf.h"
@@ -102,7 +109,7 @@ reexecute(uintptr_t oldesp)
 	ptr += 1;
 	new_argv = (const char **)ptr;
 	while (*(ptr) != 0) {
-		printf("arg: %p: %s\n", ptr, (char*)(*ptr));
+//		printf("arg: %p: %s\n", ptr, (char*)(*ptr));
 		ptr++;
 	}
 
@@ -110,13 +117,108 @@ reexecute(uintptr_t oldesp)
 	ptr++;
 	new_env = (const char **)ptr;
 	while (*(ptr) != 0) {
-		printf("env: %p: %s\n", ptr, (char*)(*ptr));
+//		printf("env: %p: %s\n", ptr, (char*)(*ptr));
 		ptr++;
 	}
 
 	/* execve */
 	INTERNAL_SYSCALL_int80(execve, 3, new_argv[0], new_argv, new_env);
 }
+
+static void
+load_ld(uintptr_t oldesp)
+{
+	int err;
+	/* open and mmap */
+	int fd = INTERNAL_SYSCALL_int80(open, 2,
+			"/lib/ld-linux.so.2", O_RDONLY);
+	assert(fd >= 0);
+
+	Elf32_Ehdr ehdr;
+	/* load the elf head */
+	err = INTERNAL_SYSCALL_int80(read, 3, fd, &ehdr, sizeof(ehdr));
+	assert(err == sizeof(ehdr));
+
+	assert(memcmp(ehdr.e_ident, ELFMAG, SELFMAG) == 0);
+	printf("check ld-linux.so.2's header, magic OK\n");
+
+	/* ********************************************* */
+	assert(ehdr.e_type == ET_DYN);
+	assert(ehdr.e_machine == EM_386);
+	uintptr_t entry = ehdr.e_entry;
+	int nr_pht = ehdr.e_phnum;
+	assert(ehdr.e_phentsize == sizeof(Elf32_Phdr));
+
+	/* load program headers */
+	err = INTERNAL_SYSCALL_int80(lseek, 3, fd,
+			ehdr.e_phoff, SEEK_SET);
+	assert(err >= 0);
+
+	Elf32_Phdr * phdrs = alloca(sizeof(Elf32_Phdr) * nr_pht);
+	assert(phdrs != NULL);
+
+	err = INTERNAL_SYSCALL_int80(read, 3, fd, phdrs, sizeof(Elf32_Phdr) * nr_pht);
+	assert(err == sizeof(Elf32_Phdr) * nr_pht);
+	printf("load phdr table OK\n");
+
+	/* iterate over its phtable */
+	/* compute total load size */
+	uint32_t total_sz = 0;
+	{
+		uint32_t s, e;
+		s = 0xffffffffUL;
+		e = 0;
+		for (int i = 0; i < nr_pht; i++) {
+			Elf32_Phdr * p = phdrs + i;
+			if (p->p_type != PT_LOAD)
+				continue;
+			if (s > p->p_vaddr)
+				s = p->p_vaddr;
+			if (e < p->p_vaddr + p->p_memsz)
+				e = p->p_vaddr + p->p_memsz;
+			assert(p->p_align == 0x1000);
+		}
+		total_sz = e - s;
+		printf("s=0x%x, e=0x%x, total_sz=0x%x\n",
+				s, e, total_sz);
+		/* roundup */
+		total_sz = (total_sz + (0x1000-1)) & (0xffffe000);
+	}
+
+	void * map_addr;
+	/* map the big sz then unmap */
+	map_addr = INTERNAL_SYSCALL_int80(mmap2, 6,
+			NULL, total_sz, PROT_READ,
+			MAP_PRIVATE, fd, 0);
+
+	assert(map_addr < 0xC0000000UL);
+	assert(!(((uint32_t)map_addr) & 0x1FFFUL));
+
+	printf("map_addr=0x%x\n", map_addr);
+
+#if 0
+	/* unmap it! */
+	err = INTERNAL_SYSCALL_int80(munmap, 2,
+			map_addr, total_sz);
+	assert(err == 0);
+
+
+	/* begin mapping */
+	for (int i = 0; i < nr_pht; i++) {
+		Elf32_Phdr * p = phdrs + i;
+		if (p->p_type != PT_LOAD)
+			continue;
+		uintptr_t addr = p->p_vaddr;
+		uintptr_t off = p->p_offset;
+		uint32_t size = p->p_memsz;
+	}
+#endif
+	/* ********************************************* */
+
+
+	INTERNAL_SYSCALL_int80(close, 1, fd);
+}
+
 
 /* must be defined as static, or ld will create textrel object */
 __attribute__((used, unused)) static int 
@@ -129,6 +231,8 @@ xmain(uintptr_t oldesp)
 	/* check personality and reexecute */
 	reexecute(oldesp);
 
+	/* try to load /lib/ld-linux.so.2, and transfer control to it */
+	load_ld(oldesp);
 
 
 	exit(0);

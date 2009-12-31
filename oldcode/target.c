@@ -23,6 +23,9 @@ int main(int argc, char * argv[])
 	printf("argc=%d, argv[0]=%s\n",
 			argc, argv[0]);
 	int i = 1;
+
+	while(1);
+
 //	FILE * fp = fopen("/dev/null", "w");
 	while(1) {
 		int c = 'x';
