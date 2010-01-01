@@ -14,7 +14,8 @@
 #include "injector.h"
 #include "vsprintf.h"
 
-
+#define DEFAULT_LOADER	"/lib/ld-linux.so.2"
+//#define DEFAULT_LOADER	"/lib/ld-linux.so.2"
 
 
 #define AT_NULL   0	/* end of vector */
@@ -189,10 +190,10 @@ fix_aux(void * esp)
 	while (*ptr != AT_NULL) {
 		printf("aux %d: %d, 0x%x\n", i, ptr[0], ptr[1]);
 
-//		if (ptr[0] == AT_BASE) {
-//			assert(interp_base != NULL);
-//			ptr[1] = (uint32_t)interp_base;
-//		}
+		if (ptr[0] == AT_BASE) {
+			assert(interp_base != NULL);
+			ptr[1] = (uint32_t)interp_base;
+		}
 
 		if (ptr[0] == AT_PHDR)
 			aux_phdr = (Elf32_Phdr *)ptr[1];
@@ -205,7 +206,24 @@ fix_aux(void * esp)
 		i ++;
 	}
 
-//	while(1);
+	/* iterate over phdr */
+	for (int i = 0; i < aux_nr_phdr; i++) {
+		if (aux_phdr[i].p_type == PT_INTERP) {
+			/* change interp */
+			uintptr_t start, end;
+			
+			start = (uintptr_t)aux_phdr[i].p_vaddr;
+			end = start + aux_phdr[i].p_memsz;
+
+			start = start & 0xfffff000UL;
+			end = (end + 0xfff) & 0xfffff000UL;
+
+			INTERNAL_SYSCALL_int80(mprotect, 3, start, end - start, PROT_READ|PROT_WRITE|PROT_EXEC);
+			strcpy((void*)aux_phdr[i].p_vaddr,
+					DEFAULT_LOADER);
+		}
+	}
+
 }
 
 
@@ -215,7 +233,7 @@ load_ld(uintptr_t oldesp)
 	int err;
 	/* open and mmap */
 	int fd = INTERNAL_SYSCALL_int80(open, 2,
-			"/lib/ld-linux.so.2", O_RDONLY);
+			DEFAULT_LOADER, O_RDONLY);
 	assert(fd >= 0);
 
 	Elf32_Ehdr ehdr;
@@ -324,10 +342,9 @@ load_ld(uintptr_t oldesp)
 					unmap_start,
 					unmap_end - unmap_start);
 		} else {
-			/* unmap */
 			uint32_t start, end;
 			start = p->p_vaddr + (uintptr_t)map_addr;
-			end = start + p->p_memsz;
+			end = start + p->p_filesz;
 			start = start & 0xfffff000UL;
 			end = (end + 0x0fff) & 0xfffff000UL;
 			/* map */
@@ -335,7 +352,36 @@ load_ld(uintptr_t oldesp)
 					start, end - start,
 					elf_prot, elf_type | MAP_FIXED,
 					fd, p->p_offset >> 12);
-			printf("map address: 0x%x\n", err);
+			printf("map address: 0x%x, length=0x%x\n", err,
+					end - start);
+
+#if 1
+			start = p->p_vaddr + (uintptr_t)map_addr;
+			if (p->p_memsz > p->p_filesz) {
+				/* pad zero and map new pages */
+				/* whether we need new page? */
+				uintptr_t fend, mend;
+				fend = start + p->p_filesz;
+				mend = start + p->p_memsz;
+				if ((fend & 0xfffff000) != (mend & 0xfffff000)) {
+					/* we need new page */
+					uintptr_t start = (fend + 0xfff) & 0xfffff000;
+					uintptr_t end = (mend + 0xfff) & 0xfffff000;
+					assert(start != end);
+					err = INTERNAL_SYSCALL_int80(mmap2, 6,
+							start, end - start,
+							elf_prot, elf_type | MAP_FIXED | MAP_ANONYMOUS,
+							fd, 0);
+					assert(err == start);
+					printf("extern padding: new pages start from 0x%x\n", err);
+				}
+				printf("start=0x%x, fend=0x%x, mend=0x%x\n",
+						start, fend, mend);
+				printf("padding zero from 0x%x, len=%x\n", fend,
+						((mend + 0xfff) & 0xfffff000) - fend);
+				memset((void*)fend, 0, ((mend + 0xfff) & 0xfffff000) - fend);
+			}
+#endif
 		}
 	}
 

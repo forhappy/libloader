@@ -1,4 +1,4 @@
-all: loader.so test
+all: loader.so test test-2 test-3
 
 CFLAGS += -g -std=gnu99 -Wall -nostartfiles -nodefaultlibs -nostdlib -fno-builtin -fPIC # -fvisibility=hidden -fPIC
 
@@ -17,6 +17,12 @@ libprintf.os: vsprintf.o string_32.o __ctype.o
 
 test: test.o
 	gcc -Wl,-dynamic-linker,$(shell pwd)/loader.so $< -o $@
+
+test-2: test.o
+	gcc -Wl,-dynamic-linker,/tmp/ld-linux.so.2 $< -o $@
+
+test-3: test.o
+	gcc $< -o $@
 
 test.o: test.c
 	gcc -c $< -o $@
