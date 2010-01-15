@@ -1,0 +1,167 @@
+# syntax:
+# table <name> { ... }
+
+table a2 {
+	00: add Eb, Gb
+	01: add Ev, Gv
+	02: add Gb, Eb
+	03: add Gv, Ev
+	04: add "AL", Iz
+	05: add "rAX", Iz
+	06: push "ES" | i64
+	07: pop "ES" | i64
+
+	10: adc Eb, Gb
+	11: adc Ev, Gv
+	12: adc Gb, Eb
+	13: adc Gv, Ev
+	14: adc "AL", Iz
+	15: adc "rAX", Iz
+	16: push "SS" | i64
+	17: pop "SS" | i64
+
+	20: and Eb, Gb
+	21: and Ev, Gv
+	22: and Gb, Eb
+	23: and Gv, Ev
+	24: and "AL", Iz
+	25: and "rAX", Iz
+	26: PREFIX, g2
+	27: daa | i64
+
+	30: xor Eb, Gb
+	31: xor Ev, Gv
+	32: xor Gb, Eb
+	33: xor Gv, Ev
+	34: xor "AL", Iz
+	35: xor "rAX", Iz
+	36: PREFIX, g2
+	37: aaa | i64
+
+	64 {
+		41-48: rex
+	}
+	
+	32 {
+		41: inc "eAX"
+		42: inc "eCX"
+		43: inc "eDX"
+		44: inc "eBX"
+		45: inc "eSP"
+		46: inc "eBP"
+		47: inc "eSI"
+		48: inc "eDI"
+	}
+
+	50: push, "rAX/r8" | d64
+	51: push, "rCX/r9" | d64
+	52: push, "rDX/r10" | d64
+	53: push, "rBX/r11" | d64
+	54: push, "rSP/r12" | d64
+	55: push, "rBP/r13" | d64
+	56: push, "rSI/r14" | d64
+	57: push, "rDI/r15" | d64
+	
+	60: pusha
+	61: popa
+	
+	62: bound Gv, Ma | i64
+
+	64 {
+		63: movsxd Gv, Ev | o64
+	}
+
+	32 {
+		63: ARPL Ew, Gw | i64
+	}
+
+	64: PREFIX, g2
+	65: PREFIX, g2
+	66: PREFIX, g3
+	# XXX address size impact the meaning of modrm
+	67: PREFIX, g4
+	
+	70: jo, Jb | f64 !
+	71: jno, Jb | f64 !
+	72: jb, Jb | f64 !
+	73: jae, Jb | f64 !
+	74: je, Jb | f64 !
+	75: jne, Jb | f64 !
+	76: jbe, Jb | f64 !
+	77: ja, Jb | f64 !
+
+	80: GRP1, Eb, Ib
+	81: GRP1, Ev, Iz
+	82: GRP1, Eb, Ib | i64
+	83: GRP1, Ev, Ib
+
+	84: test, Eb, Gb
+	85: test, Ev, Gv
+	86: xchg, Eb, Gb
+	87: xchg, Ev, Gv
+
+	90: xchg, "rAX", "rAX/r8"
+	91: xchg, "rAX", "rCX/r9"
+	92: xchg, "rAX", "rDX/r10"
+	93: xchg, "rAX", "rBX/r11"
+	94: xchg, "rAX", "rSP/r12"
+	95: xchg, "rAX", "rBP/r13"
+	96: xchg, "rAX", "rSI/r14"
+	97: xchg, "rAX", "rDI/r15"
+
+	a0: mov, "AL", Ob
+	a1: mov, "rAX", Ov
+	a2: mov, Ob, "AL"
+	a3: mov, Ov, "rAX"
+	a4: movs, Xb, Yb
+	a5: movs, Xv, Yv
+	a6: cmps, Xb, Yb
+	a7: cmps, Xv, Yv
+
+	b0: mov, "AL/R8L", Ib
+	b1: mov, "CL/R9L", Ib
+	b2: mov, "DL/R10L", Ib
+	b3: mov, "BL/R11L", Ib
+	b4: mov, "AH/R12L", Ib
+	b5: mov, "CH/R13L", Ib
+	b6: mov, "DH/R14L", Ib
+	b7: mov, "BH/R15L", Ib
+
+	c0: GRP2, Eb, Ib
+	c1: GRP2, Ev, Ib
+	c2: retn, Iw | f64 !
+	c3: retn | f64 !
+	c4: les, Gz, Mp | i64
+	c5: lds, Gz, Mp | i64
+	c6: GRP11, Eb, Ib
+	c7: GRP11, Ev, Iz
+
+	d0: GRP2, Eb, '1'
+	d1: GRP2, Ev, '1'
+	d2: GRP2, Eb, "CL"
+	d3: GRP2, Ev, "CL"
+	d4: amm Ib | i64
+	d5: aad Ib | i64
+	d6: BAD
+	d7: xlat
+
+	e0: loopne, Jb | f64 !
+	e1: loope, Jb | f64 !
+	e2: jecxz, Jb | f64 !
+	e3: in, "AL", Ib
+	e4: in, "eAX", Ib
+	e5: out, Ib, "AL"
+	e6: out, Ib, "eAX"
+
+	f0: PREFIX g1
+	f1: BAD
+	f2: PREFIX g1
+	f3: PREFIX g1
+	f4: hlt
+	f5: cmc
+	f6: GRP3 Eb
+	f7: GRP3 Ev
+}
+
+# vim:ts=4:sw=4
+
