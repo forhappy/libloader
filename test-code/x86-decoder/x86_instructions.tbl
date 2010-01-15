@@ -26,7 +26,7 @@ table a2 {
 	23: and Gv, Ev
 	24: and "AL", Iz
 	25: and "rAX", Iz
-	26: PREFIX, g2
+	26: PREFIX2
 	27: daa | i64
 
 	30: xor Eb, Gb
@@ -35,14 +35,16 @@ table a2 {
 	33: xor Gv, Ev
 	34: xor "AL", Iz
 	35: xor "rAX", Iz
-	36: PREFIX, g2
+	36: PREFIX2
 	37: aaa | i64
 
-	64 {
-		41-48: rex
+# such group have "o64" automatically
+	X64 {
+		41-48: REX
 	}
 	
-	32 {
+# such group have "i64" automatically
+	X32 {
 		41: inc "eAX"
 		42: inc "eCX"
 		43: inc "eDX"
@@ -62,24 +64,18 @@ table a2 {
 	56: push, "rSI/r14" | d64
 	57: push, "rDI/r15" | d64
 	
-	60: pusha
-	61: popa
-	
+	60: pusha | i64
+	61: popa | i64
 	62: bound Gv, Ma | i64
 
-	64 {
-		63: movsxd Gv, Ev | o64
-	}
+	63: movsxd Gv, Ev | o64
+	63: ARPL Ew, Gw | i64
 
-	32 {
-		63: ARPL Ew, Gw | i64
-	}
-
-	64: PREFIX, g2
-	65: PREFIX, g2
-	66: PREFIX, g3
+	64: PREFIX2
+	65: PREFIX2
+	66: PREFIX3
 	# XXX address size impact the meaning of modrm
-	67: PREFIX, g4
+	67: PREFIX4
 	
 	70: jo, Jb | f64 !
 	71: jno, Jb | f64 !
@@ -100,7 +96,7 @@ table a2 {
 	86: xchg, Eb, Gb
 	87: xchg, Ev, Gv
 
-	90: xchg, "rAX", "rAX/r8"
+	90: nop
 	91: xchg, "rAX", "rCX/r9"
 	92: xchg, "rAX", "rDX/r10"
 	93: xchg, "rAX", "rBX/r11"
@@ -127,19 +123,19 @@ table a2 {
 	b6: mov, "DH/R14L", Ib
 	b7: mov, "BH/R15L", Ib
 
-	c0: GRP2, Eb, Ib
-	c1: GRP2, Ev, Ib
+	c0: GRP2, Eb, Ib | 1A
+	c1: GRP2, Ev, Ib | 1A
 	c2: retn, Iw | f64 !
 	c3: retn | f64 !
 	c4: les, Gz, Mp | i64
 	c5: lds, Gz, Mp | i64
-	c6: GRP11, Eb, Ib
-	c7: GRP11, Ev, Iz
+	c6: GRP11, Eb, Ib | 1A
+	c7: GRP11, Ev, Iz | 1A
 
-	d0: GRP2, Eb, '1'
-	d1: GRP2, Ev, '1'
-	d2: GRP2, Eb, "CL"
-	d3: GRP2, Ev, "CL"
+	d0: GRP2, Eb, '1' | 1A
+	d1: GRP2, Ev, '1' | 1A
+	d2: GRP2, Eb, "CL" | 1A
+	d3: GRP2, Ev, "CL" | 1A
 	d4: amm Ib | i64
 	d5: aad Ib | i64
 	d6: BAD
@@ -147,20 +143,21 @@ table a2 {
 
 	e0: loopne, Jb | f64 !
 	e1: loope, Jb | f64 !
-	e2: jecxz, Jb | f64 !
-	e3: in, "AL", Ib
-	e4: in, "eAX", Ib
-	e5: out, Ib, "AL"
-	e6: out, Ib, "eAX"
+	e2: loop, Jb | f64 !
+	e3: jecxz, Jb | f64 !
+	e4: in, "AL", Ib
+	e5: in, "eAX", Ib
+	e6: out, Ib, "AL"
+	e7: out, Ib, "eAX"
 
-	f0: PREFIX g1
+	f0: PREFIX1
 	f1: BAD
-	f2: PREFIX g1
-	f3: PREFIX g1
+	f2: PREFIX1
+	f3: PREFIX1
 	f4: hlt
 	f5: cmc
-	f6: GRP3 Eb
-	f7: GRP3 Ev
+	f6: GRP3 Eb | 1A
+	f7: GRP3 Ev | 1A
 }
 
 # vim:ts=4:sw=4
