@@ -82,6 +82,7 @@ define_post_handler(getcwd);
 define_post_handler(poll);
 
 define_post_handler(writev);
+define_post_handler(vmsplice);
 define_post_handler(sendfile64);
 define_post_handler(getrusage);
 define_post_handler(gettimeofday);

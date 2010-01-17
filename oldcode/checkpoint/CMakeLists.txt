@@ -48,6 +48,7 @@ SET(HANDLERS
 	poll.c
 	accept.c
 	writev.c
+	vmsplice.c
 	sendfile64.c
 	shutdown.c
 	getrusage.c

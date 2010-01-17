@@ -69,6 +69,7 @@ SCOPE struct syscall_tabent syscall_table[] = {
 	def_simple_syscall_entry(getgid32),
 	def_syscall_entry(poll, NULL),
 	def_syscall_entry(writev, NULL),
+	def_syscall_entry(vmsplice, NULL),
 	def_syscall_entry(sendfile64, NULL),
 	def_syscall_entry(getrusage, NULL),
 	def_syscall_entry(gettimeofday, NULL),

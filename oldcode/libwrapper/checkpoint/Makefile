@@ -10,7 +10,7 @@ SYSCALLS = simple.c close.c mprotect.c read.c set_robust_list.c sigprocmask.c ug
 	   getcwd.c setsockopt.c listen.c poll.c accept.c \
 	   writev.c sendfile64.c shutdown.c getrusage.c gettimeofday.c pipe.c clone.c newprocess.c kill.c \
 	   waitpid.c send.c dup.c dup2.c wait4.c socketpair.c ioctl_blk.c sendmsg.c setitimer.c epoll_wait.c \
-	   times.c
+	   times.c vmsplice.c
 
 CHECKPOINT_SRCS = $(SYSCALLS)
 CHECKPOINT_HEADERS = checkpoint.h checkpoint.c syscalls.h syscall_table.h
