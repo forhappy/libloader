@@ -1,6 +1,8 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
+#include <string.h>
 #include "parser.tab.h"
 
 #ifndef YYTOKENTYPE
@@ -22,6 +24,24 @@ enum tokentype {
 
 int line_counter = 0;
 
+static int hextonum(const char *str)
+{
+	assert(str[0] == '0');
+	assert(str[1] == 'x');
+	int a, b;
+	if ((str[2] >= 'a') && (str[2] <= 'f'))
+		a = 10 + str[2] - 'a';
+	else
+		a = str[2] - '0';
+
+	if ((str[3] >= 'a') && (str[3] <= 'f'))
+		b = 10 + str[3] - 'a';
+	else
+		b = str[3] - '0';
+
+	return a * 16 + b;
+}
+
 %}
 DIGIT		[0-9]
 HEXDIGIT	[0-9abcdef]
@@ -30,13 +50,13 @@ ULETTER		[A-Z]
 LETTER		[a-zA-Z]
 GLYPH		[a-zA-Z0-9]
 %x COMMENT DESC OPBASE REGNAME OPHINTS CONSTANT
-%option stack debug
+%option stack 
 
 %%
 
 "\n"				line_counter ++;
 table				return TK_TABLE;
-{LLETTER}{GLYPH}*			return TK_TABLENAME;
+{LLETTER}{GLYPH}*	yylval.token = yytext;	return TK_TABLENAME;
 "{"					yy_push_state(DESC); return '{';
 <INITIAL,DESC,OPBASE,OPHINTS>[ \t]	/* empty */
 <INITIAL,DESC,OPBASE,OPHINTS>"#"		yy_push_state(COMMENT);
@@ -46,7 +66,7 @@ table				return TK_TABLE;
 
 <DESC>"X32"				return TK_X32;
 <DESC>"X64"				return TK_X64;
-<DESC>"0x"{HEXDIGIT}+		return TK_HEXNUMBER;
+<DESC>"0x"{HEXDIGIT}+		yylval.val = hextonum(yytext); return TK_HEXNUMBER;
 <DESC>":"					yy_push_state(OPBASE); return ':';
 <DESC>"}"				yy_pop_state(); return '}';
 <DESC>"{"				yy_push_state(DESC); return '{';
@@ -56,23 +76,23 @@ table				return TK_TABLE;
 
 <OPBASE,OPHINTS>\n			line_counter ++; yy_pop_state();
 
-<OPBASE>{LLETTER}+			return TK_OPERATOR;
+<OPBASE>{LLETTER}+			yylval.token = yytext; return TK_OPERATOR;
 <OPBASE>","					return ',';
-<OPBASE>{ULETTER}+{DIGIT}*	return TK_SPECIAL;
-<OPBASE>{ULETTER}{LLETTER}{1,2}	return TK_OPERADE;
+<OPBASE>{ULETTER}+{DIGIT}*	yylval.token = yytext; return TK_SPECIAL;
+<OPBASE>{ULETTER}{LLETTER}{1,2}	yylval.token = yytext; return TK_OPERADE;
 <OPBASE>\"			yy_push_state(REGNAME); return '"';
 <OPBASE>"|"			BEGIN(OPHINTS); return '|';
 <OPBASE>"'"					yy_push_state(CONSTANT);
-<CONSTANT>{DIGIT}+			return TK_CONSTANT;
+<CONSTANT>{DIGIT}+		yylval.token = yytext;	return TK_CONSTANT;
 <CONSTANT>"'"				yy_pop_state();
 <OPBASE>.					return ERROR;
 
-<REGNAME>{GLYPH}+	return TK_REGNAME;
+<REGNAME>{GLYPH}+ 	yylval.token = yytext; return TK_REGNAME;
 <REGNAME>"/"		return '/';
 <REGNAME>\"			yy_pop_state(); return '"';
 <REGNAME>.			return ERROR;
 
-<OPHINTS>{GLYPH}+	return TK_HINT;
+<OPHINTS>{GLYPH}+	yylval.token = yytext; return TK_HINT;
 <OPHINTS>","		return ',';
 <OPHINTS>"!"		return '!';
 <OPHINTS>.			return ERROR;
