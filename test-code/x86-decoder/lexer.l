@@ -1,6 +1,7 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
+#include "parser.tab.h"
 
 #ifndef YYTOKENTYPE
 enum tokentype {
@@ -28,8 +29,8 @@ LLETTER		[a-z]
 ULETTER		[A-Z]
 LETTER		[a-zA-Z]
 GLYPH		[a-zA-Z0-9]
-%x COMMENT DESC OPBASE REGNAME OPHINTS
-%option debug stack
+%x COMMENT DESC OPBASE REGNAME OPHINTS CONSTANT
+%option stack debug
 
 %%
 
@@ -50,6 +51,7 @@ table				return TK_TABLE;
 <DESC>"}"				yy_pop_state(); return '}';
 <DESC>"{"				yy_push_state(DESC); return '{';
 <DESC>"-"				return '-';
+<DESC>"\n"				line_counter ++;
 <DESC>.					return ERROR;
 
 <OPBASE,OPHINTS>\n			line_counter ++; yy_pop_state();
@@ -60,7 +62,9 @@ table				return TK_TABLE;
 <OPBASE>{ULETTER}{LLETTER}{1,2}	return TK_OPERADE;
 <OPBASE>\"			yy_push_state(REGNAME); return '"';
 <OPBASE>"|"			BEGIN(OPHINTS); return '|';
-<OPBASE>"'"{DIGIT}+"'"		return TK_CONSTANT;
+<OPBASE>"'"					yy_push_state(CONSTANT);
+<CONSTANT>{DIGIT}+			return TK_CONSTANT;
+<CONSTANT>"'"				yy_pop_state();
 <OPBASE>.					return ERROR;
 
 <REGNAME>{GLYPH}+	return TK_REGNAME;

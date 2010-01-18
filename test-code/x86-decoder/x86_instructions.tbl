@@ -55,14 +55,14 @@ table a2 {
 		0x48: inc "eDI"
 	}
 
-	0x50: push, "rAX/r8" | d64
-	0x51: push, "rCX/r9" | d64
-	0x52: push, "rDX/r10" | d64
-	0x53: push, "rBX/r11" | d64
-	0x54: push, "rSP/r12" | d64
-	0x55: push, "rBP/r13" | d64
-	0x56: push, "rSI/r14" | d64
-	0x57: push, "rDI/r15" | d64
+	0x50: push "rAX/r8" | d64
+	0x51: push "rCX/r9" | d64
+	0x52: push "rDX/r10" | d64
+	0x53: push "rBX/r11" | d64
+	0x54: push "rSP/r12" | d64
+	0x55: push "rBP/r13" | d64
+	0x56: push "rSI/r14" | d64
+	0x57: push "rDI/r15" | d64
 	
 	0x60: pusha | i64
 	0x61: popa | i64
@@ -77,78 +77,78 @@ table a2 {
 	# XXX address size impact the meaning of modrm
 	0x67: PREFIX4
 	
-	0x70: jo, Jb | f64 !
-	0x71: jno, Jb | f64 !
-	0x72: jb, Jb | f64 !
-	0x73: jae, Jb | f64 !
-	0x74: je, Jb | f64 !
-	0x75: jne, Jb | f64 !
-	0x76: jbe, Jb | f64 !
-	0x77: ja, Jb | f64 !
+	0x70: jo Jb | f64 !
+	0x71: jno Jb | f64 !
+	0x72: jb Jb | f64 !
+	0x73: jae Jb | f64 !
+	0x74: je Jb | f64 !
+	0x75: jne Jb | f64 !
+	0x76: jbe Jb | f64 !
+	0x77: ja Jb | f64 !
 
-	0x80: GRP1, Eb, Ib
-	0x81: GRP1, Ev, Iz
-	0x82: GRP1, Eb, Ib | i64
-	0x83: GRP1, Ev, Ib
+	0x80: GRP1 Eb, Ib
+	0x81: GRP1 Ev, Iz
+	0x82: GRP1 Eb, Ib | i64
+	0x83: GRP1 Ev, Ib
 
-	0x84: test, Eb, Gb
-	0x85: test, Ev, Gv
-	0x86: xchg, Eb, Gb
-	0x87: xchg, Ev, Gv
+	0x84: test Eb, Gb
+	0x85: test Ev, Gv
+	0x86: xchg Eb, Gb
+	0x87: xchg Ev, Gv
 
 	0x90: nop
-	0x91: xchg, "rAX", "rCX/r9"
-	0x92: xchg, "rAX", "rDX/r10"
-	0x93: xchg, "rAX", "rBX/r11"
-	0x94: xchg, "rAX", "rSP/r12"
-	0x95: xchg, "rAX", "rBP/r13"
-	0x96: xchg, "rAX", "rSI/r14"
-	0x97: xchg, "rAX", "rDI/r15"
+	0x91: xchg "rAX", "rCX/r9"
+	0x92: xchg "rAX", "rDX/r10"
+	0x93: xchg "rAX", "rBX/r11"
+	0x94: xchg "rAX", "rSP/r12"
+	0x95: xchg "rAX", "rBP/r13"
+	0x96: xchg "rAX", "rSI/r14"
+	0x97: xchg "rAX", "rDI/r15"
 
-	0xa0: mov, "AL", Ob
-	0xa1: mov, "rAX", Ov
-	0xa2: mov, Ob, "AL"
-	0xa3: mov, Ov, "rAX"
-	0xa4: movs, Xb, Yb
-	0xa5: movs, Xv, Yv
-	0xa6: cmps, Xb, Yb
-	0xa7: cmps, Xv, Yv
+	0xa0: mov "AL", Ob
+	0xa1: mov "rAX", Ov
+	0xa2: mov Ob, "AL"
+	0xa3: mov Ov, "rAX"
+	0xa4: movs Xb, Yb
+	0xa5: movs Xv, Yv
+	0xa6: cmps Xb, Yb
+	0xa7: cmps Xv, Yv
 
-	0xb0: mov, "AL/R8L", Ib
-	0xb1: mov, "CL/R9L", Ib
-	0xb2: mov, "DL/R10L", Ib
-	0xb3: mov, "BL/R11L", Ib
-	0xb4: mov, "AH/R12L", Ib
-	0xb5: mov, "CH/R13L", Ib
-	0xb6: mov, "DH/R14L", Ib
-	0xb7: mov, "BH/R15L", Ib
+	0xb0: mov "AL/R8L", Ib
+	0xb1: mov "CL/R9L", Ib
+	0xb2: mov "DL/R10L", Ib
+	0xb3: mov "BL/R11L", Ib
+	0xb4: mov "AH/R12L", Ib
+	0xb5: mov "CH/R13L", Ib
+	0xb6: mov "DH/R14L", Ib
+	0xb7: mov "BH/R15L", Ib
 
-	0xc0: GRP2, Eb, Ib | 1A
-	0xc1: GRP2, Ev, Ib | 1A
-	0xc2: retn, Iw | f64 !
+	0xc0: GRP2 Eb, Ib | 1A
+	0xc1: GRP2 Ev, Ib | 1A
+	0xc2: retn Iw | f64 !
 	0xc3: retn | f64 !
-	0xc4: les, Gz, Mp | i64
-	0xc5: lds, Gz, Mp | i64
-	0xc6: GRP11, Eb, Ib | 1A
-	0xc7: GRP11, Ev, Iz | 1A
+	0xc4: les Gz, Mp | i64
+	0xc5: lds Gz, Mp | i64
+	0xc6: GRP11 Eb, Ib | 1A
+	0xc7: GRP11 Ev, Iz | 1A
 
-	0xd0: GRP2, Eb, '1' | 1A
-	0xd1: GRP2, Ev, '1' | 1A
-	0xd2: GRP2, Eb, "CL" | 1A
-	0xd3: GRP2, Ev, "CL" | 1A
+	0xd0: GRP2 Eb, '1' | 1A
+	0xd1: GRP2 Ev, '1' | 1A
+	0xd2: GRP2 Eb, "CL" | 1A
+	0xd3: GRP2 Ev, "CL" | 1A
 	0xd4: amm Ib | i64
 	0xd5: aad Ib | i64
 	0xd6: BAD
 	0xd7: xlat
 
-	0xe0: loopne, Jb | f64 !
-	0xe1: loope, Jb | f64 !
-	0xe2: loop, Jb | f64 !
-	0xe3: jecxz, Jb | f64 !
-	0xe4: in, "AL", Ib
-	0xe5: in, "eAX", Ib
-	0xe6: out, Ib, "AL"
-	0xe7: out, Ib, "eAX"
+	0xe0: loopne Jb | f64 !
+	0xe1: loope Jb | f64 !
+	0xe2: loop Jb | f64 !
+	0xe3: jecxz Jb | f64 !
+	0xe4: in "AL", Ib
+	0xe5: in "eAX", Ib
+	0xe6: out Ib, "AL"
+	0xe7: out Ib, "eAX"
 
 	0xf0: PREFIX1
 	0xf1: BAD
