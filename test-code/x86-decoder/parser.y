@@ -4,6 +4,35 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include "x86_instructions.tbl.h"
+
+#ifndef PARSER_DEBUG_OUT
+# define printf(...)	do { } while(0)
+#endif
+
+static int nr_strdup = 0;
+static int nr_free = 0;
+
+static const char * table_name = NULL;
+
+char *
+xstrdup(const char * str)
+{
+	nr_strdup ++;
+	return strdup(str);
+}
+
+void
+xfree(void * ptr)
+{
+	nr_free ++;
+	free(ptr);
+}
+
+#define strdup xstrdup
+#define free xfree
+
+
 
 extern int line_counter;
 static void yyerror(const char *str)
@@ -19,6 +48,7 @@ static void
 begin_table(const char * tn)
 {
 	printf("begin table %s\n", tn);
+	table_name = tn;
 }
 
 static void
@@ -28,63 +58,57 @@ end_table(const char * tn)
 	free((void*)tn);
 }
 
-enum operator_type {
-	OPERATOR_NORMAL,
-	OPERATOR_SPECIAL,
-} operator_type;
-
-enum operade_type {
-	OPERADE_NORMAL,
-	OPERADE_CONSTANT,
-	OPERADE_REGISTERS,
-};
-
-struct regs {
-	const char * r1;
-	const char * r2;
-};
-#define BISON_REGS_DEFINED	(1)
-
 static int nr_operades = 0;
-static struct operade {
-	enum operade_type type;
-	union {
-		struct regs regs;
-		const char * normal;
-		int constant;
-	} u;
-} operades[10];
+static struct _operade operades[4];
 
 static int nr_hints = 0;
-static struct hint {
-	const char * hint;
-} hints[10];
+static struct _hint hints[4];
 static int jmpnote = 0;
 
 
-const char * operator = NULL;
+static const char * operator = NULL;
 static int table_head = 32;
 
-static struct entry_rng {
-	int start;
-	int end;
-} rng;
+static struct _entry_rng rng;
 
 void
 new_description()
 {
-	printf("0x%x-0x%x %s", rng.start, rng.end,
+
+	int _th = (table_head == 132) ? 32 : table_head;
+	if (table_head == 132) {
+		hints[nr_hints].hint = strdup("i64");
+		nr_hints ++;
+	}
+
+	if (table_head == 64) {
+		hints[nr_hints].hint = strdup("o64");
+		nr_hints ++;
+	}
+
+	add_descriptor(
+		table_name,
+		_th,
+		operator,
+		rng,
+		nr_operades,
+		operades,
+		nr_hints,
+		hints,
+		jmpnote);
+
+	printf("%d:0x%x-0x%x %s", table_head, rng.start, rng.end,
 		operator);
 	free((void*)operator);
 	for (int i = 0; i < nr_operades; i++) {
-		struct operade o = operades[i];
-		if (o.type == OPERADE_NORMAL) {
+		struct _operade o = operades[i];
+		if (o.type == _OPERADE_NORMAL) {
 			printf(", %s", o.u.normal);
 			free((void*)(o.u.normal));
-		} else if (o.type == OPERADE_CONSTANT) {
+		} else if (o.type == _OPERADE_CONSTANT) {
 			printf(", '%d'", o.u.constant);
 		} else {
-			assert(o.type == OPERADE_REGISTERS);
+			assert(o.type == _OPERADE_REGISTERS);
 			printf(", \"%s/%s\"",
 				o.u.regs.r1, o.u.regs.r2);
 			if (o.u.regs.r1)
@@ -120,14 +144,7 @@ new_description()
 	char * token;
 	char * string;
 	int val;
-	#ifdef BISON_REGS_DEFINED
-	struct regs regs;
-	#else
-	struct regs {
-		const char r1;
-		const char r2;
-	} regs;
-	#endif
+	struct _regs regs;
 }
 
 %token <val> TK_HEXNUMBER
@@ -177,7 +194,7 @@ descriptor: normal_descriptor
 block_descriptor: blockhead '{' descriptors '}'	{ table_head = $1;}
 				;
 
-blockhead: TK_X32 { $$ = table_head; table_head = 32; }
+blockhead: TK_X32 { $$ = table_head; table_head = 132; }
 		 | TK_X64 { $$ = table_head; table_head = 64; }
 		 ;
 
@@ -188,8 +205,8 @@ opcode_rng: TK_HEXNUMBER	{ rng.start = rng.end = $1; }
 		  | TK_HEXNUMBER '-' TK_HEXNUMBER { rng.start = $1; rng.end = $3; }
 		  ;
 
-operator: TK_OPERATOR { operator_type = OPERATOR_NORMAL; operator = strdup($1); }
-		| TK_SPECIAL { operator_type = OPERATOR_SPECIAL; operator = strdup($1); }
+operator: TK_OPERATOR { operator_type = _OPERATOR_NORMAL; operator = strdup($1); }
+		| TK_SPECIAL { operator_type = _OPERATOR_SPECIAL; operator = strdup($1); }
 		;
 
 operades:	 /* empty */	{ nr_operades = 0; }
@@ -200,15 +217,15 @@ xxoperades: operade	{ nr_operades ++;}
 		  | xxoperades ',' operade { nr_operades ++;}
 
 operade: normal_operade	{
-		   operades[nr_operades].type = OPERADE_NORMAL;
+		   operades[nr_operades].type = _OPERADE_NORMAL;
 		   operades[nr_operades].u.normal = $1;
 	   }
 	   | '"' regname '"' {
-	   		operades[nr_operades].type = OPERADE_REGISTERS;
+	   		operades[nr_operades].type = _OPERADE_REGISTERS;
 			operades[nr_operades].u.regs = $2;
 	   }
 	   | constant        {
-	   		operades[nr_operades].type = OPERADE_CONSTANT;
+	   		operades[nr_operades].type = _OPERADE_CONSTANT;
 			operades[nr_operades].u.constant = $1;
 	   }
 	   ;
@@ -250,10 +267,14 @@ jmpnote:	/* empty */
 %%
 
 #ifdef TEST_PARSER
+extern void print_table(void);
 int main()
 {
 	yydebug = 0;
 	yyparse();
+	printf("nr_strdup = %d, nr_free = %d\n",
+		nr_strdup, nr_free);
+	print_table();
 	return 0;
 }
 #endif

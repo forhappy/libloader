@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
+#include "x86_instructions.tbl.h"
 #include "parser.tab.h"
 
 #ifndef YYTOKENTYPE

@@ -1,7 +1,7 @@
 # synt0xax:
 # table <name> { ... }
 
-table a2 {
+table onebyte {
 	0x00: add Eb, Gb
 	0x01: add Ev, Gv
 	0x02: add Gb, Eb
@@ -40,19 +40,19 @@ table a2 {
 
 # such group have "o64" automatically
 	X64 {
-		0x41-0x48: REX
+		0x40-0x47: REX
 	}
 	
 # such group have "i64" automatically
 	X32 {
-		0x41: inc "eAX"
-		0x42: inc "eCX"
-		0x43: inc "eDX"
-		0x44: inc "eBX"
-		0x45: inc "eSP"
-		0x46: inc "eBP"
-		0x47: inc "eSI"
-		0x48: inc "eDI"
+		0x40: inc "eAX"
+		0x41: inc "eCX"
+		0x42: inc "eDX"
+		0x43: inc "eBX"
+		0x44: inc "eSP"
+		0x45: inc "eBP"
+		0x46: inc "eSI"
+		0x47: inc "eDI"
 	}
 
 	0x50: push "rAX/r8" | d64
