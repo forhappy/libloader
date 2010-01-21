@@ -1,12 +1,13 @@
-# synt0xax:
+# syntax:
 # table <name> { ... }
 
 table onebyte {
+# table a-2/1
 	0x00: add Eb, Gb
 	0x01: add Ev, Gv
 	0x02: add Gb, Eb
 	0x03: add Gv, Ev
-	0x04: add "AL", Iz
+	0x04: add "AL", Ib
 	0x05: add "rAX", Iz
 	0x06: push "ES" | i64
 	0x07: pop "ES" | i64
@@ -158,6 +159,38 @@ table onebyte {
 	0xf5: cmc
 	0xf6: GRP3 Eb | 1A
 	0xf7: GRP3 Ev | 1A
+
+
+# table a-2/2
+
+	0x88: mov Eb, Gb
+	0x89: mov Ev, Gv
+	0x8a: mov Gb, Eb
+	0x8b: mov Gv, Ev
+
+	X64 {
+		0x48-0x4f: REX
+	}
+
+	X32 {
+		0x48: dec "eAX"
+		0x49: dec "eCX"
+		0x4a: dec "eDX"
+		0x4b: dec "eBX"
+		0x4c: dec "eSP"
+		0x4d: dec "eBP"
+		0x4e: dec "eSI"
+		0x4f: dec "eDI"
+	}
+
+	0x58: pop "rAX/r8" | d64
+	0x59: pop "rCX/r9" | d64
+	0x5a: pop "rDX/r10" | d64
+	0x5b: pop "rBX/r11" | d64
+	0x5c: pop "rSP/r12" | d64
+	0x5d: pop "rBP/r13" | d64
+	0x5e: pop "rSI/r14" | d64
+	0x5f: pop "rDI/r15" | d64
 }
 
 # vim:ts=4:sw=4

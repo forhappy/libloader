@@ -172,6 +172,7 @@ void add_descriptor(
 		struct _hint * __hints,
 		int jmpnote)
 {
+
 	/* if it is a x86_64 only instruction, omit */
 	if (head == 64)
 		return;
@@ -257,8 +258,8 @@ void add_descriptor(
 		/* jmpnote */
 		if (jmpnote)
 			inst->jmpnote = 1;
-
 	}
+
 
 	return;
 }
@@ -286,9 +287,9 @@ print_one_table(const char * head, struct opcode_table_entry * table)
 				printf("\t\t\t},\n");
 			}
 			printf("\t\t},\n");
-			if (inst.jmpnote)
-				printf("\t\t.jmpnote = 1,\n");
 		}
+		if (inst.jmpnote)
+			printf("\t\t.jmpnote = 1,\n");
 		printf("\t},\n");
 		printf("\n");
 	}
