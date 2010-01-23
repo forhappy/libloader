@@ -9,7 +9,8 @@
 #include <stdlib.h>
 
 
-extern struct opcode_table_entry normal_insts[256];
+extern const struct opcode_table_entry normal_insts[256];
+extern const struct opcode_table_entry group1_insts[8];
 
 /* if this instruction is jmp, then return NULL. if not, return
  * the address of next instruction */
@@ -21,14 +22,19 @@ next_inst(uint8_t * stream)
 	uint8_t prefix3 = 0;
 	uint8_t prefix4 = 0;
 	uint8_t opc;
-	struct opcode_table_entry * e = NULL;
+	struct opcode_table_entry inn_e;
+	const struct opcode_table_entry * e = NULL;
+	uint8_t modrm = 0;
+
+#define MOD(x)	(((x) & 0xc0)>>6)
+#define REG(x)	(((x) & 0x38)>>3)
+#define RM(x)	(((x) & 0x7))
 restart:
 	/* lookup in normal table */
 	opc = *stream;
 	stream ++;
 	e = &normal_insts[opc];
 
-	printf("instruction 0x%x:%s\n", opc, e->name);
 	switch (e->type) {
 		case INST_PREFIX1:
 			prefix1 = opc;
@@ -42,7 +48,6 @@ restart:
 		case INST_PREFIX4:
 			prefix4 = opc;
 			goto restart;
-
 		case INST_INVALID:
 			printf("invalid instruction 0x%x\n", opc);
 			exit(-1);
@@ -50,6 +55,10 @@ restart:
 		case INST_NORMAL:
 			break;
 		case INST_GROUP1:
+			modrm = *(stream);
+			inn_e = *e;
+			inn_e.name = group1_insts[REG(modrm)].name;
+			e = &inn_e;
 			break;
 		case INST_GROUP1A:
 		case INST_GROUP2:
@@ -74,6 +83,8 @@ restart:
 			exit(-1);
 	}
 
+	printf("instruction 0x%x:%s\n", opc, e->name);
+
 	if (e->jmpnote != 0)
 		return NULL;
 
@@ -82,7 +93,6 @@ restart:
 
 	/* modrm */
 	uint32_t flag = 0;
-	uint8_t modrm = 0;
 	int operade_size = 4;
 	int address_size = 4;
 	/* prefix group 3 */
@@ -95,12 +105,10 @@ restart:
 		flag |= e->operades[i].addressing;
 
 	/* modrm and disp */
-	if (flag & REQ_MODRM) {
+	if ((flag & REQ_MODRM) || 
+		((e->type >= INST_GROUP1) && (e->type <= INST_GROUP16))) {
 		modrm = *stream;
 		stream ++;
-#define MOD(x)	(((x) & 0xc0)>>6)
-#define REG(x)	(((x) & 0x38)>>3)
-#define RM(x)	(((x) & 0x7))
 		/* SIB */
 		uint8_t mod_rm = (modrm & 0xc7);
 		if (address_size == 2) {
@@ -121,7 +129,7 @@ restart:
 				disp = 4;
 			if (MOD(modrm) == 0x01)
 				disp = 1;
-			else if (MOD(modrm == 0x02))
+			else if (MOD(modrm) == 0x02)
 				disp = 4;
 			if (have_sib)
 				stream += 1;

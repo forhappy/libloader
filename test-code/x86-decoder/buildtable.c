@@ -17,6 +17,23 @@ static struct opcode_table_entry normal_insts[256];
 static struct opcode_table_entry twobytes_insts[256];
 static struct opcode_table_entry threebytes_0f38_insts[256];
 static struct opcode_table_entry threebytes_0f3a_insts[256];
+static struct opcode_table_entry group1_insts[8];
+static struct opcode_table_entry group1a_insts[8];
+static struct opcode_table_entry group2_insts[8];
+static struct opcode_table_entry group3_insts[8];
+static struct opcode_table_entry group4_insts[8];
+static struct opcode_table_entry group5_insts[8];
+static struct opcode_table_entry group6_insts[8];
+static struct opcode_table_entry group7_insts[8];
+static struct opcode_table_entry group8_insts[8];
+static struct opcode_table_entry group9_insts[8];
+static struct opcode_table_entry group10_insts[8];
+static struct opcode_table_entry group11_insts[8];
+static struct opcode_table_entry group12_insts[8];
+static struct opcode_table_entry group13_insts[8];
+static struct opcode_table_entry group14_insts[8];
+static struct opcode_table_entry group15_insts[8];
+static struct opcode_table_entry group16_insts[8];
 
 static void
 set_normal_operade(struct operade * d, struct _operade * s)
@@ -208,11 +225,45 @@ void add_descriptor(
 	if (strcmp(table, "onebyte") == 0)
 		inst_table = normal_insts;
 	else if (strcmp(table, "twobytes") == 0)
-		inst_table == twobytes_insts;
+		inst_table = twobytes_insts;
 	else if (strcmp(table, "threebytes_0f38") == 0)
-		inst_table == threebytes_0f38_insts;
+		inst_table = threebytes_0f38_insts;
 	else if (strcmp(table, "threebytes_0f3a") == 0)
-		inst_table == threebytes_0f3a_insts;
+		inst_table = threebytes_0f3a_insts;
+	else if (strcmp(table, "group1") == 0)
+		inst_table = group1_insts;
+	else if (strcmp(table, "group1a") == 0)
+		inst_table = group1a_insts;
+	else if (strcmp(table, "group2") == 0)
+		inst_table = group2_insts;
+	else if (strcmp(table, "group3") == 0)
+		inst_table = group3_insts;
+	else if (strcmp(table, "group4") == 0)
+		inst_table = group4_insts;
+	else if (strcmp(table, "group5") == 0)
+		inst_table = group5_insts;
+	else if (strcmp(table, "group6") == 0)
+		inst_table = group6_insts;
+	else if (strcmp(table, "group7") == 0)
+		inst_table = group7_insts;
+	else if (strcmp(table, "group8") == 0)
+		inst_table = group8_insts;
+	else if (strcmp(table, "group9") == 0)
+		inst_table = group9_insts;
+	else if (strcmp(table, "group10") == 0)
+		inst_table = group10_insts;
+	else if (strcmp(table, "group11") == 0)
+		inst_table = group11_insts;
+	else if (strcmp(table, "group12") == 0)
+		inst_table = group12_insts;
+	else if (strcmp(table, "group13") == 0)
+		inst_table = group13_insts;
+	else if (strcmp(table, "group14") == 0)
+		inst_table = group14_insts;
+	else if (strcmp(table, "group15") == 0)
+		inst_table = group15_insts;
+	else if (strcmp(table, "group16") == 0)
+		inst_table = group16_insts;
 	else {
 		printf("wrong table %s\n", table);
 		exit(1);
@@ -267,8 +318,12 @@ void add_descriptor(
 static void
 print_one_table(const char * head, struct opcode_table_entry * table)
 {
-	printf("struct opcode_table_entry %s[256] = {\n", head);
-	for (int i = 0; i < 256; i++) {
+	int nr_opc = 256;
+	if (strncmp(head, "group", 5) == 0)
+		nr_opc = 8;
+	printf("struct opcode_table_entry %s[%d] = {\n", head, nr_opc);
+
+	for (int i = 0; i < nr_opc; i++) {
 		struct opcode_table_entry inst = table[i];
 		if (inst.type == INST_INVALID)
 			continue;
@@ -309,6 +364,25 @@ void print_table(void)
 			threebytes_0f38_insts);
 	print_one_table("threebytes_0f3a_insts",
 			threebytes_0f3a_insts);
+
+	print_one_table("group1_insts", group1_insts);
+	print_one_table("group1a_insts", group1a_insts);
+	print_one_table("group2_insts", group2_insts);
+	print_one_table("group3_insts", group3_insts);
+	print_one_table("group4_insts", group4_insts);
+	print_one_table("group5_insts", group5_insts);
+	print_one_table("group6_insts", group6_insts);
+	print_one_table("group7_insts", group7_insts);
+	print_one_table("group8_insts", group8_insts);
+	print_one_table("group9_insts", group9_insts);
+	print_one_table("group10_insts", group10_insts);
+	print_one_table("group11_insts", group11_insts);
+	print_one_table("group12_insts", group12_insts);
+	print_one_table("group13_insts", group13_insts);
+	print_one_table("group14_insts", group14_insts);
+	print_one_table("group15_insts", group15_insts);
+	print_one_table("group16_insts", group16_insts);
+
 	printf("// vim:ts=4:sw=4\n");
 	return;
 }

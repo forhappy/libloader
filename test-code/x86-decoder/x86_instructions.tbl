@@ -193,5 +193,16 @@ table onebyte {
 	0x5f: pop "rDI/r15" | d64
 }
 
+table group1 {
+	0x00: add
+	0x01: or
+	0x02: adc
+	0x03: sbb
+	0x04: and
+	0x05: sub
+	0x06: xor
+	0x07: cmp
+}
+
 # vim:ts=4:sw=4
 
