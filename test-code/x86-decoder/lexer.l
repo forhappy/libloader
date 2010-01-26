@@ -49,7 +49,7 @@ HEXDIGIT	[0-9abcdef]
 LLETTER		[a-z]
 ULETTER		[A-Z]
 LETTER		[a-zA-Z]
-GLYPH		[a-zA-Z0-9]
+GLYPH		[a-zA-Z0-9_-]
 %x COMMENT DESC OPBASE REGNAME OPHINTS CONSTANT
 %option stack 
 
@@ -57,7 +57,7 @@ GLYPH		[a-zA-Z0-9]
 
 "\n"				line_counter ++;
 table				return TK_TABLE;
-{LLETTER}{GLYPH}*	yylval.token = yytext;	return TK_TABLENAME;
+{LLETTER}{GLYPH}*	yylval.token = yytext; return TK_TABLENAME;
 "{"					yy_push_state(DESC); return '{';
 <INITIAL,DESC,OPBASE,OPHINTS>[ \t]	/* empty */
 <INITIAL,DESC,OPBASE,OPHINTS>"#"		yy_push_state(COMMENT);

@@ -20,7 +20,8 @@ static struct opcode_table_entry threebytes_0f3a_insts[256];
 static struct opcode_table_entry group1_insts[8];
 static struct opcode_table_entry group1a_insts[8];
 static struct opcode_table_entry group2_insts[8];
-static struct opcode_table_entry group3_insts[8];
+static struct opcode_table_entry group3_0xf6_insts[8];
+static struct opcode_table_entry group3_0xf7_insts[8];
 static struct opcode_table_entry group4_insts[8];
 static struct opcode_table_entry group5_insts[8];
 static struct opcode_table_entry group6_insts[8];
@@ -203,7 +204,7 @@ void add_descriptor(
 				set_normal_operade(&operades[i], &__operades[i]);
 				break;
 			case _OPERADE_CONSTANT:
-				operades[i].addressing = REQ_OPERADE_CONSTANT | __operades[i].u.constant;
+				operades[i].addressing = OPERADE_ADDRESSING_CONSTANT | __operades[i].u.constant;
 				break;
 			case _OPERADE_REGISTERS:
 				set_register_operade(&operades[i], &__operades[i]);
@@ -236,8 +237,10 @@ void add_descriptor(
 		inst_table = group1a_insts;
 	else if (strcmp(table, "group2") == 0)
 		inst_table = group2_insts;
-	else if (strcmp(table, "group3") == 0)
-		inst_table = group3_insts;
+	else if (strcmp(table, "group3_0xf6") == 0)
+		inst_table = group3_0xf6_insts;
+	else if (strcmp(table, "group3_0xf7") == 0)
+		inst_table = group3_0xf7_insts;
 	else if (strcmp(table, "group4") == 0)
 		inst_table = group4_insts;
 	else if (strcmp(table, "group5") == 0)
@@ -368,7 +371,8 @@ void print_table(void)
 	print_one_table("group1_insts", group1_insts);
 	print_one_table("group1a_insts", group1a_insts);
 	print_one_table("group2_insts", group2_insts);
-	print_one_table("group3_insts", group3_insts);
+	print_one_table("group3_0xf6_insts", group3_0xf6_insts);
+	print_one_table("group3_0xf7_insts", group3_0xf7_insts);
 	print_one_table("group4_insts", group4_insts);
 	print_one_table("group5_insts", group5_insts);
 	print_one_table("group6_insts", group6_insts);

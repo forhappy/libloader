@@ -7,10 +7,28 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 
 
 extern const struct opcode_table_entry normal_insts[256];
 extern const struct opcode_table_entry group1_insts[8];
+extern const struct opcode_table_entry group2_insts[8];
+extern const struct opcode_table_entry group11_insts[8];
+extern const struct opcode_table_entry group3_0xf6_insts[8];
+extern const struct opcode_table_entry group3_0xf7_insts[8];
+
+static inline void
+merge_operades(struct opcode_table_entry * d,
+		const struct opcode_table_entry * s)
+{
+	assert(d->nr_operades + s->nr_operades < 4);
+	int i, j;
+	for (i = d->nr_operades, j = 0; j < s->nr_operades; i++, j++)
+	{
+		d->operades[i] = s->operades[j];
+		d->nr_operades ++;
+	}
+}
 
 /* if this instruction is jmp, then return NULL. if not, return
  * the address of next instruction */
@@ -35,6 +53,7 @@ restart:
 	stream ++;
 	e = &normal_insts[opc];
 
+group_restart:
 	switch (e->type) {
 		case INST_PREFIX1:
 			prefix1 = opc;
@@ -58,11 +77,45 @@ restart:
 			modrm = *(stream);
 			inn_e = *e;
 			inn_e.name = group1_insts[REG(modrm)].name;
+			inn_e.type = group1_insts[REG(modrm)].type;
+			merge_operades(&inn_e, &group1_insts[REG(modrm)]);
 			e = &inn_e;
 			break;
-		case INST_GROUP1A:
+
 		case INST_GROUP2:
-		case INST_GROUP3:
+			modrm = *(stream);
+			inn_e = *e;
+			inn_e.name = group2_insts[REG(modrm)].name;
+			inn_e.type = group2_insts[REG(modrm)].type;
+			merge_operades(&inn_e, &group2_insts[REG(modrm)]);
+			e = &inn_e;
+			break;
+		case INST_GROUP11:
+			modrm = *(stream);
+			inn_e = *e;
+			inn_e.name = group11_insts[REG(modrm)].name;
+			inn_e.type = group11_insts[REG(modrm)].type;
+			merge_operades(&inn_e, &group11_insts[REG(modrm)]);
+			e = &inn_e;
+			break;
+		case INST_GROUP3: {
+			modrm = *(stream);
+			inn_e = *e;
+			const struct opcode_table_entry * __e = NULL;
+			assert((opc == 0xf6) || (opc == 0xf7));
+			if (opc == 0xf6)
+				__e = &group3_0xf6_insts[REG(modrm)];
+			else
+				__e = &group3_0xf7_insts[REG(modrm)];
+			inn_e.name = __e->name;
+			inn_e.type = __e->type;
+			merge_operades(&inn_e, __e);
+			e = &inn_e;
+		}
+			break;
+
+		case INST_GROUP1A:
+
 		case INST_GROUP4:
 		case INST_GROUP5:
 		case INST_GROUP6:
@@ -70,7 +123,6 @@ restart:
 		case INST_GROUP8:
 		case INST_GROUP9:
 		case INST_GROUP10:
-		case INST_GROUP11:
 		case INST_GROUP12:
 		case INST_GROUP13:
 		case INST_GROUP14:
