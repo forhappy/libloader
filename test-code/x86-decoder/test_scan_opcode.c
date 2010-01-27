@@ -225,13 +225,13 @@ int main()
 	uint8_t * ptr = (uint8_t*)func;
 	uint8_t * prev_ptr = ptr;
 	int i = 0, j = 0;
-#if 0
 	do {
 		printf("%p:%d: ", ptr, i++);
 		ptr = next_inst(ptr);
 	} while (ptr != NULL);
 
 
+#if 0
 	ptr = (uint8_t*)func2;
 	prev_ptr = ptr;
 	i = 0, j = 0;
@@ -239,7 +239,6 @@ int main()
 		printf("%p:%d: ", ptr, i++);
 		ptr = next_inst(ptr);
 	} while (ptr != NULL);
-#endif
 
 	ptr = (uint8_t*)func3;
 	prev_ptr = ptr;
@@ -249,6 +248,7 @@ int main()
 		ptr = next_inst(ptr);
 	} while (ptr != NULL);
 
+#endif
 
 	return 0;
 }

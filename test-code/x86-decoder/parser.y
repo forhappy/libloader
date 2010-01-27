@@ -206,7 +206,7 @@ opcode_rng: TK_HEXNUMBER	{ rng.start = rng.end = $1; }
 		  ;
 
 operator: TK_OPERATOR { operator_type = _OPERATOR_NORMAL; operator = strdup($1); }
-		| TK_SPECIAL { operator_type = _OPERATOR_SPECIAL; operator = strdup($1); }
+		| TK_SPECIAL { operator_type = _OPERATOR_SPECIAL; operator = strdup($1);}
 		;
 
 operades:	 /* empty */	{ nr_operades = 0; }

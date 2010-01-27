@@ -11,27 +11,7 @@
 
 
 extern const struct opcode_table_entry normal_insts[256];
-extern const struct opcode_table_entry group1_insts[8];
-extern const struct opcode_table_entry group2_insts[8];
-extern const struct opcode_table_entry group11_insts[8];
-extern const struct opcode_table_entry group3_0xf6_insts[8];
-extern const struct opcode_table_entry group3_0xf7_insts[8];
-extern const struct opcode_table_entry group4_insts[8];
-extern const struct opcode_table_entry group5_insts[8];
-extern const struct opcode_table_entry group1A_insts[8];
-
-static inline void
-merge_operades(struct opcode_table_entry * d,
-		const struct opcode_table_entry * s)
-{
-	assert(d->nr_operades + s->nr_operades < 4);
-	int i, j;
-	for (i = d->nr_operades, j = 0; j < s->nr_operades; i++, j++)
-	{
-		d->operades[i] = s->operades[j];
-		d->nr_operades ++;
-	}
-}
+extern const struct opcode_table_entry group_insts[NR_GROUPS][8];
 
 /* if this instruction is jmp, then return NULL. if not, return
  * the address of next instruction */
@@ -76,74 +56,39 @@ group_restart:
 			break;
 		case INST_NORMAL:
 			break;
-		case INST_GROUP1:
-			modrm = *(stream);
-			inn_e = *e;
-			inn_e.name = group1_insts[REG(modrm)].name;
-			inn_e.type = group1_insts[REG(modrm)].type;
-			merge_operades(&inn_e, &group1_insts[REG(modrm)]);
-			e = &inn_e;
+		
+		case INST_GROUP1_0x80:
+		case INST_GROUP1_0x81:
+		case INST_GROUP1_0x82:
+		case INST_GROUP1_0x83:
+		case INST_GROUP1A_0x8f:
+		case INST_GROUP2_0xc0:
+		case INST_GROUP2_0xc1:
+		case INST_GROUP2_0xd0:
+		case INST_GROUP2_0xd1:
+		case INST_GROUP2_0xd2:
+		case INST_GROUP2_0xd3:
+		case INST_GROUP3_0xf6:
+		case INST_GROUP3_0xf7:
+		case INST_GROUP4_0xfe:
+		case INST_GROUP5_0xff:
+		case INST_GROUP6_0x0f00:
+		case INST_GROUP7_0x0f01_mem:
+		case INST_GROUP7_0x0f01_11:
+		case INST_GROUP8_0x0fba:
+		case INST_GROUP9_0x0fc7:
+		case INST_GROUP10_0x0fb9:
+		case INST_GROUP11_0xc6:
+		case INST_GROUP11_0xc7:
+		case INST_GROUP12_0x0f71:
+		case INST_GROUP13_0x0f72:
+		case INST_GROUP14_0x0f73:
+		case INST_GROUP15_0x0fae:
+		case INST_GROUP16_0x0f18:
+			modrm = *stream;
+			e = &(group_insts[e->type - INST_GROUP_start - 1]
+					[REG(modrm)]);
 			break;
-
-		case INST_GROUP2:
-			modrm = *(stream);
-			inn_e = *e;
-			inn_e.name = group2_insts[REG(modrm)].name;
-			inn_e.type = group2_insts[REG(modrm)].type;
-			merge_operades(&inn_e, &group2_insts[REG(modrm)]);
-			e = &inn_e;
-			break;
-		case INST_GROUP11:
-			modrm = *(stream);
-			inn_e = *e;
-			inn_e.name = group11_insts[REG(modrm)].name;
-			inn_e.type = group11_insts[REG(modrm)].type;
-			merge_operades(&inn_e, &group11_insts[REG(modrm)]);
-			e = &inn_e;
-			break;
-		case INST_GROUP3: {
-			modrm = *(stream);
-			inn_e = *e;
-			const struct opcode_table_entry * __e = NULL;
-			assert((opc == 0xf6) || (opc == 0xf7));
-			if (opc == 0xf6)
-				__e = &group3_0xf6_insts[REG(modrm)];
-			else
-				__e = &group3_0xf7_insts[REG(modrm)];
-			inn_e.name = __e->name;
-			inn_e.type = __e->type;
-			merge_operades(&inn_e, __e);
-			e = &inn_e;
-		}
-			break;
-		case INST_GROUP4:
-			modrm = *(stream);
-			inn_e = *e;
-			inn_e.name = group4_insts[REG(modrm)].name;
-			inn_e.type = group4_insts[REG(modrm)].type;
-			merge_operades(&inn_e, &group4_insts[REG(modrm)]);
-			e = &inn_e;
-			break;
-		case INST_GROUP5:
-			modrm = *(stream);
-			inn_e = *e;
-			inn_e.name = group5_insts[REG(modrm)].name;
-			inn_e.type = group5_insts[REG(modrm)].type;
-			merge_operades(&inn_e, &group5_insts[REG(modrm)]);
-			e = &inn_e;
-			break;
-		case INST_GROUP1A:
-
-		case INST_GROUP6:
-		case INST_GROUP7:
-		case INST_GROUP8:
-		case INST_GROUP9:
-		case INST_GROUP10:
-		case INST_GROUP12:
-		case INST_GROUP13:
-		case INST_GROUP14:
-		case INST_GROUP15:
-		case INST_GROUP16:
 		case INST_ESCAPE:
 		case INST_SPECIAL:
 		default:
@@ -160,7 +105,6 @@ group_restart:
 		return stream;
 
 	/* modrm */
-	uint32_t flag = 0;
 	int operade_size = 4;
 	int address_size = 4;
 	/* prefix group 3 */
@@ -169,12 +113,9 @@ group_restart:
 	if (prefix4 == 0x67)
 		address_size = 2;
 
-	for (int i = 0; i < e->nr_operades; i++)
-		flag |= e->operades[i].addressing;
-
 	/* modrm and disp */
-	if ((flag & REQ_MODRM) || 
-		((e->type >= INST_GROUP1) && (e->type <= INST_GROUP16))) {
+	if ((e->req_modrm) || 
+		((e->type >= INST_GROUP_start) && (e->type <= INST_GROUP_end))) {
 		modrm = *stream;
 		stream ++;
 		/* SIB */

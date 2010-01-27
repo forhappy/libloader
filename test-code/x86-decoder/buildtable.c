@@ -12,29 +12,46 @@
 #include "x86_opcode.h"
 #include "x86_registers.h"
 
-
 static struct opcode_table_entry normal_insts[256];
 static struct opcode_table_entry twobytes_insts[256];
 static struct opcode_table_entry threebytes_0f38_insts[256];
 static struct opcode_table_entry threebytes_0f3a_insts[256];
-static struct opcode_table_entry group1_insts[8];
-static struct opcode_table_entry group1a_insts[8];
-static struct opcode_table_entry group2_insts[8];
-static struct opcode_table_entry group3_0xf6_insts[8];
-static struct opcode_table_entry group3_0xf7_insts[8];
-static struct opcode_table_entry group4_insts[8];
-static struct opcode_table_entry group5_insts[8];
-static struct opcode_table_entry group6_insts[8];
-static struct opcode_table_entry group7_insts[8];
-static struct opcode_table_entry group8_insts[8];
-static struct opcode_table_entry group9_insts[8];
-static struct opcode_table_entry group10_insts[8];
-static struct opcode_table_entry group11_insts[8];
-static struct opcode_table_entry group12_insts[8];
-static struct opcode_table_entry group13_insts[8];
-static struct opcode_table_entry group14_insts[8];
-static struct opcode_table_entry group15_insts[8];
-static struct opcode_table_entry group16_insts[8];
+
+static struct group_table_name_map_entry {
+	const char * string;
+} group_table_name_map[NR_GROUPS] = {
+	[TABLE_GROUP1_0x80] = "GRP1_0x80",
+	[TABLE_GROUP1_0x81] = "GRP1_0x81",
+	[TABLE_GROUP1_0x82] = "GRP1_0x82",
+	[TABLE_GROUP1_0x83] = "GRP1_0x83",
+	[TABLE_GROUP1A_0x8f] = "GRP1A_0x8f",
+	[TABLE_GROUP2_0xc0] = "GRP2_0xc0",
+	[TABLE_GROUP2_0xc1] = "GRP2_0xc1",
+	[TABLE_GROUP2_0xd0] = "GRP2_0xd0",
+	[TABLE_GROUP2_0xd1] = "GRP2_0xd1",
+	[TABLE_GROUP2_0xd2] = "GRP2_0xd2",
+	[TABLE_GROUP2_0xd3] = "GRP2_0xd3",
+	[TABLE_GROUP3_0xf6] = "GRP3_0xf6",
+	[TABLE_GROUP3_0xf7] = "GRP3_0xf7",
+	[TABLE_GROUP4_0xfe] = "GRP4_0xfe",
+	[TABLE_GROUP5_0xff] = "GRP5_0xff",
+	[TABLE_GROUP6_0x0f00] = "GRP6_0x0f00",
+	[TABLE_GROUP7_0x0f01_mem] = "GRP7_0x0f01_mem",
+	[TABLE_GROUP7_0x0f01_11] = "GRP7_0x0f01_11",
+	[TABLE_GROUP8_0x0fba] = "GRP8_0x0fba",
+	[TABLE_GROUP9_0x0fc7] = "GRP9_0x0fc7",
+	[TABLE_GROUP10_0x0fb9] = "GRP10_0f89",
+	[TABLE_GROUP11_0xc6] = "GRP11_0xc6",
+	[TABLE_GROUP11_0xc7] = "GRP11_0xc7",
+	[TABLE_GROUP12_0x0f71] = "GRP12_0x0f71",
+	[TABLE_GROUP13_0x0f72] = "GRP13_0x0f72",
+	[TABLE_GROUP14_0x0f73] = "GRP14_0x0f73",
+	[TABLE_GROUP15_0x0fae] = "GRP15_0x0fae",
+	[TABLE_GROUP16_0x0f18] = "GRP16_0x0f18",
+};
+
+static struct opcode_table_entry groups_table[NR_GROUPS][8];
+
 
 static void
 set_normal_operade(struct operade * d, struct _operade * s)
@@ -233,47 +250,19 @@ void add_descriptor(
 		inst_table = threebytes_0f38_insts;
 	else if (strcmp(table, "threebytes_0f3a") == 0)
 		inst_table = threebytes_0f3a_insts;
-	else if (strcmp(table, "group1") == 0)
-		inst_table = group1_insts;
-	else if (strcmp(table, "group1a") == 0)
-		inst_table = group1a_insts;
-	else if (strcmp(table, "group2") == 0)
-		inst_table = group2_insts;
-	else if (strcmp(table, "group3_0xf6") == 0)
-		inst_table = group3_0xf6_insts;
-	else if (strcmp(table, "group3_0xf7") == 0)
-		inst_table = group3_0xf7_insts;
-	else if (strcmp(table, "group4") == 0)
-		inst_table = group4_insts;
-	else if (strcmp(table, "group5") == 0)
-		inst_table = group5_insts;
-	else if (strcmp(table, "group6") == 0)
-		inst_table = group6_insts;
-	else if (strcmp(table, "group7") == 0)
-		inst_table = group7_insts;
-	else if (strcmp(table, "group8") == 0)
-		inst_table = group8_insts;
-	else if (strcmp(table, "group9") == 0)
-		inst_table = group9_insts;
-	else if (strcmp(table, "group10") == 0)
-		inst_table = group10_insts;
-	else if (strcmp(table, "group11") == 0)
-		inst_table = group11_insts;
-	else if (strcmp(table, "group12") == 0)
-		inst_table = group12_insts;
-	else if (strcmp(table, "group13") == 0)
-		inst_table = group13_insts;
-	else if (strcmp(table, "group14") == 0)
-		inst_table = group14_insts;
-	else if (strcmp(table, "group15") == 0)
-		inst_table = group15_insts;
-	else if (strcmp(table, "group16") == 0)
-		inst_table = group16_insts;
 	else {
-		printf("wrong table %s\n", table);
-		exit(1);
+		/* find the table */
+		int i;
+		for (i = 0; i < NR_GROUPS; i++) {
+			if (strcmp(table, group_table_name_map[i].string) == 0)
+				break;
+		}
+		if (i >= NR_GROUPS) {
+			printf("wrong table %s\n", table);
+			exit(-1);
+		}
+		inst_table = (groups_table[i]);
 	}
-
 
 	for (int i = rng.start; i <= rng.end; i++) {
 		struct opcode_table_entry * inst = &inst_table[i];
@@ -287,12 +276,17 @@ void add_descriptor(
 			if (strncmp("PREFIX", inst->name, 6) == 0) {
 				inst->type = INST_PREFIX1 + inst->name[6] - '1';
 			} else if (strncmp("GRP", inst->name, 3) == 0) {
-				if (strcmp("GRP1", inst->name) == 0)
-					inst->type = INST_GROUP1;
-				else if (strcmp("GRP1A", inst->name) == 0)
-					inst->type = INST_GROUP1A;
-				else
-					inst->type = INST_GROUP2 + atoi(&(inst->name[3])) - 2;
+				/* find group */
+				int i;
+				for (i = 0; i < NR_GROUPS; i++) {
+					if (strcmp(inst->name, group_table_name_map[i].string) == 0)
+						break;
+				}
+				if (i >= NR_GROUPS) {
+					printf("wrong group %s\n", inst->name);
+					exit(-1);
+				}
+				inst->type = INST_GROUP_start + 1 + i;
 			} else if (strcmp("INVALID", inst->name) == 0) {
 				inst->type = INST_INVALID;
 			} else if (strcmp("BAD", inst->name) == 0) {
@@ -315,23 +309,21 @@ void add_descriptor(
 		if (jmpnote)
 			inst->jmpnote = 1;
 	}
-
-
 	return;
 }
 
 static void
-print_one_table(const char * head, struct opcode_table_entry * table)
+print_one_table(const char * head, struct opcode_table_entry * table,
+		int nr_opc)
 {
-	int nr_opc = 256;
-	if (strncmp(head, "group", 5) == 0)
-		nr_opc = 8;
-	printf("struct opcode_table_entry %s[%d] = {\n", head, nr_opc);
+	if (nr_opc == 256)
+		printf("struct opcode_table_entry %s[%d] = {\n", head, nr_opc);
 
 	for (int i = 0; i < nr_opc; i++) {
 		struct opcode_table_entry inst = table[i];
 		if (inst.type == INST_INVALID)
 			continue;
+		int flag = 0;
 		printf("\t[0x%x] = {\n", i);
 		printf("\t\t.type = %d,\n", inst.type);
 		printf("\t\t.name = \"%s\",\n", inst.name);
@@ -341,6 +333,7 @@ print_one_table(const char * head, struct opcode_table_entry * table)
 			for (int j = 0; j < inst.nr_operades; j++) {
 				printf("\t\t\t[%d] = {\n", j);
 				printf("\t\t\t\t.addressing = 0x%x,\n", inst.operades[j].addressing);
+				flag |= inst.operades[j].addressing;
 				printf("\t\t\t\t.size = 0x%x,\n", inst.operades[j].size);
 				if (inst.operades[j].addressing & OPERADE_ADDRESSING_REGISTER)
 					printf("\t\t\t\t.reg_num = 0x%x,\n", inst.operades[j].reg_num);
@@ -348,12 +341,14 @@ print_one_table(const char * head, struct opcode_table_entry * table)
 			}
 			printf("\t\t},\n");
 		}
+		printf("\t\t.req_modrm = %d,\n", (flag & REQ_MODRM) ? 1 : 0);
 		if (inst.jmpnote)
 			printf("\t\t.jmpnote = 1,\n");
 		printf("\t},\n");
 		printf("\n");
 	}
-	printf("};\n");
+	if (nr_opc == 256)
+		printf("};\n");
 	printf("\n");
 }
 
@@ -362,33 +357,20 @@ void print_table(void)
 	printf("#include \"x86_opcode.h\"\n");
 	printf("// ----------------- begin print tables --------------\n");
 	print_one_table("normal_insts",
-			normal_insts);
+			normal_insts, 256);
 	print_one_table("twobytes_insts",
-			twobytes_insts);
+			twobytes_insts, 256);
 	print_one_table("threebytes_0f38_insts",
-			threebytes_0f38_insts);
+			threebytes_0f38_insts, 256);
 	print_one_table("threebytes_0f3a_insts",
-			threebytes_0f3a_insts);
-
-	print_one_table("group1_insts", group1_insts);
-	print_one_table("group1a_insts", group1a_insts);
-	print_one_table("group2_insts", group2_insts);
-	print_one_table("group3_0xf6_insts", group3_0xf6_insts);
-	print_one_table("group3_0xf7_insts", group3_0xf7_insts);
-	print_one_table("group4_insts", group4_insts);
-	print_one_table("group5_insts", group5_insts);
-	print_one_table("group6_insts", group6_insts);
-	print_one_table("group7_insts", group7_insts);
-	print_one_table("group8_insts", group8_insts);
-	print_one_table("group9_insts", group9_insts);
-	print_one_table("group10_insts", group10_insts);
-	print_one_table("group11_insts", group11_insts);
-	print_one_table("group12_insts", group12_insts);
-	print_one_table("group13_insts", group13_insts);
-	print_one_table("group14_insts", group14_insts);
-	print_one_table("group15_insts", group15_insts);
-	print_one_table("group16_insts", group16_insts);
-
+			threebytes_0f3a_insts, 256);
+	printf("struct opcode_table_entry group_insts[%d][8] = {\n", NR_GROUPS);
+	for (int i = 0; i < NR_GROUPS; i++) {
+		printf("\t[%d] = {\n", i);
+		print_one_table(NULL, groups_table[i], 8);
+		printf("\t},\n");
+	}
+	printf("};\n");
 	printf("// vim:ts=4:sw=4\n");
 	return;
 }

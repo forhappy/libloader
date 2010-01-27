@@ -39,12 +39,12 @@ table onebyte {
 	0x36: PREFIX2
 	0x37: aaa | i64
 
-# such group have "o64" automatically
+# such GRP have "o64" automatically
 	X64 {
 		0x40-0x47: REX
 	}
 	
-# such group have "i64" automatically
+# such GRP have "i64" automatically
 	X32 {
 		0x40: inc "eAX"
 		0x41: inc "eCX"
@@ -87,12 +87,10 @@ table onebyte {
 	0x76: jbe Jb | f64 !
 	0x77: ja Jb | f64 !
 
-	0x80: GRP1 Eb, Ib
-	0x81: GRP1 Ev, Iz
-	0x82: GRP1 Eb, Ib | i64
-	0x83: GRP1 Ev, Ib
-
-
+	0x80: GRP1_0x80
+	0x81: GRP1_0x81
+	0x82: GRP1_0x82
+	0x83: GRP1_0x83
 
 	0x84: test Eb, Gb
 	0x85: test Ev, Gv
@@ -126,19 +124,19 @@ table onebyte {
 	0xb6: mov "DH/R14L", Ib
 	0xb7: mov "BH/R15L", Ib
 
-	0xc0: GRP2 Eb, Ib | 1A
-	0xc1: GRP2 Ev, Ib | 1A
+	0xc0: GRP2_0xc0
+	0xc1: GRP2_0xc1
 	0xc2: retn Iw | f64 !
 	0xc3: retn | f64 !
 	0xc4: les Gz, Mp | i64
 	0xc5: lds Gz, Mp | i64
-	0xc6: GRP11 Eb, Ib | 1A
-	0xc7: GRP11 Ev, Iz | 1A
+	0xc6: GRP11_0xc6
+	0xc7: GRP11_0xc7
 
-	0xd0: GRP2 Eb, '1' | 1A
-	0xd1: GRP2 Ev, '1' | 1A
-	0xd2: GRP2 Eb, "CL" | 1A
-	0xd3: GRP2 Ev, "CL" | 1A
+	0xd0: GRP2_0xd0
+	0xd1: GRP2_0xd1
+	0xd2: GRP2_0xd2
+	0xd3: GRP2_0xd3
 	0xd4: amm Ib | i64
 	0xd5: aad Ib | i64
 	0xd6: BAD
@@ -159,8 +157,8 @@ table onebyte {
 	0xf3: PREFIX1
 	0xf4: hlt
 	0xf5: cmc
-	0xf6: GRP3 Eb | 1A
-	0xf7: GRP3 Ev | 1A
+	0xf6: GRP3_0xf6
+	0xf7: GRP3_0xf7
 
 
 # table a-2/2
@@ -252,7 +250,7 @@ table onebyte {
 	0x8c: mov Ev, Sw
 	0x8d: lea Gv, Mxx
 	0x8e: mov Sw, Ew
-	0x8f: GRP1A
+	0x8f: GRP1A_0x8f
 
 	0x98: cwtl
 	0x99: cltd
@@ -307,68 +305,162 @@ table onebyte {
 	0xfb: sti
 	0xfc: cld
 	0xfd: std
-	0xfe: GRP4 | 1A
-	0xff: GRP5 | 1A
+	0xfe: GRP4_0xfe
+	0xff: GRP5_0xff
 }
 
-table group1 {
-	0x00: add
-	0x01: or
-	0x02: adc
-	0x03: sbb
-	0x04: and
-	0x05: sub
-	0x06: xor
-	0x07: cmp
+table GRP1_0x80 {
+	0x00: add Eb, Ib
+	0x01: or  Eb, Ib
+	0x02: adc Eb, Ib
+	0x03: sbb Eb, Ib
+	0x04: and Eb, Ib
+	0x05: sub Eb, Ib
+	0x06: xor Eb, Ib
+	0x07: cmp Eb, Ib
 }
 
-table group2 {
-	0x00: rol
-	0x01: ror
-	0x02: rcl
-	0x03: rcr
-	0x04: shl
-	0x05: shr
-	0x07: sar
+table GRP1_0x81 {
+	0x00: add Ev, Iz
+	0x01: or  Ev, Iz
+	0x02: adc Ev, Iz
+	0x03: sbb Ev, Iz
+	0x04: and Ev, Iz
+	0x05: sub Ev, Iz
+	0x06: xor Ev, Iz
+	0x07: cmp Ev, Iz
 }
 
-table group11 {
-	0x00: mov
+table GRP1_0x82 {
+	0x00: add Eb, Ib | i64
+	0x01: or  Eb, Ib | i64
+	0x02: adc Eb, Ib | i64
+	0x03: sbb Eb, Ib | i64
+	0x04: and Eb, Ib | i64
+	0x05: sub Eb, Ib | i64
+	0x06: xor Eb, Ib | i64
+	0x07: cmp Eb, Ib | i64
 }
 
-table group3_0xf6 {
-	0x00: test Ib
-	0x02: not
-	0x03: neg
-	0x04: mul "AL"
-	0x05: imul "AL"
-	0x06: div "AL"
-	0x07: idiv "AL"
+table GRP1_0x83 {
+	0x00: add Ev, Ib
+	0x01: or  Ev, Ib
+	0x02: adc Ev, Ib
+	0x03: sbb Ev, Ib
+	0x04: and Ev, Ib
+	0x05: sub Ev, Ib
+	0x06: xor Ev, Ib
+	0x07: cmp Ev, Ib
 }
 
-table group3_0xf7 {
-	0x00: test Iz
-	0x02: not
-	0x03: neg
-	0x04: mul "rAX"
-	0x05: imul "rAX"
-	0x06: div "rAX"
-	0x07: idiv "rAX"
+table GRP1A_0x8f {
+	0x00: pop Ev
 }
 
-table group4 {
-	0x00: inc Eb
-	0x01: dec Eb
+table GRP2_0xc0 {
+	0x00: rol Eb, Ib | 1A
+	0x01: ror Eb, Ib | 1A
+	0x02: rcl Eb, Ib | 1A
+	0x03: rcr Eb, Ib | 1A
+	0x04: shl Eb, Ib | 1A
+	0x05: shr Eb, Ib | 1A
+	0x07: sar Eb, Ib | 1A
 }
 
-table group5 {
-	0x00: inc Ev
-	0x01: dec Ev
-	0x02: calln Ev | f64 !
-	0x03: callf Ep | !
-	0x04: jmpn Ev | !
-	0x05: jmpf Ep | !
-	0x06: push Ev | d64
+table GRP2_0xc1 {
+	0x00: rol Ev, Ib | 1A
+	0x01: ror Ev, Ib | 1A
+	0x02: rcl Ev, Ib | 1A
+	0x03: rcr Ev, Ib | 1A
+	0x04: shl Ev, Ib | 1A
+	0x05: shr Ev, Ib | 1A
+	0x07: sar Ev, Ib | 1A
+}
+
+table GRP2_0xd0 {
+	0x00: rol Eb, '1' | 1A
+	0x01: ror Eb, '1' | 1A
+	0x02: rcl Eb, '1' | 1A
+	0x03: rcr Eb, '1' | 1A
+	0x04: shl Eb, '1' | 1A
+	0x05: shr Eb, '1' | 1A
+	0x07: sar Eb, '1' | 1A
+}
+
+
+table GRP2_0xd1 {
+	0x00: rol Ev, '1' | 1A
+	0x01: ror Ev, '1' | 1A
+	0x02: rcl Ev, '1' | 1A
+	0x03: rcr Ev, '1' | 1A
+	0x04: shl Ev, '1' | 1A
+	0x05: shr Ev, '1' | 1A
+	0x07: sar Ev, '1' | 1A
+}
+
+table GRP2_0xd2 {
+	0x00: rol Eb, "CL" | 1A
+	0x01: ror Eb, "CL" | 1A
+	0x02: rcl Eb, "CL" | 1A
+	0x03: rcr Eb, "CL" | 1A
+	0x04: shl Eb, "CL" | 1A
+	0x05: shr Eb, "CL" | 1A
+	0x07: sar Eb, "CL" | 1A
+}
+
+table GRP2_0xd3 {
+	0x00: rol Ev, "CL" | 1A
+	0x01: ror Ev, "CL" | 1A
+	0x02: rcl Ev, "CL" | 1A
+	0x03: rcr Ev, "CL" | 1A
+	0x04: shl Ev, "CL" | 1A
+	0x05: shr Ev, "CL" | 1A
+	0x07: sar Ev, "CL" | 1A
+}
+
+
+table GRP11_0xc6 {
+	0x00: mov Eb, Ib | 1A
+}
+
+table GRP11_0xc7 {
+	0x00: mov Ev, Iz | 1A
+}
+
+
+table GRP3_0xf6 {
+	0x00: test Eb, Ib | 1A
+	0x02: not Eb | 1A
+	0x03: neg Eb | 1A
+	0x04: mul Eb, "AL" | 1A
+	0x05: imul Eb, "AL" | 1A
+	0x06: div Eb, "AL" | 1A
+	0x07: idiv Eb, "AL" | 1A
+}
+
+table GRP3_0xf7 {
+	0x00: test Ev, Iz | 1A
+	0x02: not Ev | 1A
+	0x03: neg Ev | 1A
+	0x04: mul Ev, "rAX" | 1A
+	0x05: imul Ev, "rAX" | 1A
+	0x06: div Ev, "rAX" | 1A
+	0x07: idiv Ev, "rAX" | 1A
+}
+
+table GRP4_0xfe {
+	0x00: inc Eb | 1A
+	0x01: dec Eb | 1A
+}
+
+table GRP5_0xff {
+	0x00: inc Ev | 1A
+	0x01: dec Ev | 1A
+	0x02: calln Ev | 1A, f64 !
+	0x03: callf Ep | 1A !
+	0x04: jmpn Ev | 1A !
+	0x05: jmpf Ep | 1A !
+	0x06: push Ev | 1A, d64
 }
 
 # vim:ts=4:sw=4

@@ -57,6 +57,7 @@ GLYPH		[a-zA-Z0-9_-]
 
 "\n"				line_counter ++;
 table				return TK_TABLE;
+GRP{DIGIT}{GLYPH}+	yylval.token = yytext; return TK_TABLENAME;
 {LLETTER}{GLYPH}*	yylval.token = yytext; return TK_TABLENAME;
 "{"					yy_push_state(DESC); return '{';
 <INITIAL,DESC,OPBASE,OPHINTS>[ \t]	/* empty */
@@ -79,6 +80,7 @@ table				return TK_TABLE;
 
 <OPBASE>{LLETTER}+3{0,1}			yylval.token = yytext; return TK_OPERATOR;
 <OPBASE>","					return ',';
+<OPBASE>GRP{DIGIT}{GLYPH}+	yylval.token = yytext; return TK_SPECIAL;
 <OPBASE>{ULETTER}+{DIGIT}*+A{0,1}	yylval.token = yytext; return TK_SPECIAL;
 <OPBASE>{ULETTER}{LLETTER}{1,2}	yylval.token = yytext; return TK_OPERADE;
 <OPBASE>\"			yy_push_state(REGNAME); return '"';
