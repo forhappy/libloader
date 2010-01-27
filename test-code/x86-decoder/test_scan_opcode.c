@@ -6,6 +6,46 @@
 extern uint8_t *
 next_inst(uint8_t * stream);
 
+static void func3(void)
+{
+	asm volatile (
+		"orb %bh, (%eax)\n"
+		"orl %ebx, (%eax)\n"
+		"orb (%eax), %bh\n"
+		"orl (%eax), %ebx\n"
+		"orb $0x12, %al\n"
+		"orl $0x1345, %eax\n"
+		"orw $0x1345, %ax\n"
+		"push %cs\n"
+		"sbbb %bh, (%eax)\n"
+		"sbbw %cx, (%ebx)\n"
+		"sbbl (%esi), %edx\n"
+		"push %ds\n"
+		"pop %ds\n"
+		"das\n"
+		"cmpl (%esi), %ecx\n"
+		"aas\n"
+		"decl %esi\n"
+		"popl %esi\n"
+		"pushl $0x12348776\n"
+		"pushl (%eax)\n"
+		"imul $0x12, 0x123456(%ebx, %ecx, 4), %eax\n"
+		"insb\n"
+		"insw\n"
+		"insl\n"
+		"outsb\n"
+		"outsw\n"
+		"outsl\n"
+		"movb (%eax), %bl\n"
+		"movl (%ebx), %ebx\n"
+		"movw %bx, (%ebx)\n"
+		"movw %ds, (%eax)\n"
+		"lea 0x32(%edx, %ebx, 4), %eax\n"
+		"movw (%edx), %es\n"
+		"popl (%ecx)\n"
+		);
+}
+
 static void func2(void)
 {
 	asm volatile (
@@ -185,6 +225,7 @@ int main()
 	uint8_t * ptr = (uint8_t*)func;
 	uint8_t * prev_ptr = ptr;
 	int i = 0, j = 0;
+#if 0
 	do {
 		printf("%p:%d: ", ptr, i++);
 		ptr = next_inst(ptr);
@@ -198,7 +239,15 @@ int main()
 		printf("%p:%d: ", ptr, i++);
 		ptr = next_inst(ptr);
 	} while (ptr != NULL);
+#endif
 
+	ptr = (uint8_t*)func3;
+	prev_ptr = ptr;
+	i = 0, j = 0;
+	do {
+		printf("%p:%d: ", ptr, i++);
+		ptr = next_inst(ptr);
+	} while (ptr != NULL);
 
 
 	return 0;

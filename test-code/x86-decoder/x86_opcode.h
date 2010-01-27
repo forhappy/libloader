@@ -90,6 +90,7 @@ enum operade_size {
 	OP_SIZE_a	= RESPECT_OPERADE_SIZE | 0x0000ffff,
 										/* tow one-word operades in memory or two double-word
 				  						    operades in memory, only by BOUND instruction */
+	OP_SIZE_0	= 0,					/* doesn't really read the operade, only take its address, such as lea */
 	OP_SIZE_b	= IGN_OPERADE_SIZE | 1,		/* byte */
 	/* Very strange: seems no operator respect type of 'c' */
 	OP_SIZE_c	= RESPECT_OPERADE_SIZE | 1,		/* byte or word */

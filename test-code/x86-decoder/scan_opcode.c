@@ -16,6 +16,9 @@ extern const struct opcode_table_entry group2_insts[8];
 extern const struct opcode_table_entry group11_insts[8];
 extern const struct opcode_table_entry group3_0xf6_insts[8];
 extern const struct opcode_table_entry group3_0xf7_insts[8];
+extern const struct opcode_table_entry group4_insts[8];
+extern const struct opcode_table_entry group5_insts[8];
+extern const struct opcode_table_entry group1A_insts[8];
 
 static inline void
 merge_operades(struct opcode_table_entry * d,
@@ -113,11 +116,24 @@ group_restart:
 			e = &inn_e;
 		}
 			break;
-
+		case INST_GROUP4:
+			modrm = *(stream);
+			inn_e = *e;
+			inn_e.name = group4_insts[REG(modrm)].name;
+			inn_e.type = group4_insts[REG(modrm)].type;
+			merge_operades(&inn_e, &group4_insts[REG(modrm)]);
+			e = &inn_e;
+			break;
+		case INST_GROUP5:
+			modrm = *(stream);
+			inn_e = *e;
+			inn_e.name = group5_insts[REG(modrm)].name;
+			inn_e.type = group5_insts[REG(modrm)].type;
+			merge_operades(&inn_e, &group5_insts[REG(modrm)]);
+			e = &inn_e;
+			break;
 		case INST_GROUP1A:
 
-		case INST_GROUP4:
-		case INST_GROUP5:
 		case INST_GROUP6:
 		case INST_GROUP7:
 		case INST_GROUP8:

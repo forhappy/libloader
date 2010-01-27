@@ -77,9 +77,9 @@ table				return TK_TABLE;
 
 <OPBASE,OPHINTS>\n			line_counter ++; yy_pop_state();
 
-<OPBASE>{LLETTER}+			yylval.token = yytext; return TK_OPERATOR;
+<OPBASE>{LLETTER}+3{0,1}			yylval.token = yytext; return TK_OPERATOR;
 <OPBASE>","					return ',';
-<OPBASE>{ULETTER}+{DIGIT}*	yylval.token = yytext; return TK_SPECIAL;
+<OPBASE>{ULETTER}+{DIGIT}*+A{0,1}	yylval.token = yytext; return TK_SPECIAL;
 <OPBASE>{ULETTER}{LLETTER}{1,2}	yylval.token = yytext; return TK_OPERADE;
 <OPBASE>\"			yy_push_state(REGNAME); return '"';
 <OPBASE>"|"			BEGIN(OPHINTS); return '|';

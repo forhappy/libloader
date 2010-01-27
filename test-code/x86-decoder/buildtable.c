@@ -141,6 +141,8 @@ set_normal_operade(struct operade * d, struct _operade * s)
 		d->size = OP_SIZE_w;
 	else if (strcmp("z", str_sz) == 0)
 		d->size = OP_SIZE_z;
+	else if (strcmp("xx", str_sz) == 0)
+		d->size = OP_SIZE_0;
 	else {
 		printf("wrong operade size: %s\n", s->u.normal);
 		exit(-1);

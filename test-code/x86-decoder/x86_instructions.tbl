@@ -92,6 +92,8 @@ table onebyte {
 	0x82: GRP1 Eb, Ib | i64
 	0x83: GRP1 Ev, Ib
 
+
+
 	0x84: test Eb, Gb
 	0x85: test Ev, Gv
 	0x86: xchg Eb, Gb
@@ -163,10 +165,43 @@ table onebyte {
 
 # table a-2/2
 
-	0x88: mov Eb, Gb
-	0x89: mov Ev, Gv
-	0x8a: mov Gb, Eb
-	0x8b: mov Gv, Ev
+	0x08: or Eb, Gb
+	0x09: or Ev, Gv
+	0x0a: or Gb, Eb
+	0x0b: or Gv, Ev
+	0x0c: or "AL", Ib
+	0x0d: or "rAX", Iz
+	0x0e: pushcs | i64
+	0x0f: ESCAPE
+
+	0x18: sbb Eb, Gb
+	0x19: sbb Ev, Gv
+	0x1a: sbb Gb, Eb
+	0x1b: sbb Gv, Ev
+	0x1c: sbb "AL", Ib
+	0x1d: sbb "rAX", Iz
+	0x1e: pushds | i64
+	0x1f: popds
+
+	0x28: sub Eb, Gb
+	0x29: sub Ev, Gv
+	0x2a: sub Gb, Eb
+	0x2b: sub Gv, Ev
+	0x2c: sub "AL", Ib
+	0x2d: sub "rAX", Iz
+	0x2e: PREFIX2
+	0x2f: das | i64
+
+	0x38: cmp Eb, Gb
+	0x39: cmp Ev, Gv
+	0x3a: cmp Gb, Eb
+	0x3b: cmp Gv, Ev
+	0x3c: cmp "AL", Ib
+	0x3d: cmp "rAX", Iz
+	0x3e: PREFIX2
+	0x3f: aas | i64
+
+
 
 	X64 {
 		0x48-0x4f: REX
@@ -191,6 +226,89 @@ table onebyte {
 	0x5d: pop "rBP/r13" | d64
 	0x5e: pop "rSI/r14" | d64
 	0x5f: pop "rDI/r15" | d64
+
+	0x68: push Iz | d64
+	0x69: imul Gv, Ev, Iz
+	0x6a: push Ib
+	0x6b: imul Gv, Ev, Ib
+	0x6c: insb Yb, "DX"
+	0x6d: ins Yz, "DX"
+	0x6e: outs "DX", Xb
+	0x6f: outs "DX", Xz
+
+	0x78: js Jb | f64 !
+	0x79: jns Jb | f64 !
+	0x7a: jp Jb | f64 !
+	0x7b: jnp Jb | f64 !
+	0x7c: jl Jb | f64 !
+	0x7d: jge Jb | f64 !
+	0x7e: jle Jb | f64 !
+	0x7f: jg Jb | f64 !
+
+	0x88: mov Eb, Gb
+	0x89: mov Ev, Gv
+	0x8a: mov Gb, Eb
+	0x8b: mov Gv, Ev
+	0x8c: mov Ev, Sw
+	0x8d: lea Gv, Mxx
+	0x8e: mov Sw, Ew
+	0x8f: GRP1A
+
+	0x98: cwtl
+	0x99: cltd
+	0x9a: callf Ap | i64 !
+	0x9b: fwait
+	0x9c: pushf Fv
+	0x9d: popf Fv
+	0x9e: sahf
+	0x9f: lahf
+
+	0xa8: test "AL", Ib
+	0xa9: test "rAX", Iz
+	0xaa: stosb Yb, "AL"
+	0xab: stos Yv, "rAX"
+	0xac: lodsb "AL", Xb
+	0xad: lods "rAX", Xv
+	0xae: scasb "AL", Yb
+	0xaf: scas "rAX", Xv
+
+	0xb8: mov "rAX/r8", Iv
+	0xb9: mov "rCX/r9", Iv
+	0xba: mov "rDX/r10", Iv
+	0xbb: mov "rBX/r11", Iv
+	0xbc: mov "rSP/r12", Iv
+	0xbd: mov "rBP/r13", Iv
+	0xbe: mov "rSI/r14", Iv
+	0xbf: mov "rDI/r15", Iv
+
+	0xc8: enter Iw, Ib
+	0xc9: leave | d64
+	0xca: retf Iw | !
+	0xcb: retf | !
+	0xcc: int3 | !
+	0xcd: int | !
+	0xce: into | !
+	0xcf: iret
+
+	0xd8-0xdf: ESCAPE
+
+	0xe8: call Jz | !
+	0xe9: jmp Jz | f64 !
+	0xea: ljmp Ap | i64 !
+	0xeb: jmp Jb | f64 !
+	0xec: in "AL", "DX"
+	0xed: in "eAX", "DX"
+	0xee: out "DX", "AL"
+	0xef: out "DX", "eAX"
+
+	0xf8: clc
+	0xf9: stc
+	0xfa: cli
+	0xfb: sti
+	0xfc: cld
+	0xfd: std
+	0xfe: GRP4 | 1A
+	0xff: GRP5 | 1A
 }
 
 table group1 {
@@ -236,6 +354,21 @@ table group3_0xf7 {
 	0x05: imul "rAX"
 	0x06: div "rAX"
 	0x07: idiv "rAX"
+}
+
+table group4 {
+	0x00: inc Eb
+	0x01: dec Eb
+}
+
+table group5 {
+	0x00: inc Ev
+	0x01: dec Ev
+	0x02: calln Ev | f64 !
+	0x03: callf Ep | !
+	0x04: jmpn Ev | !
+	0x05: jmpf Ep | !
+	0x06: push Ev | d64
 }
 
 # vim:ts=4:sw=4

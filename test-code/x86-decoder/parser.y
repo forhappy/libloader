@@ -252,8 +252,9 @@ constant: TK_CONSTANT
 		}
 		;
 
-hints:	/* empty */ { nr_hints = 0; }
+hints: 	/* empty */ { nr_hints = 0; }
 	 | '|' xxhints
+	 | '|'	{ nr_hints = 0; }
 	 ;
 
 xxhints: TK_HINT { hints[nr_hints].hint = strdup($1); nr_hints ++; }
