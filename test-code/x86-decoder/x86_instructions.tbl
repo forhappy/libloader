@@ -281,8 +281,8 @@ table onebyte {
 
 	0xc8: enter Iw, Ib
 	0xc9: leave | d64
-	0xca: retf Iw | !
-	0xcb: retf | !
+	0xca: lret Iw | !
+	0xcb: lret | !
 	0xcc: int3 | !
 	0xcd: int | !
 	0xce: into | !

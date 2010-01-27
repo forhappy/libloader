@@ -172,6 +172,8 @@ group_restart:
 			case OP_ADDR_X:
 			case OP_ADDR_Y:
 				break;
+			case OP_ADDR_F:
+				break;
 			default:
 				if (!((addressing & REQ_MODRM) ||
 						(addressing & OPERADE_ADDRESSING_CONSTANT) ||

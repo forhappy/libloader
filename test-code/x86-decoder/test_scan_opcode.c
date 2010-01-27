@@ -43,6 +43,44 @@ static void func3(void)
 		"lea 0x32(%edx, %ebx, 4), %eax\n"
 		"movw (%edx), %es\n"
 		"popl (%ecx)\n"
+		"cwtl\n"
+		"cwd\n"
+		"fwait\n"
+		"pushf\n"
+		"popf\n"
+		"sahf\n"
+		"lahf\n"
+		"testb $0x12, %al\n"
+		"testw $0x1234, %ax\n"
+		"testl $0x112234, %eax\n"
+		"stosb %al, %es:(%edi)\n"
+		"stosw %ax, %es:(%edi)\n"
+		"stosl %eax, %es:(%edi)\n"
+		"lodsb %es:(%esi), %al\n"
+		"lodsw %es:(%esi), %ax\n"
+		"lodsl %es:(%esi), %eax\n"
+		"scasb %es:(%esi), %al\n"
+		"scasw %es:(%esi), %ax\n"
+		"scasl %es:(%esi), %eax\n"
+		"movl $0x1234, %eax\n"
+		"movw $0x1234, %ax\n"
+		"movb $0x12, %ah\n"
+		"enter $0x1234, $0x12\n"
+		"leave\n"
+		"in %dx, %al\n"
+		"in %dx, %eax\n"
+		"in %dx, %ax\n"
+		"clc\n"
+		"stc\n"
+		"cli\n"
+		"sti\n"
+		"cld\n"
+		"std\n"
+		"incb (%eax)\n"
+		"decb (%eax)\n"
+		"incw (%eax)\n"
+		"incl (%ebx)\n"
+		"pushl (%edx, %ebx, 4)\n"
 		);
 }
 
@@ -164,11 +202,11 @@ static void func(void)
 			"subb $0x13, 0x12346789\n"
 			"andb $0x13, 0x12345678(%ebx, %eax, 4)\n"
 
-			"subw $0x13, 0x12346789\n"
-			"andw $0x13, 0x12345678(%ebx, %eax, 4)\n"
+			"subw $0x1323, 0x12346789\n"
+			"andw $0x1312, 0x12345678(%ebx, %eax, 4)\n"
 
-			"subl $0x13, 0x12346789\n"
-			"andl $0x13, 0x12345678(%ebx, %eax, 4)\n"
+			"subl $0x1345, 0x12346789\n"
+			"andl $0x1314, 0x12345678(%ebx, %eax, 4)\n"
 
 			"addr16 subw $0x13, 0x1234\n"
 			"addr16 andw $0x13, 0x1234(%bx)\n"
@@ -225,13 +263,13 @@ int main()
 	uint8_t * ptr = (uint8_t*)func;
 	uint8_t * prev_ptr = ptr;
 	int i = 0, j = 0;
+#if 0
 	do {
 		printf("%p:%d: ", ptr, i++);
 		ptr = next_inst(ptr);
 	} while (ptr != NULL);
 
 
-#if 0
 	ptr = (uint8_t*)func2;
 	prev_ptr = ptr;
 	i = 0, j = 0;
@@ -240,6 +278,7 @@ int main()
 		ptr = next_inst(ptr);
 	} while (ptr != NULL);
 
+#endif
 	ptr = (uint8_t*)func3;
 	prev_ptr = ptr;
 	i = 0, j = 0;
@@ -248,7 +287,6 @@ int main()
 		ptr = next_inst(ptr);
 	} while (ptr != NULL);
 
-#endif
 
 	return 0;
 }
