@@ -13,6 +13,42 @@
 extern const struct opcode_table_entry normal_insts[256];
 extern const struct opcode_table_entry group_insts[NR_GROUPS][8];
 
+#define MOD(x)	(((x) & 0xc0)>>6)
+#define REG(x)	(((x) & 0x38)>>3)
+#define RM(x)	(((x) & 0x7))
+
+static inline uint8_t *
+scan_modrm(uint8_t * stream, uint8_t modrm, int address_size)
+{
+	/* SIB */
+	uint8_t mod_rm = (modrm & 0xc7);
+	if (address_size == 2) {
+		if (mod_rm == 0x06)
+			stream += 2;
+		else if (MOD(modrm) == 1)
+			stream += 1;
+		else if (MOD(modrm) == 2)
+			stream += 2;
+	} else {
+		/* addressing == 4 (*8bit) */
+		int disp = 0;
+		int have_sib = 0;
+
+		if ((RM(modrm) == 0x04) && (MOD(modrm) != 0x03))
+			have_sib = 1;
+		if (mod_rm == 0x05)
+			disp = 4;
+		if (MOD(modrm) == 0x01)
+			disp = 1;
+		else if (MOD(modrm) == 0x02)
+			disp = 4;
+		if (have_sib)
+			stream += 1;
+		stream += disp;
+	}
+	return stream;
+}
+
 /* if this instruction is jmp, then return NULL. if not, return
  * the address of next instruction */
 uint8_t *
@@ -27,9 +63,10 @@ next_inst(uint8_t * stream)
 	const struct opcode_table_entry * e = NULL;
 	uint8_t modrm = 0;
 
-#define MOD(x)	(((x) & 0xc0)>>6)
-#define REG(x)	(((x) & 0x38)>>3)
-#define RM(x)	(((x) & 0x7))
+
+	int operade_size = 4;
+	int address_size = 4;
+
 restart:
 	/* lookup in normal table */
 	opc = *stream;
@@ -46,9 +83,13 @@ group_restart:
 			goto restart;
 		case INST_PREFIX3:
 			prefix3 = opc;
+			if (opc == 0x66)
+				operade_size = 2;
 			goto restart;
 		case INST_PREFIX4:
 			prefix4 = opc;
+			if (opc == 0x67)
+				address_size = 2;
 			goto restart;
 		case INST_INVALID:
 			printf("invalid instruction 0x%x\n", opc);
@@ -89,7 +130,13 @@ group_restart:
 			e = &(group_insts[e->type - INST_GROUP_start - 1]
 					[REG(modrm)]);
 			break;
-		case INST_ESCAPE:
+		case INST_ESCAPE_2B:
+		case INST_ESCAPE_3B:
+		case INST_ESCAPE_COP:
+			printf("coprocessor instruction 0x%x\n", opc);
+			modrm = *stream;
+			stream ++;
+			return scan_modrm(stream, modrm, address_size);
 		case INST_SPECIAL:
 		default:
 			printf("type %d not implelented\n", e->type);
@@ -105,45 +152,12 @@ group_restart:
 		return stream;
 
 	/* modrm */
-	int operade_size = 4;
-	int address_size = 4;
-	/* prefix group 3 */
-	if (prefix3 == 0x66)
-		operade_size = 2;
-	if (prefix4 == 0x67)
-		address_size = 2;
-
 	/* modrm and disp */
 	if ((e->req_modrm) || 
 		((e->type >= INST_GROUP_start) && (e->type <= INST_GROUP_end))) {
 		modrm = *stream;
 		stream ++;
-		/* SIB */
-		uint8_t mod_rm = (modrm & 0xc7);
-		if (address_size == 2) {
-			if (mod_rm == 0x06)
-				stream += 2;
-			else if (MOD(modrm) == 1)
-				stream += 1;
-			else if (MOD(modrm) == 2)
-				stream += 2;
-		} else {
-			/* addressing == 4 (*8bit) */
-			int disp = 0;
-			int have_sib = 0;
-
-			if ((RM(modrm) == 0x04) && (MOD(modrm) != 0x03))
-				have_sib = 1;
-			if (mod_rm == 0x05)
-				disp = 4;
-			if (MOD(modrm) == 0x01)
-				disp = 1;
-			else if (MOD(modrm) == 0x02)
-				disp = 4;
-			if (have_sib)
-				stream += 1;
-			stream += disp;
-		}
+		stream = scan_modrm(stream, modrm, address_size);
 	}
 
 	/* operade */

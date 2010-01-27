@@ -6,6 +6,16 @@
 extern uint8_t *
 next_inst(uint8_t * stream);
 
+static void func4(void)
+{
+	asm volatile(
+		"fadd 0x1234(%eax, %ebx, 4)\n"
+		"fadd %st(5),%st\n"
+		"\n"
+			);
+}
+
+
 static void func3(void)
 {
 	asm volatile (
@@ -278,7 +288,6 @@ int main()
 		ptr = next_inst(ptr);
 	} while (ptr != NULL);
 
-#endif
 	ptr = (uint8_t*)func3;
 	prev_ptr = ptr;
 	i = 0, j = 0;
@@ -286,7 +295,15 @@ int main()
 		printf("%p:%d: ", ptr, i++);
 		ptr = next_inst(ptr);
 	} while (ptr != NULL);
+#endif
 
+	ptr = (uint8_t*)func4;
+	prev_ptr = ptr;
+	i = 0, j = 0;
+	do {
+		printf("%p:%d: ", ptr, i++);
+		ptr = next_inst(ptr);
+	} while (ptr != NULL);
 
 	return 0;
 }

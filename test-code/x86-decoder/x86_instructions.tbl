@@ -170,7 +170,7 @@ table onebyte {
 	0x0c: or "AL", Ib
 	0x0d: or "rAX", Iz
 	0x0e: pushcs | i64
-	0x0f: ESCAPE
+	0x0f: ESCAPETWOBYTES
 
 	0x18: sbb Eb, Gb
 	0x19: sbb Ev, Gv
@@ -288,7 +288,7 @@ table onebyte {
 	0xce: into | !
 	0xcf: iret
 
-	0xd8-0xdf: ESCAPE
+	0xd8-0xdf: ESCAPECOPROCESSOR
 
 	0xe8: call Jz | !
 	0xe9: jmp Jz | f64 !
