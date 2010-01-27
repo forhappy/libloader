@@ -309,6 +309,16 @@ table onebyte {
 	0xff: GRP5_0xff
 }
 
+table twobytes {
+	0x00: GRP6_0x0f00
+	0x01: XXXGRP7
+	0x02: lar Gv, Ew
+	0x03: lsl Gv, Ew
+	0x05: syscall | !
+	0x06: clts
+	0x07: sysret | !
+}
+
 table GRP1_0x80 {
 	0x00: add Eb, Ib
 	0x01: or  Eb, Ib
@@ -462,6 +472,33 @@ table GRP5_0xff {
 	0x05: jmpf Ep | 1A !
 	0x06: push Ev | 1A, d64
 }
+
+table GRP6_0x0f00 {
+	0x00: sldt Ew
+	0x01: str Ew
+	0x02: lldt Ew
+	0x03: ltr Ew
+	0x04: verr Ew
+	0x05: verw Ew
+}
+
+table GRP7_0x0f01_mem {
+	0x00: sgdt Ms
+	0x01: sidt Ms
+	0x02: lgdt Ms
+	0x03: lidt Ms
+	0x04: smsw Ev
+	0x06: lmsw Ew
+	0x07: invlpg Mb
+}
+
+table GRP7_0x0f01_11b {
+	0x00: vmxxx
+	0x01: monitorormwait
+	0x02: xgetorsetbv
+	0x07: swapgs | o64
+}
+
 
 # vim:ts=4:sw=4
 

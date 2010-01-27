@@ -11,6 +11,28 @@ static void func4(void)
 	asm volatile(
 		"fadd 0x1234(%eax, %ebx, 4)\n"
 		"fadd %st(5),%st\n"
+		"sldt (%eax)\n"
+		"sldt %ecx\n"
+		"str %edx\n"
+		"lldt (%edx)\n"
+		"ltr 0x12345678\n"
+		"verr (%ecx)\n"
+		"verw %cx\n"
+		"sgdtl (%ebx)\n"
+		"sgdtw (%ebx)\n"
+		"lldt (%esi)\n"
+		"ltr (%edi)\n"
+		"verr (%eax)\n"
+		"verr %ax\n"
+		"verw %ax\n"
+		"vmcall\n"
+		"vmlaunch\n"
+		"mwait\n"
+		".byte 0x0f,0x01,0xd1\n"
+		"lar (%eax), %ebx\n"
+		"lsl (%edi), %ecx\n"
+		"clts\n"
+
 		"\n"
 			);
 }

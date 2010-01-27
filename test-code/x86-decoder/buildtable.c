@@ -37,7 +37,7 @@ static struct group_table_name_map_entry {
 	[TABLE_GROUP5_0xff] = "GRP5_0xff",
 	[TABLE_GROUP6_0x0f00] = "GRP6_0x0f00",
 	[TABLE_GROUP7_0x0f01_mem] = "GRP7_0x0f01_mem",
-	[TABLE_GROUP7_0x0f01_11] = "GRP7_0x0f01_11",
+	[TABLE_GROUP7_0x0f01_11b] = "GRP7_0x0f01_11b",
 	[TABLE_GROUP8_0x0fba] = "GRP8_0x0fba",
 	[TABLE_GROUP9_0x0fc7] = "GRP9_0x0fc7",
 	[TABLE_GROUP10_0x0fb9] = "GRP10_0f89",
@@ -299,6 +299,8 @@ void add_descriptor(
 				inst->type = INST_ESCAPE_COP;
 			} else if (strcmp("SPECIAL", inst->name) == 0) {
 				inst->type = INST_SPECIAL;
+			} else if (strcmp("XXXGRP7", inst->name) == 0) {
+				inst->type = INST_GROUP7;
 			} else {
 				printf("unknow type %s\n", inst->name);
 				exit(1);

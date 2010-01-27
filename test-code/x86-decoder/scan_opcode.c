@@ -11,6 +11,9 @@
 
 
 extern const struct opcode_table_entry normal_insts[256];
+extern const struct opcode_table_entry twobytes_insts[256];
+extern const struct opcode_table_entry threebytes_0f38_insts[256];
+extern const struct opcode_table_entry threebytes_0f3a_insts[256];
 extern const struct opcode_table_entry group_insts[NR_GROUPS][8];
 
 #define MOD(x)	(((x) & 0xc0)>>6)
@@ -66,14 +69,14 @@ next_inst(uint8_t * stream)
 
 	int operade_size = 4;
 	int address_size = 4;
+	const struct opcode_table_entry * opcode_table = normal_insts;
 
 restart:
 	/* lookup in normal table */
 	opc = *stream;
 	stream ++;
-	e = &normal_insts[opc];
+	e = &opcode_table[opc];
 
-group_restart:
 	switch (e->type) {
 		case INST_PREFIX1:
 			prefix1 = opc;
@@ -97,7 +100,7 @@ group_restart:
 			break;
 		case INST_NORMAL:
 			break;
-		
+
 		case INST_GROUP1_0x80:
 		case INST_GROUP1_0x81:
 		case INST_GROUP1_0x82:
@@ -115,7 +118,7 @@ group_restart:
 		case INST_GROUP5_0xff:
 		case INST_GROUP6_0x0f00:
 		case INST_GROUP7_0x0f01_mem:
-		case INST_GROUP7_0x0f01_11:
+		case INST_GROUP7_0x0f01_11b:
 		case INST_GROUP8_0x0fba:
 		case INST_GROUP9_0x0fc7:
 		case INST_GROUP10_0x0fb9:
@@ -130,8 +133,31 @@ group_restart:
 			e = &(group_insts[e->type - INST_GROUP_start - 1]
 					[REG(modrm)]);
 			break;
+
+		case INST_GROUP7:
+			modrm = *stream;
+			if (MOD(modrm) == 3) {
+				e = &(group_insts[INST_GROUP7_0x0f01_11b - INST_GROUP_start - 1]
+						[REG(modrm)]);
+				/* this instruction has no operade, but occupies a modrm */
+				stream ++;
+			} else {
+				e = &(group_insts[INST_GROUP7_0x0f01_mem - INST_GROUP_start - 1]
+						[REG(modrm)]);
+			}
+			break;
+
 		case INST_ESCAPE_2B:
+			printf("0x%x ", opc);
+			opcode_table = twobytes_insts;
+			goto restart;
 		case INST_ESCAPE_3B:
+			printf("0x%x ", opc);
+			if (opc == 0x38)
+				opcode_table = threebytes_0f38_insts;
+			else
+				opcode_table = threebytes_0f3a_insts;
+			goto restart;
 		case INST_ESCAPE_COP:
 			printf("coprocessor instruction 0x%x\n", opc);
 			modrm = *stream;
