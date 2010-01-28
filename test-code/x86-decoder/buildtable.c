@@ -51,7 +51,12 @@ static struct group_table_name_map_entry {
 };
 
 static struct opcode_table_entry groups_table[NR_GROUPS][8];
-
+static struct opcode_table_entry spec_prefix_table[1024] = {
+	[0] = {
+		.type = INST_INVALID,
+	},
+};
+static int next_spec_prefix_instruction = 1;
 
 static void
 set_normal_operade(struct operade * d, struct _operade * s)
@@ -160,6 +165,8 @@ set_normal_operade(struct operade * d, struct _operade * s)
 		d->size = OP_SIZE_z;
 	else if (strcmp("xx", str_sz) == 0)
 		d->size = OP_SIZE_0;
+	else if (strcmp("sd", str_sz) == 0)
+		d->size = OP_SIZE_sd;
 	else {
 		printf("wrong operade size: %s\n", s->u.normal);
 		exit(-1);
@@ -203,13 +210,13 @@ void add_descriptor(
 		int head,
 		const char * operator,
 		struct _entry_rng rng,
+		const char * specprefix,
 		int nr_operades,
 		struct _operade * __operades,
 		int nr_hints,
 		struct _hint * __hints,
 		int jmpnote)
 {
-
 	/* if it is a x86_64 only instruction, omit */
 	if (head == 64)
 		return;
@@ -266,6 +273,31 @@ void add_descriptor(
 
 	for (int i = rng.start; i <= rng.end; i++) {
 		struct opcode_table_entry * inst = &inst_table[i];
+		/* check whether it is a spec prefix instruction */
+		if (specprefix != NULL) {
+			/* this instruction rely on prefix */
+			/* if not already set, reset the entry instruction */
+			if (inst->type != INST_NEED_SPECPREFIX) {
+				memset(inst, '\0', sizeof(*inst));
+				inst->type = INST_NEED_SPECPREFIX;
+				inst->name = strdup("SPECPREFIXINSTRUCTION");
+			}
+			/* find the prefix */
+			int nprefix;
+			if (strcmp(specprefix, "[none]") == 0) {
+				nprefix = SPECPREFIX_NONE;
+			} else if (strcmp(specprefix, "[0x66]") == 0) {
+				nprefix = SPECPREFIX_0x66;
+			} else if (strcmp(specprefix, "[0xf2]") == 0) {
+				nprefix = SPECPREFIX_0xf2;
+			} else if (strcmp(specprefix, "[0xf3]") == 0) {
+				nprefix = SPECPREFIX_0xf3;
+			}
+			inst->nr_operades = 4;
+			inst->operades[nprefix].addressing = next_spec_prefix_instruction;
+			inst = &spec_prefix_table[next_spec_prefix_instruction];
+			next_spec_prefix_instruction ++;
+		}
 
 		inst->name = strdup(operator);
 		inst->nr_operades = nr_operades;
@@ -322,7 +354,7 @@ static void
 print_one_table(const char * head, struct opcode_table_entry * table,
 		int nr_opc)
 {
-	if (nr_opc == 256)
+	if ((nr_opc == 256) && (head != NULL))
 		printf("struct opcode_table_entry %s[%d] = {\n", head, nr_opc);
 
 	for (int i = 0; i < nr_opc; i++) {
@@ -377,6 +409,11 @@ void print_table(void)
 		printf("\t},\n");
 	}
 	printf("};\n");
+
+	printf("struct opcode_table_entry spec_prefix_insts[%d] = { \n", next_spec_prefix_instruction);
+	print_one_table(NULL, spec_prefix_table, next_spec_prefix_instruction);
+	printf("};\n");
+
 	printf("// vim:ts=4:sw=4\n");
 	return;
 }

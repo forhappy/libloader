@@ -71,6 +71,8 @@ static int table_head = 32;
 
 static struct _entry_rng rng;
 
+static const char * current_specprefix = NULL;
+
 void
 new_description()
 {
@@ -91,11 +93,15 @@ new_description()
 		_th,
 		operator,
 		rng,
+		current_specprefix,
 		nr_operades,
 		operades,
 		nr_hints,
 		hints,
 		jmpnote);
+
+	if (current_specprefix != NULL)
+		free((void*)current_specprefix);
 
 	printf("%d:0x%x-0x%x %s", table_head, rng.start, rng.end,
 		operator);
@@ -148,6 +154,7 @@ new_description()
 }
 
 %token <val> TK_HEXNUMBER
+%token <token> TK_SPECPREFIX
 %token <token> TK_TABLE
 %token <token> TK_TABLENAME
 %token <token> TK_X32
@@ -198,12 +205,16 @@ blockhead: TK_X32 { $$ = table_head; table_head = 132; }
 		 | TK_X64 { $$ = table_head; table_head = 64; }
 		 ;
 
-normal_descriptor: opcode_rng ':' operator operades hints jmpnote { new_description();}
+normal_descriptor: opcode_rng ':' specprefix operator operades hints jmpnote { new_description();}
 				 ;
 
 opcode_rng: TK_HEXNUMBER	{ rng.start = rng.end = $1; }
 		  | TK_HEXNUMBER '-' TK_HEXNUMBER { rng.start = $1; rng.end = $3; }
 		  ;
+
+specprefix:	/* empty */	{ current_specprefix = NULL; }
+		  | TK_SPECPREFIX { current_specprefix = strdup($1); }
+
 
 operator: TK_OPERATOR { operator_type = _OPERATOR_NORMAL; operator = strdup($1); }
 		| TK_SPECIAL { operator_type = _OPERATOR_SPECIAL; operator = strdup($1);}

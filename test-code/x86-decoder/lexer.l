@@ -9,6 +9,7 @@
 #ifndef YYTOKENTYPE
 enum tokentype {
 	TK_HEXNUMBER = 256,
+	TK_SPECPREFIX,
 	TK_TABLE,
 	TK_TABLENAME,
 	TK_X32,
@@ -75,6 +76,11 @@ GRP{DIGIT}{GLYPH}+	yylval.token = yytext; return TK_TABLENAME;
 <DESC>"-"				return '-';
 <DESC>"\n"				line_counter ++;
 <DESC>.					return ERROR;
+
+<OPBASE>"[none]"		yylval.token = yytext; return TK_SPECPREFIX;
+<OPBASE>"[0x66]"		yylval.token = yytext; return TK_SPECPREFIX;
+<OPBASE>"[0xf2]"		yylval.token = yytext; return TK_SPECPREFIX;
+<OPBASE>"[0xf3]"		yylval.token = yytext; return TK_SPECPREFIX;
 
 <OPBASE,OPHINTS>\n			line_counter ++; yy_pop_state();
 

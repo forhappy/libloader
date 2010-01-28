@@ -81,6 +81,7 @@ enum inst_type {
 	INST_ESCAPE_2B,
 	INST_ESCAPE_3B,
 	INST_ESCAPE_COP,
+	INST_NEED_SPECPREFIX,
 	INST_SPECIAL,
 };
 
@@ -166,12 +167,21 @@ enum operade_size {
 	OP_SIZE_w	= IGN_OPERADE_SIZE | 2,		/* word */
 	OP_SIZE_z	= RESPECT_OPERADE_SIZE_66 | 4,		/* word for 16bit operade size,
 											   double word for 32 or 64 bit operade size */
+	OP_SIZE_sd	= IGN_OPERADE_SIZE | OPERADE_SCALAR | 8,	/* double-precision floating data
+																see movsd */
 };
 
 struct operade {
 	enum operade_addressing addressing;
 	enum operade_size size;
 	int reg_num;
+};
+
+enum spec_prefix_number {
+	SPECPREFIX_NONE = 0,
+	SPECPREFIX_0x66 = 1,
+	SPECPREFIX_0xf2 = 2,
+	SPECPREFIX_0xf3 = 3,
 };
 
 struct opcode_table_entry {

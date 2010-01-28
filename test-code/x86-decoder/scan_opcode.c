@@ -15,6 +15,7 @@ extern const struct opcode_table_entry twobytes_insts[256];
 extern const struct opcode_table_entry threebytes_0f38_insts[256];
 extern const struct opcode_table_entry threebytes_0f3a_insts[256];
 extern const struct opcode_table_entry group_insts[NR_GROUPS][8];
+extern const struct opcode_table_entry spec_prefix_insts[];
 
 #define MOD(x)	(((x) & 0xc0)>>6)
 #define REG(x)	(((x) & 0x38)>>3)
@@ -163,6 +164,17 @@ restart:
 			modrm = *stream;
 			stream ++;
 			return scan_modrm(stream, modrm, address_size);
+		case INST_NEED_SPECPREFIX:
+			/* set 'e' according to prefix */
+			if (prefix3 == 0x66)
+				e = &spec_prefix_insts[e->operades[SPECPREFIX_0x66].addressing];
+			else if (prefix1 == 0xf2)
+				e = &spec_prefix_insts[e->operades[SPECPREFIX_0xf2].addressing];
+			else if (prefix1 == 0xf3)
+				e = &spec_prefix_insts[e->operades[SPECPREFIX_0xf3].addressing];
+			else
+				e = &spec_prefix_insts[e->operades[SPECPREFIX_NONE].addressing];
+			break;
 		case INST_SPECIAL:
 		default:
 			printf("type %d not implelented\n", e->type);

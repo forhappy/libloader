@@ -317,6 +317,10 @@ table twobytes {
 	0x05: syscall | !
 	0x06: clts
 	0x07: sysret | !
+	0x10: [none] movups Vps, Wps
+	0x10: [0xf3] movss Vss, Wss
+	0x10: [0x66] movupd Vpd, Wpd
+	0x10: [0xf2] movsd Vsd, Wsd
 }
 
 table GRP1_0x80 {

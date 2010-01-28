@@ -45,6 +45,7 @@ extern void add_descriptor(
 	int head,
 	const char * operator,
 	struct _entry_rng rng,
+	const char * specprefix,
 	int nr_operades,
 	struct _operade * operades,
 	int nr_hints,

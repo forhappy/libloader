@@ -32,7 +32,8 @@ static void func4(void)
 		"lar (%eax), %ebx\n"
 		"lsl (%edi), %ecx\n"
 		"clts\n"
-
+		"movups (%eax, %ebx, 4), %xmm1\n"
+		"movss (%eax, %ebx, 4), %xmm1\n"
 		"\n"
 			);
 }
