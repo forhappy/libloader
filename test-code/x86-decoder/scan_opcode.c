@@ -77,7 +77,7 @@ restart:
 	opc = *stream;
 	stream ++;
 	e = &opcode_table[opc];
-
+group_restart:
 	switch (e->type) {
 		case INST_PREFIX1:
 			prefix1 = opc;
@@ -133,6 +133,8 @@ restart:
 			modrm = *stream;
 			e = &(group_insts[e->type - INST_GROUP_start - 1]
 					[REG(modrm)]);
+			if (e->type == INST_NEED_SPECPREFIX)
+				goto group_restart;
 			break;
 
 		case INST_GROUP7:
@@ -152,12 +154,13 @@ restart:
 			printf("0x%x ", opc);
 			opcode_table = twobytes_insts;
 			goto restart;
-		case INST_ESCAPE_3B:
+		case INST_ESCAPE_3B_0x38:
 			printf("0x%x ", opc);
-			if (opc == 0x38)
-				opcode_table = threebytes_0f38_insts;
-			else
-				opcode_table = threebytes_0f3a_insts;
+			opcode_table = threebytes_0f38_insts;
+			goto restart;
+		case INST_ESCAPE_3B_0x3a:
+			printf("0x%x ", opc);
+			opcode_table = threebytes_0f3a_insts;
 			goto restart;
 		case INST_ESCAPE_COP:
 			printf("coprocessor instruction 0x%x\n", opc);

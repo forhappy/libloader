@@ -3,6 +3,7 @@ all: test_scan_opcode
 CFLAGS=-g -std=gnu99 -D_GNU_SOURCE -DTEST_PARSER
 
 test_scan_opcode: test_scan_opcode.c scan_opcode.c  x86_opcode.h x86_opcode.c
+	gcc $(CFLAGS) test_scan_opcode.c scan_opcode.c x86_opcode.c -o $@
 
 x86_opcode.c: parser x86_instructions.tbl
 	./parser < x86_instructions.tbl > ./x86_opcode.c

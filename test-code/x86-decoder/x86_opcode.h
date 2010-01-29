@@ -79,7 +79,8 @@ enum inst_type {
 	/* group 7 is defferent from other groups */
 	INST_GROUP7,
 	INST_ESCAPE_2B,
-	INST_ESCAPE_3B,
+	INST_ESCAPE_3B_0x38,
+	INST_ESCAPE_3B_0x3a,
 	INST_ESCAPE_COP,
 	INST_NEED_SPECPREFIX,
 	INST_SPECIAL,

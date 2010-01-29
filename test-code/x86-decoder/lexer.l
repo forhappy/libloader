@@ -84,7 +84,7 @@ GRP{DIGIT}{GLYPH}+	yylval.token = yytext; return TK_TABLENAME;
 
 <OPBASE,OPHINTS>\n			line_counter ++; yy_pop_state();
 
-<OPBASE>{LLETTER}+3{0,1}			yylval.token = yytext; return TK_OPERATOR;
+<OPBASE>{LLETTER}{GLYPH}+3{0,1}			yylval.token = yytext; return TK_OPERATOR;
 <OPBASE>","					return ',';
 <OPBASE>GRP{DIGIT}{GLYPH}+	yylval.token = yytext; return TK_SPECIAL;
 <OPBASE>{ULETTER}+{DIGIT}*+A{0,1}	yylval.token = yytext; return TK_SPECIAL;

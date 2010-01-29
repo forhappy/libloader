@@ -6,6 +6,47 @@
 extern uint8_t *
 next_inst(uint8_t * stream);
 
+static void func5(void)
+{
+	asm volatile(
+		"movmskps %xmm0, %eax\n"
+		"movmskpd %xmm0, %eax\n"
+		"sqrtps %xmm1, %xmm0\n"
+		"sqrtss %xmm1, %xmm0\n"
+		"sqrtpd %xmm1, %xmm0\n"
+		"sqrtsd %xmm1, %xmm0\n"
+
+		"punpcklbw (%eax), %mm0\n"
+		"punpcklbw (%eax), %xmm0\n"
+
+		"pshufw $0x12, (%eax), %mm0\n"
+		"pshufd $0x12, (%eax), %xmm0\n"
+		"pshufhw $0x12, (%eax), %xmm0\n"
+		"pshuflw $0x12, (%eax), %xmm0\n"
+
+		"psrlw $0x12, %mm0\n"
+		"psrlw $0x12, %xmm0\n"
+
+		"psraw $0x12, %mm0\n"
+		"psraw $0x12, %xmm0\n"
+
+		"psrld $0x12, %mm0\n"
+
+		"psrlq $0x14, %xmm0\n"
+		"psrldq $0x14, %xmm0\n"
+		"prefetchnta 0x12345\n"
+		"cvtpi2ps %mm2, %xmm2\n"
+
+		"cvtsd2si %xmm0, %eax\n"
+		"cvtpd2pi (%eax), %mm0\n"
+		"setna (%eax)\n"
+		"shld $0x12, %eax, (%ebx)\n"
+		"shld %cl, %eax, (%ebx)\n"
+		"cmpps $0x12, %xmm1, %xmm2\n"
+		"pinsrw $0x12, (%eax), %mm0\n"
+		);
+}
+
 static void func4(void)
 {
 	asm volatile(
@@ -34,6 +75,36 @@ static void func4(void)
 		"clts\n"
 		"movups (%eax, %ebx, 4), %xmm1\n"
 		"movss (%eax, %ebx, 4), %xmm1\n"
+		"movupd 0x12345, %xmm3\n"
+		"movsd %xmm1, %xmm2\n"
+		"movups %xmm3, (%ecx)\n"
+		"movss %xmm3, (%ecx)\n"
+		"movupd %xmm3, (%ecx)\n"
+		"movsd %xmm3, (%ecx)\n"
+		"movlps 0x1234567, %xmm2\n"
+		"movlpd 0x12345, %xmm1\n"
+		"movlps %xmm1, 0x12345\n"
+		"movlpd %xmm1, 0x12345\n"
+		"unpcklps (%eax), %xmm0\n"
+		"unpcklpd (%eax), %xmm0\n"
+		"unpckhps (%eax), %xmm0\n"
+		"unpckhpd (%eax), %xmm0\n"
+
+		"movhps (%eax), %xmm0\n"
+		"movhpd (%ebx), %xmm1\n"
+		"movlhps %xmm0, %xmm1\n"
+		"movshdup %xmm1, %xmm0\n"
+
+		"movhps %xmm1, (%eax)\n"
+		"movhpd %xmm1, (%eax)\n"
+
+		"mov %db4, %eax\n"
+		"mov %eax, %cr0\n"
+		"mov %eax, %db3\n"
+		"mov %eax, %db4\n"
+
+		"wrmsr\n"
+		"rdtsc\n"
 		"\n"
 			);
 }
@@ -318,9 +389,19 @@ int main()
 		printf("%p:%d: ", ptr, i++);
 		ptr = next_inst(ptr);
 	} while (ptr != NULL);
-#endif
 
 	ptr = (uint8_t*)func4;
+	prev_ptr = ptr;
+	i = 0, j = 0;
+	do {
+		printf("%p:%d: ", ptr, i++);
+		ptr = next_inst(ptr);
+	} while (ptr != NULL);
+
+#endif
+
+
+	ptr = (uint8_t*)func5;
 	prev_ptr = ptr;
 	i = 0, j = 0;
 	do {

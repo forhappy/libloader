@@ -325,8 +325,10 @@ void add_descriptor(
 				inst->type = INST_INVALID;
 			} else if (strcmp("ESCAPETWOBYTES", inst->name) == 0) {
 				inst->type = INST_ESCAPE_2B;
-			} else if (strcmp("ESCAPETHREEBYTES", inst->name) == 0) {
-				inst->type = INST_ESCAPE_3B;
+			} else if (strcmp("ESCAPETHREEBYTESA", inst->name) == 0) {
+				inst->type = INST_ESCAPE_3B_0x38;
+			} else if (strcmp("ESCAPETHREEBYTESB", inst->name) == 0) {
+				inst->type = INST_ESCAPE_3B_0x3a;
 			} else if (strcmp("ESCAPECOPROCESSOR", inst->name) == 0) {
 				inst->type = INST_ESCAPE_COP;
 			} else if (strcmp("SPECIAL", inst->name) == 0) {
