@@ -49,6 +49,12 @@ static void func5(void)
 		"fxsave (%eax)\n"
 		"bt $0x12, (%eax)\n"
 		"pxor (%eax), %mm0\n"
+		"crc32b (%eax), %ebx\n"
+		"pextrb $0x12, %xmm0, (%eax)\n"
+		"extractps $0x12, %xmm0, %eax\n"
+		"roundps $0x12, (%eax), %xmm3\n"
+		"palignr $0x12, (%eax), %mm0\n"
+		"palignr $0x12, (%eax), %xmm0\n"
 		);
 }
 

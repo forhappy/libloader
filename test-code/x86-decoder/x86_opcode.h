@@ -115,7 +115,7 @@ enum operade_addressing {
 	OP_ADDR_S = REQ_MODRM | 14,		/* have modrm, reg field selects a segment register */
 	OP_ADDR_U = REQ_MODRM | 15,		/* modrm R/M field selects select a 128bit XMM register */
 	OP_ADDR_V = REQ_MODRM | 16,		/* modrm reg field selects a 128bit XMM register */
-	OP_ADDR_W = REQ_MODRM | 17,		/* modrm R/M field selects a 128bit XMM register  */
+	OP_ADDR_W = REQ_MODRM | 17,		/* modrm R/M field selects a 128bit XMM register or memory address  */
 	OP_ADDR_X = NON_MODRM | 18,		/* memory, addressed by DS:rSI (movs, cmps ...) */
 	OP_ADDR_Y = NON_MODRM | 19,		/* memory, addredded by ES:rDI (movs, cmps ...)  */
 };
