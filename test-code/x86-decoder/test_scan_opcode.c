@@ -44,6 +44,11 @@ static void func5(void)
 		"shld %cl, %eax, (%ebx)\n"
 		"cmpps $0x12, %xmm1, %xmm2\n"
 		"pinsrw $0x12, (%eax), %mm0\n"
+		"cmpxchg8b 0x1234\n"
+		"lfence\n"
+		"fxsave (%eax)\n"
+		"bt $0x12, (%eax)\n"
+		"pxor (%eax), %mm0\n"
 		);
 }
 

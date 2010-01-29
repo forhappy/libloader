@@ -620,10 +620,224 @@ table twobytes {
 	0xc6: [0x66] shufpd Vpd, Wpd, Ib
 
 	0xc7: GRP9_0x0fc7
+
+	0xd0: [0xf2] addsubps Vps, Wps
+	0xd0: [0x66] addsubpd Vpd, Wpd
+
+	0xd1: [none] psrlw Pq, Dq
+	0xd1: [0x66] psrlw Vdq, Wdq
+
+	0xd2: [none] psrld Pq, Qq
+	0xd2: [0x66] psrld Vdq, Wdq
+
+	0xd3: [none] psrlq Pq, Dq
+	0xd3: [0x66] parlq Vdq, Wdq
+
+	0xd4: [none] paddq Pq, Qq
+	0xd4: [0x66] paddq Vdq, Wdq
+
+	0xd5: [none] pmullw Pq, Dq
+	0xd5: [0x66] pmullw Vdq, Wdq
+
+	0xd6: [0x66] movq Wq, Vq
+	0xd6: [0xf3] movq2dq Vdq, Nq
+	0xd6: [0xf2] movdq2q Pq, Uq
+
+	0xd7: [none] pmovmskb Gd, Nq
+	0xd7: [0x66] pmovmskb Gd, Udq
+
+	0xe0: [none] pavgb Pq, Qq
+	0xe0: [0x66] pavgb Vdq, Wdq
+
+	0xe1: [none] psraw Pq, Qq
+	0xe1: [0x66] psraw Vdq, Wdq
+
+	0xe2: [none] psrad Pq, Qq
+	0xe2: [0x66] psrad Vdq, Wdq
+
+	0xe3: [none] pavgw Pq, Qq
+	0xe3: [0x66] pavgw Vdq, Wdq
+
+	0xe4: [none] pmulhuw Pq, Qq
+	0xe4: [0x66] pmulhuw Vdq, Wdq
+
+	0xe5: [none] pmulhw Pq, Qq
+	0xe5: [0x66] pmulhw Vdq, Wdq
+
+	0xe6: [0xf2] cvtpd2dq Vdq, Wpd
+	0xe6: [0x66] cvttpd2dq Vdq, Wpd
+	0xe6: [0xf3] cvtdq2pd Vpd, Wdq
+
+	0xe7: [none] movntq Mq, Pq
+	0xe7: [0x66] movntdq Mdq, Vdq
+
+	0xf0: [0xf2] iddqu Vdq, Mdq
+
+	0xf1: [none] psllw Pq, Qq
+	0xf1: [0x66] psllw Vdq, Wdq
+
+	0xf2: [none] pslld Pq, Qq
+	0xf2: [0x66] pslld Vdq, Wdq
+
+	0xf3: [none] psllq Pq, Qq
+	0xf3: [0x66] psllq Vdq, Wdq
+
+	0xf4: [none] pmuludq Pq, Qq
+	0xf4: [0x66] pmuludq Vdq, Wdq
+
+	0xf5: [none] pmaddwd Pq, Qq
+	0xf5: [0x66] pmaddwd Vdq, Wdq
+
+	0xf6: [none] psadbw Pq, Qq
+	0xf6: [0x66] psadbw Vdq, Wdq
+
+	0xf7: [none] maskmovq Pq, Nq
+	0xf7: [0x66] maskmovdqu Vdq, Udq
+
+	0x88: js  Jz | !
+	0x89: jns Jz | !
+	0x8a: jp  Jz | !
+	0x8b: jnp Jz | !
+	0x8c: jl  Jz | !
+	0x8d: jge Jz | !
+	0x8e: jle Jz | !
+	0x8f: jg  Jz | !
+
+	0x98: sets  Jz | !
+	0x99: setns Jz | !
+	0x9a: setp  Jz | !
+	0x9b: setnp Jz | !
+	0x9c: setl  Jz | !
+	0x9d: setge Jz | !
+	0x9e: setle Jz | !
+	0x9f: setg  Jz | !
+
+	0xa8: pushgs | d64
+	0xa9: popgs | d64
+	0xaa: rsm
+	0xab: bts Ev, Gv
+	0xac: shrd Ev, Gv, Ib
+	0xad: shrd Ev, Gv, "CL"
+	0xae: XXXGRP15
+	0xaf: imul Gv, Ev
+
+	0xb8: [none] jmpe | !
+	0xb8: [0xf3] popcnt Gv, Ev
+
+	0xb9: BAD
+
+	0xba: GRP8_0x0fba
+
+	0xbb: btc Ev, Gv
+	0xbc: bsf Gv, Ev
+	0xbd: bsr Gv, Ev
+	0xbe: movsx Gv, Eb
+	0xbf: movsx Gv, Ew
+
+	0xc8: bswap "rAX/r8"
+	0xc9: bswap "rCX/r9"
+	0xca: bswap "rDX/r10"
+	0xcb: bswap "rBX/r11"
+	0xcc: bswap "rSP/r12"
+	0xcd: bswap "rBP/r13"
+	0xce: bswap "rSI/r14"
+	0xcf: bswap "rDI/r15"
+
+	0xd8: [none] psubusb Pq, Qq
+	0xd8: [0x66] psubusb Vdq, Wdq
+
+	0xd9: [none] psubusw Pq, Qq
+	0xd9: [0x66] psubusw Vdq, Wdq
+
+	0xda: [none] pminub Pq, Qq
+	0xda: [0x66] pminub Vdq, Wdq
+
+	0xdb: [none] pand Pq, Qq
+	0xdb: [0x66] pand Vdq, Wdq
+
+	0xdc: [none] paddusb Pq, Qq
+	0xdc: [0x66] paddusb Vdq, Wdq
+
+	0xdd: [none] paddusw Pq, Qq
+	0xdd: [0x66] paddusw Vdq, Wdq
+
+	0xde: [none] pmaxub Pq, Qq
+	0xde: [0x66] pmaxub Vdq, Wdq
+
+	0xdf: [none] pandn Pq, Qq
+	0xdf: [0x66] pandn Vdq, Wdq
+
+	0xe8: [none] psubsb Pq, Qq
+	0xe8: [0x66] psubsb Vdq, Wdq
+
+	0xe9: [none] psubsw Pq, Qq
+	0xe9: [0x66] psubsw Vdq, Wdq
+
+	0xea: [none] pminsw Pq, Qq
+	0xea: [0x66] pminsw Vdq, Wdq
+
+	0xeb: [none] por Pq, Qq
+	0xeb: [0x66] por Vdq, Wdq
+
+	0xec: [none] paddsb Pq, Qq
+	0xec: [0x66] paddsb Vdq, Wdq
+
+	0xed: [none] paddsw Pq, Qq
+	0xed: [0x66] paddsw Vdq, Wdq
+
+	0xee: [none] pmaxsw Pq, Qq
+	0xee: [0x66] pmaxsw Vdq, Wdq
+
+	0xef: [none] pxor Pq, Qq
+	0xef: [0x66] pxor Vdq, Wdq
+
+	0xf8: [none] psubb Pq, Qq
+	0xf8: [0x66] psubb Vdq, Wdq
+
+	0xf9: [none] psubw Pq, Qq
+	0xf9: [0x66] psubw Vdq, Wdq
+
+	0xfa: [none] psubd Pq, Qq
+	0xfa: [0x66] psubd Vdq, Wdq
+
+	0xfb: [none] psubq Pq, Qq
+	0xfb: [0x66] psubq Vdq, Wdq
+
+	0xfc: [none] paddb Pq, Qq
+	0xfc: [0x66] paddb Vdq, Wdq
+
+	0xfd: [none] paddw Pq, Qq
+	0xfd: [0x66] paddw Vdq, Wdq
+
+	0xfe: [none] paddd Pq, Qq
+	0xfe: [0x66] paddd Vdq, Wdq
+}
+
+table GRP8_0x0fba {
+	0x04: bt Ev, Ib
+	0x05: bts Ev, Ib
+	0x06: btr Ev, Ib
+	0x07: btc Ev, Ib
+}
+
+table GRP15_0x0fae_mem {
+	0x00: fxsave  Ev
+	0x01: fxrstor Ev
+	0x02: ldmxcsr Ev
+	0x03: stmxcsr Ev
+	0x04: xsave   Ev
+	0x05: xrstor  Ev
+	0x07: clflush Ev
+}
+
+table GRP15_0x0fae_11b {
+	0x05: lfence
+	0x06: mfence
+	0x07: sfence
 }
 
 table GRP9_0x0fc7 {
-	0x01: cmpxch8b Mq
+	0x01: cmpxchg8b Mq
 	0x06: [none] vmptrld Mq
 	0x06: [0x66] vmclear Mq
 	0x06: [0xf3] vmxon Mq
