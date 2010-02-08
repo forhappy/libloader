@@ -12,6 +12,7 @@
 ADD_SUBDIRECTORY(host)
 ADD_SUBDIRECTORY(interp)
 ADD_SUBDIRECTORY(utils)
+ADD_SUBDIRECTORY(asm)
 
 # vim:ts=4:sw=4
 
