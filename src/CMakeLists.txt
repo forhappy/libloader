@@ -1,7 +1,7 @@
 INCLUDE_DIRECTORIES(${SNITCHASER_BINARY_DIR}/src
 	${SNITCHASER_BINARY_DIR}
 	${SNITCHASER_SOURCE_DIR}/src
-	${SNITCHASER_SOURCE_DIR}/src/${ARCH}/include
+	${SNITCHASER_SOURCE_DIR}/src/arch/${ARCH}/include
 	)
 
 MACRO(build_tests testlist libs)

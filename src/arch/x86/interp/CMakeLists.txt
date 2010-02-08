@@ -1,13 +1,23 @@
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR}
+	${CMAKE_CURRENT_SOURCE_DIR}
+	)
 SET(SRC
 	scan_opcode.c
-	x86_opcode.c.h
 	x86_opcode.h
+	x86_opcode.c.h
 	)
 
 ADD_LIBRARY(platform STATIC ${SRC})
 SET_PROPERTY(TARGET platform
 	APPEND
 	PROPERTY COMPILE_FLAGS "-fPIC")
+ADD_DEPENDENCIES(platform x86_tbl_parser)
+
+ADD_CUSTOM_COMMAND(OUTPUT x86_opcode.c.h
+	COMMAND ${CMAKE_CURRENT_BINARY_DIR}/../utils/x86_tbl_parser < ${CMAKE_CURRENT_SOURCE_DIR}/../utils/x86_instructions.tbl > x86_opcode.c.h
+	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+	)
+
 
 # vim:ts=4:sw=4
 
