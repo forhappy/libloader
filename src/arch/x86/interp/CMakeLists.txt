@@ -8,9 +8,9 @@ SET(SRC
 	)
 
 ADD_LIBRARY(platform STATIC ${SRC})
-SET_PROPERTY(TARGET platform
-	APPEND
-	PROPERTY COMPILE_FLAGS "-fPIC")
+
+set_interp_properties(platform)
+
 ADD_DEPENDENCIES(platform x86_tbl_parser)
 
 ADD_CUSTOM_COMMAND(OUTPUT x86_opcode.c.h
@@ -18,6 +18,9 @@ ADD_CUSTOM_COMMAND(OUTPUT x86_opcode.c.h
 	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 	)
 
+ADD_SUBDIRECTORY(printf)
+
+TARGET_LINK_LIBRARIES(platform printf)
 
 # vim:ts=4:sw=4
 

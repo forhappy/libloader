@@ -15,6 +15,15 @@ IF (BUILD_TESTS)
 ENDIF(BUILD_TESTS)
 ENDMACRO(build_tests testlist libs)
 
+MACRO(set_interp_properties target)
+SET_PROPERTY(TARGET ${target}
+	APPEND
+	PROPERTY COMPILE_FLAGS "-fvisibility=hidden -fPIC")
+SET_PROPERTY(TARGET ${target}
+	APPEND
+	PROPERTY LINK_FLAGS "-nostartfiles -nodefaultlibs -nostdlib")
+ENDMACRO(set_interp_properties target)
+
 ADD_SUBDIRECTORY(arch)
 ADD_SUBDIRECTORY(interp)
 ADD_SUBDIRECTORY(host)
