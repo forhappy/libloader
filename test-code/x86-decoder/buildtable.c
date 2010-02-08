@@ -360,7 +360,7 @@ print_one_table(const char * head, struct opcode_table_entry * table,
 		int nr_opc)
 {
 	if ((nr_opc == 256) && (head != NULL))
-		printf("struct opcode_table_entry %s[%d] = {\n", head, nr_opc);
+		printf("static struct opcode_table_entry %s[%d] = {\n", head, nr_opc);
 
 	for (int i = 0; i < nr_opc; i++) {
 		struct opcode_table_entry inst = table[i];
@@ -407,7 +407,7 @@ void print_table(void)
 			threebytes_0f38_insts, 256);
 	print_one_table("threebytes_0f3a_insts",
 			threebytes_0f3a_insts, 256);
-	printf("struct opcode_table_entry group_insts[%d][8] = {\n", NR_GROUPS);
+	printf("static struct opcode_table_entry group_insts[%d][8] = {\n", NR_GROUPS);
 	for (int i = 0; i < NR_GROUPS; i++) {
 		printf("\t[%d] = {\n", i);
 		print_one_table(NULL, groups_table[i], 8);
@@ -415,7 +415,7 @@ void print_table(void)
 	}
 	printf("};\n");
 
-	printf("struct opcode_table_entry spec_prefix_insts[%d] = { \n", next_spec_prefix_instruction);
+	printf("static struct opcode_table_entry spec_prefix_insts[%d] = { \n", next_spec_prefix_instruction);
 	print_one_table(NULL, spec_prefix_table, next_spec_prefix_instruction);
 	printf("};\n");
 

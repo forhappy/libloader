@@ -57,7 +57,6 @@ next_inst(uint8_t * stream)
 	uint8_t prefix3 = 0;
 	uint8_t prefix4 = 0;
 	uint8_t opc;
-	struct opcode_table_entry inn_e;
 	const struct opcode_table_entry * e = NULL;
 	uint8_t modrm = 0;
 
@@ -122,8 +121,7 @@ group_restart:
 		case INST_GROUP12_0x0f71:
 		case INST_GROUP13_0x0f72:
 		case INST_GROUP14_0x0f73:
-		case INST_GROUP15_0x0fae_mem:
-		case INST_GROUP15_0x0fae_11b:
+		case INST_GROUP15_0x0fae:
 		case INST_GROUP16_0x0f18:
 			modrm = *stream;
 			e = &(group_insts[e->type - INST_GROUP_start - 1]
@@ -145,18 +143,6 @@ group_restart:
 			}
 			break;
 
-		case INST_GROUP15:
-			modrm = *stream;
-			if (MOD(modrm) == 3) {
-				e = &(group_insts[INST_GROUP15_0x0fae_11b - INST_GROUP_start - 1]
-						[REG(modrm)]);
-				/* this instruction has no operade, but occupies a modrm */
-				stream ++;
-			} else {
-				e = &(group_insts[INST_GROUP15_0x0fae_mem - INST_GROUP_start - 1]
-						[REG(modrm)]);
-			}
-			break;
 		case INST_ESCAPE_2B:
 			printf("0x%x ", opc);
 			opcode_table = twobytes_insts;

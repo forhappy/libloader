@@ -1,7 +1,7 @@
 INCLUDE_DIRECTORIES(${SNITCHASER_BINARY_DIR}/src
 	${SNITCHASER_BINARY_DIR}
 	${SNITCHASER_SOURCE_DIR}/src
-	${SNITCHASER_SOURCE_DIR}/include/${ARCH}
+	${SNITCHASER_SOURCE_DIR}/src/${ARCH}/include
 	)
 
 MACRO(build_tests testlist libs)
@@ -15,13 +15,8 @@ IF (BUILD_TESTS)
 ENDIF(BUILD_TESTS)
 ENDMACRO(build_tests testlist libs)
 
-ADD_EXECUTABLE(snitchaser
-	main.c)
-
-TARGET_LINK_LIBRARIES(snitchaser
-	common
-	ptrace)
-
+ADD_SUBDIRECTORY(arch)
+ADD_SUBDIRECTORY(interp)
+ADD_SUBDIRECTORY(host)
 ADD_SUBDIRECTORY(common)
-ADD_SUBDIRECTORY(ptrace)
 
