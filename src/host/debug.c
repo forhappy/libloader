@@ -38,7 +38,6 @@ dbg_output(enum __debug_level level,
 	va_end(ap);
 }
 
-
 #undef __DEBUG_C
 
 // vim:ts=4:sw=4

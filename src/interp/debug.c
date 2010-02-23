@@ -5,7 +5,10 @@
 #define __DEBUG_C
 
 #include <common/debug.h>
+#include <common/assert.h>
+#include <asm/utils.h>
 #include <stdarg.h>
+#include <unistd.h>
 
 void
 dbg_output(enum __debug_level level,
@@ -22,20 +25,29 @@ dbg_output(enum __debug_level level,
 		return;
 
 #ifdef SNITCHASER_DEBUG
-	fprintf(stderr, "[%s@%s:%d]\t",
-			__debug_level_names[level],
+	fdprintf(STDERR_FILENO, "[%s@%s:%d]:\t",
+			(char*)__debug_level_names[level],
 			func, line);
 #else
-	fprintf(stderr, "%s:\t", __debug_level_names[level]);
+	fdprintf(STDERR_FILENO, "%s:\t", (char*)__debug_level_names[level]);
 #endif
 
 	va_list ap;
 	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
+	vfdprintf(STDERR_FILENO, fmt, ap);
 	va_end(ap);
 }
 
-
+void ATTR(noreturn)
+__assert_fail (const char *__assertion, const char *__file,
+		unsigned int __line, const char *__function)
+{
+	fdprintf(STDERR_FILENO, 
+			"** %s:%d: %s: assertion `%s' failed **\n",
+			__file, __line, __function, __assertion);
+	__exit(-1);
+}
 #undef __DEBUG_C
 
+// vim:ts=4:sw=4
 

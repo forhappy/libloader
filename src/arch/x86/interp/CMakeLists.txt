@@ -2,6 +2,8 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}
 	)
 SET(SRC
+	relocate.c
+	utils.c
 	scan_opcode.c
 	x86_opcode.h
 	x86_opcode.c.h

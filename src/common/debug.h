@@ -27,7 +27,7 @@ enum __debug_level {
 
 #ifdef __DEBUG_C
 static enum __debug_level current_debug_level = DBG_LV_TRACE;
-static const char * __debug_level_names[NR_DEBUG_LEVELS] = {
+static const char * __debug_level_names[NR_DEBUG_LEVELS] ATTR(unused) = {
 	[DBG_LV_SILENT]		= "SIL",
 	[DBG_LV_TRACE]		= "TRC",
 	[DBG_LV_DEBUG]		= "DBG",

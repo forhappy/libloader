@@ -1108,3 +1108,5 @@ int sscanf(const char * buf, const char * fmt, ...)
 	return i;
 }
 
+// vim:ts=4:sw=4
+

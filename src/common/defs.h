@@ -43,6 +43,7 @@ typedef int bool_t;
 #endif
 
 #define ATTR(x) __attribute__((x))
+#define ATTR_HIDDEN ATTR(visibility("hidden"))
 
 
 /* The ability to declare that a function never returns is useful, but
