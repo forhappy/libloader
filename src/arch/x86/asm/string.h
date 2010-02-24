@@ -15,14 +15,20 @@ strcat(char *dest, const char *src);
 extern char *
 strncat(char *dest, const char *src, size_t count);
 
+#ifndef strcmp
 extern int
 strcmp(const char *cs, const char *ct);
+#endif
 
+#ifndef strncmp
 extern int
 strncmp(const char *cs, const char *ct, size_t count);
+#endif
 
+#ifndef strchr
 extern char *
 strchr(const char *s, int c);
+#endif
 
 extern size_t
 strlen(const char *s);

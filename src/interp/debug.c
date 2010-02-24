@@ -23,10 +23,11 @@ dbg_output(enum __debug_level level,
 	if (fmt == NULL)
 		return;
 	assert(level < NR_DEBUG_LEVELS);
+#ifdef SNITCHASER_DEBUG
 	assert(comp < NR_DEBUG_COMPONENTS);
-
 	if (level < __debug_component_levels[comp])
 		return;
+#endif
 
 #ifdef SNITCHASER_DEBUG
 	fdprintf(STDERR_FILENO, "[%s %s@%s:%d]:\t",

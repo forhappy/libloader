@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+
 #include "x86_instructions.tbl.h"
 
 #ifndef PARSER_DEBUG_OUT
@@ -29,6 +30,9 @@ xfree(void * ptr)
 	free(ptr);
 }
 
+#ifdef strdup
+# undef strdup
+#endif
 #define strdup xstrdup
 #define free xfree
 

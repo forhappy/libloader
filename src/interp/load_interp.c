@@ -7,6 +7,7 @@
 
 #include <common/debug.h>
 #include <common/assert.h>
+#include <asm/string.h>
 #include <asm/utils.h>
 #include <asm/syscall.h>
 #include <asm/elf.h>

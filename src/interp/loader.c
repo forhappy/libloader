@@ -13,7 +13,6 @@
 
 #include <asm/debug.h>
 #include <asm/syscall.h>
-#include <asm/string.h>
 #include <asm/vsprintf.h>
 #include <asm/utils.h>
 #include <asm/elf.h>

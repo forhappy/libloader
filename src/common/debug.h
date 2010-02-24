@@ -8,7 +8,6 @@
 #include <common/defs.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <memory.h>	/* strdup */
 #include <malloc.h>
 
 __BEGIN_DECLS
@@ -44,12 +43,13 @@ static const char * __debug_level_names[NR_DEBUG_LEVELS] ATTR(unused) = {
 	[DBG_LV_FORCE]		= "FOC",
 };
 
-
+#ifdef SNITCHASER_DEBUG
 static const char *
 __debug_component_names[NR_DEBUG_COMPONENTS] = {
 	[SYSTEM]	= "SYS",
 	[LOADER]	= "LOD",
 };
+#endif
 
 static const enum __debug_level
 __debug_component_levels[NR_DEBUG_COMPONENTS] = {

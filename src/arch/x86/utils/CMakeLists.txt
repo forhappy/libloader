@@ -20,5 +20,10 @@ ADD_EXECUTABLE(x86_tbl_parser
 	x86_registers.h
 	buildtable.c
 	)
+
+SET_PROPERTY(TARGET x86_tbl_parser
+	APPEND
+	PROPERTY COMPILE_FLAGS "-D_FORTIFY_SOURCE=0")
+
 TARGET_LINK_LIBRARIES(x86_tbl_parser ${FLEX_LIBRARIES})
 

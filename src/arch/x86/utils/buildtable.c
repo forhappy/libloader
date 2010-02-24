@@ -284,7 +284,7 @@ void add_descriptor(
 				inst->name = strdup("SPECPREFIXINSTRUCTION");
 			}
 			/* find the prefix */
-			int nprefix;
+			int nprefix = 0;
 			if (strcmp(specprefix, "[none]") == 0) {
 				nprefix = SPECPREFIX_NONE;
 			} else if (strcmp(specprefix, "[0x66]") == 0) {
