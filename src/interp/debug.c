@@ -47,6 +47,13 @@ __assert_fail (const char *__assertion, const char *__file,
 			__file, __line, __function, __assertion);
 	__exit(-1);
 }
+
+void ATTR(noreturn)
+dbg_fatal(void)
+{
+	__exit(-1);
+}
+
 #undef __DEBUG_C
 
 // vim:ts=4:sw=4

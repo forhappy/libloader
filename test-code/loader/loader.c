@@ -165,9 +165,6 @@ reexecute(uintptr_t oldesp)
 	/* execve */
 	printf("new_argv[0]=%s\n", new_argv[0]);
 	err = INTERNAL_SYSCALL_int80(execve, 3, new_argv[0], new_argv, new_env);
-	printf("err = %d\n", err);
-	exit(-1);
-	assert(err == 0);
 }
 
 static void * interp_base = NULL;

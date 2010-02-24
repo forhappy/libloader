@@ -6,6 +6,7 @@
 #define __DEBUG_C
 
 #include <common/debug.h>
+#include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -36,6 +37,13 @@ dbg_output(enum __debug_level level,
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
+}
+
+void ATTR(noreturn)
+dbg_fatal(void)
+{
+	raise(SIGABRT);
+	exit(-1);
 }
 
 #undef __DEBUG_C

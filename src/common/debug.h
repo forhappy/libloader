@@ -55,6 +55,9 @@ ATTR(format(printf, 5, 6));
 ATTR(format(printf, 2, 3));
 #endif
 
+extern void
+dbg_fatal(void) ATTR(noreturn);
+
 #ifdef SNITCHASER_DEBUG
 
 #define SILENT(...)     __NOP
