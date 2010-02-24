@@ -1,8 +1,6 @@
 /* 
- * load_interp.c
- * by WN @ Feb. 24, 2010
- *
- * load the real ld-linux.so
+ * load_elf.c
+ * by WN @ Feb. 25, 2010
  */
 
 #include <common/debug.h>
@@ -15,13 +13,11 @@
 
 #include <sys/mman.h>
 
-#define INTERP_FILE		"/lib/ld-linux.so.2"
-
 static int
-open_real_interp(struct elf32_hdr * hdr)
+open_elf_file(struct elf32_hdr * hdr, const char * fn)
 {
 	int fd = INTERNAL_SYSCALL_int80(open, 2,
-			INTERP_FILE, O_RDONLY);
+			fn, O_RDONLY);
 	assert(fd >= 0);
 
 	int err = INTERNAL_SYSCALL_int80(read, 3,
@@ -32,7 +28,7 @@ open_real_interp(struct elf32_hdr * hdr)
 	TRACE(LOADER, "magic check ok\n");
 
 	/* parse header */
-	assert(hdr->e_type == ET_DYN);
+	assert((hdr->e_type == ET_DYN) || (hdr->e_type == ET_EXEC));
 	assert(hdr->e_machine == EM_386);
 	return fd;
 }
@@ -87,15 +83,14 @@ compute_total_map_sz(struct elf32_phdr * phdrs, int nr_phdrs,
 		__map_prot;						\
 		})
 
-void * real_interp_address = NULL;
-
 void *
-load_interp(void * oldesp)
+load_elf(const char * fn, void ** p_load_bias)
 {
-	TRACE(LOADER, "loading " INTERP_FILE "\n");
+	assert(fn != NULL);
+	TRACE(LOADER, "loading %s\n", fn);
 
 	struct elf32_hdr hdr;
-	int fd = open_real_interp(&hdr);
+	int fd = open_elf_file(&hdr, fn);
 
 	int nr_phdrs = hdr.e_phnum;
 	struct elf32_phdr * phdrs = alloca(sizeof(struct elf32_phdr) *
@@ -106,25 +101,47 @@ load_interp(void * oldesp)
 	int start, end, nr_first;
 	int total_map_sz = compute_total_map_sz(phdrs, nr_phdrs,
 			&start, &end, &nr_first);
-	TRACE(LOADER, "total mem sz of " INTERP_FILE " = 0x%x: 0x%x -- 0x%x, %d\n",
-			total_map_sz, start, end, nr_first);
+	TRACE(LOADER, "total mem sz of %s = 0x%x: 0x%x -- 0x%x, %d\n",
+			fn, total_map_sz, start, end, nr_first);
 
 	/* map the file */
-	void * map_addr;
+	void * map_addr = NULL;
+	void * end_addr = NULL;
+	void * load_bias = NULL;
+	uint32_t map_type = MAP_PRIVATE;
+	
+	map_addr = (void*)phdrs[nr_first].p_vaddr;
+	end_addr = map_addr + total_map_sz;
+	map_addr = ALIGN_DOWN_PTR(map_addr, 4096);
+	total_map_sz = ALIGN_UP_PTR(end_addr, 4096) - map_addr;
+
+	if (hdr.e_type == ET_EXEC) {
+		map_type |= MAP_FIXED;
+	} else {
+		assert(map_addr == NULL);
+	}
+
 	/* map the first section with total_map_sz, and 
 	 * unmap unneed pages. This is to make sure we have a
 	 * continuous memory space to hold the whole mem image. */
 	uint32_t first_prot = get_map_prot(phdrs[nr_first].p_flags);
 	map_addr = (void*)INTERNAL_SYSCALL_int80(mmap2, 6,
-			NULL, total_map_sz, first_prot, MAP_PRIVATE,
+			map_addr, total_map_sz, first_prot, map_type,
 			fd, phdrs[nr_first].p_offset >> 12);
 	assert(map_addr < (void*)0xc0000000);
 	TRACE(LOADER, "map from %p to %p\n",
 			map_addr, map_addr + total_map_sz);
 
+	if (hdr.e_type == ET_EXEC) {
+		load_bias = NULL;
+	} else {
+		load_bias = map_addr;
+	}
+
 	/* unmap the padding pages */
-	void * unmap_start = map_addr + phdrs[nr_first].p_memsz;
-	void * unmap_end = map_addr + total_map_sz;
+	void * unmap_start = load_bias + phdrs[nr_first].p_vaddr + phdrs[nr_first].p_memsz;
+	void * unmap_end = load_bias + (uint32_t)(end_addr);
+
 	unmap_start = ALIGN_UP_PTR(unmap_start, 4096);
 	unmap_end = ALIGN_UP_PTR(unmap_end, 4096);
 	TRACE(LOADER, "unmap from %p to %p\n",
@@ -138,7 +155,7 @@ load_interp(void * oldesp)
 			continue;
 		if (phdrs[i].p_type != PT_LOAD)
 			continue;
-		void * start_addr = map_addr + phdrs[i].p_vaddr;
+		void * start_addr = load_bias + phdrs[i].p_vaddr;
 		void * fend_addr = start_addr + phdrs[i].p_filesz;
 		void * real_fend_addr = fend_addr;
 		void * mend_addr = start_addr + phdrs[i].p_memsz;
@@ -170,9 +187,13 @@ load_interp(void * oldesp)
 	}
 	INTERNAL_SYSCALL_int80(close, 1,
 			fd);
-	real_interp_address = map_addr;
-	return map_addr + hdr.e_entry;
+	if (p_load_bias)
+		*p_load_bias = load_bias;
+	return load_bias + hdr.e_entry;
 }
+
+
+
 
 // vim:ts=4:sw=4
 

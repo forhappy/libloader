@@ -107,6 +107,7 @@ struct elf32_hdr {
 	Elf32_Half e_shnum;
 	Elf32_Half e_shstrndx;
 };
+#define ET_EXEC		2
 #define ET_DYN		3
 #define EM_386		3
 

@@ -21,7 +21,7 @@
 #include <linux/auxvec.h>
 
 extern void *
-load_interp(void *);
+load_real_interp(void);
 
 extern void * real_interp_address;
 
@@ -138,7 +138,7 @@ xmain(void * retptr, volatile void * __retaddr)
 	reexec(oldesp);
 
 	/* need change!! */
-	void * interp_entry = load_interp(oldesp);
+	void * interp_entry = load_real_interp();
 
 	fix_aux(oldesp);
 
