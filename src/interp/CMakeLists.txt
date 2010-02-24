@@ -2,6 +2,7 @@ INCLUDE_DIRECTORIES(${SNITCHASER_CURRENT_SOURCE_DIR})
 
 SET(SRC
 	loader.c
+	load_interp.c
 	debug.c
 	)
 ADD_LIBRARY(interp SHARED

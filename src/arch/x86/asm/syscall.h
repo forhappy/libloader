@@ -6,6 +6,8 @@
 #ifndef __SYSCALL_H
 #define __SYSCALL_H
 #include <stdint.h>
+#include <unistd.h>
+#include <fcntl.h>
 #include <asm/unistd.h>
 #include <common/defs.h>
 __BEGIN_DECLS

@@ -13,6 +13,7 @@
 void
 dbg_output(enum __debug_level level,
 #ifdef SNITCHASER_DEBUG
+		enum __debug_component comp,
 		const char * file ATTR(unused),
 		const char * func,
 		int line,
@@ -21,11 +22,15 @@ dbg_output(enum __debug_level level,
 {
 	if (fmt == NULL)
 		return;
-	if (level < current_debug_level)
+	assert(level < NR_DEBUG_LEVELS);
+	assert(comp < NR_DEBUG_COMPONENTS);
+
+	if (level < __debug_component_levels[comp])
 		return;
 
 #ifdef SNITCHASER_DEBUG
-	fdprintf(STDERR_FILENO, "[%s@%s:%d]:\t",
+	fdprintf(STDERR_FILENO, "[%s %s@%s:%d]:\t",
+			(char*)__debug_component_names[comp],
 			(char*)__debug_level_names[level],
 			func, line);
 #else
