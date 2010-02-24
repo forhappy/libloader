@@ -18,7 +18,7 @@
 #include <asm/elf.h>
 #include <asm/startup.h>
 
-extern uintptr_t
+extern void *
 load_interp(void *);
 
 /* reexec reset the personality bit ADDR_NO_RANDOMIZE to make sure
@@ -59,14 +59,15 @@ reexec(void * old_esp)
 }
 
 __attribute__((used, unused)) static int
-xmain(void * retptr, volatile uintptr_t retcode)
+xmain(void * retptr, volatile void * retaddr)
 {
 	relocate_interp();
 	void * oldesp = retptr + sizeof(uintptr_t);
 	
 	reexec(oldesp);
 
-	uintptr_t retaddr = load_interp(oldesp);
+	/* need change!! */
+	retaddr = load_interp(oldesp);
 
 	__exit(0);
 	return 0;

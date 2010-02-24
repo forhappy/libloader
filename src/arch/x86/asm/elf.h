@@ -105,6 +105,22 @@ struct elf32_hdr {
 	Elf32_Half e_shnum;
 	Elf32_Half e_shstrndx;
 };
+#define ET_DYN		3
+#define EM_386		3
+
+struct elf32_phdr {
+	Elf32_Word p_type;
+	Elf32_Off p_offset;
+	Elf32_Addr p_vaddr;
+	Elf32_Addr p_paddr;
+	Elf32_Word p_filesz;
+	Elf32_Word p_memsz;
+	Elf32_Word p_flags;
+	Elf32_Word p_align;
+};
+
+#define PT_LOAD    1
+
 
 #endif
 
