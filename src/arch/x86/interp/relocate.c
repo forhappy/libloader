@@ -32,6 +32,7 @@ relocate_interp(void)
 
 	/* prepare relocation */
 	struct elf32_rel * reltab = NULL;
+	struct elf32_sym * symtab = NULL;
 	int relsz = 0;
 	int relent = 0;
 	for (struct elf32_dyn * dyn = &_DYNAMIC[0]; dyn->d_tag != DT_NULL; dyn ++) {
@@ -44,6 +45,9 @@ relocate_interp(void)
 				break;
 			case DT_RELENT:
 				relent = dyn->d_un.d_val;
+				break;
+			case DT_SYMTAB:
+				symtab = (void*)dyn->d_un.d_ptr + load_bias;
 				break;
 		}
 		
@@ -70,8 +74,16 @@ relocate_interp(void)
 				real_val = old_val + load_bias;
 				break;
 			}
+			case R_386_GLOB_DAT: {
+				assert(symtab != NULL);
+				int nsym = ELF32_R_SYM(info);
+				struct elf32_sym * sym = &symtab[nsym];
+				uint32_t sym_val = sym->st_value;
+				real_val = sym_val + load_bias;
+				break;
+			}
 			default:
-				printf("unknown relocate type 0x%x\n", type);
+				printf("relocate error: unknown relocate type 0x%x\n", type);
 				__exit(-1);
 				break;
 		}

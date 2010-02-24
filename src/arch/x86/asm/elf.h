@@ -13,6 +13,7 @@ typedef uint16_t	Elf32_Half;
 typedef uint32_t	Elf32_Off;
 typedef int32_t		Elf32_Sword;
 typedef uint32_t	Elf32_Word;
+typedef uint16_t	Elf32_Section;
 
 #define DT_NULL		0
 #define DT_NEEDED	1
@@ -65,6 +66,7 @@ typedef uint32_t	Elf32_Word;
 #define ELF32_R_SYM(x) ((x) >> 8)
 #define ELF32_R_TYPE(x) ((x) & 0xff)
 
+#define R_386_GLOB_DAT	   6		/* Adjust by program base */
 #define R_386_RELATIVE	   8		/* Adjust by program base */
 
 
@@ -121,6 +123,18 @@ struct elf32_phdr {
 
 #define PT_LOAD    1
 
+#define PF_R		0x4
+#define PF_W		0x2
+#define PF_X		0x1
+
+struct elf32_sym {
+  Elf32_Word	st_name;		/* Symbol name (string tbl index) */
+  Elf32_Addr	st_value;		/* Symbol value */
+  Elf32_Word	st_size;		/* Symbol size */
+  unsigned char	st_info;		/* Symbol type and binding */
+  unsigned char	st_other;		/* Symbol visibility */
+  Elf32_Section	st_shndx;		/* Section index */
+};
 
 #endif
 
