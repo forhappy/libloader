@@ -20,10 +20,13 @@
 
 #include <linux/auxvec.h>
 
-extern void *
-load_real_interp(void);
+#define INTERP_FILE		"/lib/ld-linux.so.2"
+//#define INTERP_FILE		"/tmp/glibc/lib/ld-linux.so.2"
+//#define INTERP_FILE "/home/wn/work/glibc/build/elf/ld-linux.so.2"
 
-extern void * real_interp_address;
+extern void *
+load_elf(const char * fn, void ** p_load_bias,
+		struct elf32_phdr ** ppuser_phdrs, int * p_nr_user_phdrs);
 
 /* reexec reset the personality bit ADDR_NO_RANDOMIZE to make sure
  * the process' memory layout is idential */
@@ -55,7 +58,7 @@ reexec(void * old_esp)
 	/* iterate over args */
 	const char ** new_argv = NULL;
 	const char ** new_env = NULL;
-	uint32_t * ptr = old_esp;
+	uintptr_t * ptr = old_esp;
 
 	int argc = *(ptr ++);
 	TRACE(LOADER, "argc = %d\n", argc);
@@ -72,11 +75,11 @@ reexec(void * old_esp)
 static void ** p_user_entry = NULL;
 static struct elf32_phdr ** ppuser_phdrs = NULL;
 static int * p_nr_user_phdrs = NULL;
+static void ** p_base = NULL;
+static const char ** p_execfn = NULL;
 
-/* entries in base stack */
-static int * p_user_argc = NULL;
-static const char ** user_argv = NULL;
-static const char ** user_env = NULL;
+static void * real_interp_address = NULL;
+
 
 static void
 fix_aux(void * oldesp)
@@ -85,30 +88,33 @@ fix_aux(void * oldesp)
 	assert(real_interp_address != NULL);
 
 	/* find the aux vector */
-	uint32_t * p = oldesp;
-	p_user_argc = (int*)(p++);
-	user_argv = (const char **)(p);
+	uintptr_t * p = oldesp;
+	p++;
 	while (*p != 0)
 		p ++;
 	p ++;
-	user_env = (const char **)(p);
 	while (*p != 0)
 		p ++;
 	p ++;
 
 	/* now p is pointed to aux vector */
+	SILENT(LOADER, "auxv start from %p\n", p);
 	while (*p != AT_NULL) {
 		switch (p[0]) {
 			case AT_ENTRY: {
 				p_user_entry = (void*)(&p[1]);
+				SILENT(LOADER, "user entry = %p\n", *p_user_entry);
 				break;
 			}
 			case AT_BASE: {
-				p[1] = (uint32_t)(real_interp_address);
+				p_base = (void*)&p[1];
+				SILENT(LOADER, "interp base = %p\n", *p_base);
+				*p_base = real_interp_address;
 				break;
 			}
 			case AT_PHDR: {
 				ppuser_phdrs = (void*)(&p[1]);
+				SILENT(LOADER, "user phdr = %p\n", *ppuser_phdrs);
 				break;
 			}
 			case AT_PHENT: {
@@ -117,6 +123,12 @@ fix_aux(void * oldesp)
 			}
 			case AT_PHNUM: {
 				p_nr_user_phdrs = (void*)(&p[1]);
+				SILENT(LOADER, "phnum = %d\n", *p_nr_user_phdrs);
+				break;
+			}
+			case AT_EXECFN: {
+				p_execfn = (const char **)(&p[1]);
+				SILENT(LOADER, "AT_EXECFN=%s\n", *p_execfn);
 				break;
 			}
 			default:
@@ -126,30 +138,50 @@ fix_aux(void * oldesp)
 	}
 }
 
+static int
+adjust_direct_args(void * esp)
+{
+	int * pargc = (int*)(esp);
+	const char ** argv = &((const char**)(esp))[1];
+	assert(*pargc > 0);
+	if (*pargc == 1) {
+		printf("Usage: %s EXECUTABLE-FILE [ARGS-FOR-PROGRAM...]\n",
+				argv[0]);
+		__exit(0);
+	}
+
+	*p_user_entry = load_elf(argv[1], NULL, ppuser_phdrs, p_nr_user_phdrs);
+	*p_execfn = argv[1];
+	pargc[1] = pargc[0] - 1;
+	return 1;
+}
+
 /* hidden symbol will be retrived using ebx directly,
  * avoid to generate R_386_GLOB_DAT relocation */
 extern int _start[] ATTR_HIDDEN;
 __attribute__((used, unused)) static int
-xmain(void * retptr, volatile void * __retaddr)
+xmain(void * __esp, volatile void * __retaddr)
 {
 	relocate_interp();
-	void * oldesp = retptr + sizeof(uintptr_t);
+	void * oldesp = __esp + sizeof(uintptr_t);
+
+	VERBOSE(LOADER, "oldesp=%p\n", oldesp);
 	
 	reexec(oldesp);
 
-	/* need change!! */
-	void * interp_entry = load_real_interp();
+	/* needs change!! */
+	void * interp_entry =
+		load_elf(INTERP_FILE, &real_interp_address, NULL, NULL);
 
 	fix_aux(oldesp);
 
-	VERBOSE(LOADER, "interp_entry = %p, user_entry = %p\n",
-			interp_entry, *p_user_entry);
+	int esp_add = 0;
 	if (_start == *p_user_entry) {
 		VERBOSE(LOADER, "loader is called directly\n");
-		__exit(1);
+		esp_add = adjust_direct_args(oldesp);
 	}
 	__retaddr = interp_entry;
-	return 0;
+	return esp_add;
 }
 
 #undef __LOADER_MAIN_C

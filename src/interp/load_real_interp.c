@@ -8,7 +8,6 @@
 #include <common/debug.h>
 #include <common/assert.h>
 
-#define INTERP_FILE		"/lib/ld-linux.so.2"
 
 extern void *
 load_elf(const char * fn, void ** p_load_bias);

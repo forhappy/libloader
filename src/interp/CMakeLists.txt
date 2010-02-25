@@ -2,7 +2,6 @@ INCLUDE_DIRECTORIES(${SNITCHASER_CURRENT_SOURCE_DIR})
 
 SET(SRC
 	loader.c
-	load_real_interp.c
 	load_elf.c
 	debug.c
 	)

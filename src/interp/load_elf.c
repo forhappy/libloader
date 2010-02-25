@@ -18,7 +18,8 @@ open_elf_file(struct elf32_hdr * hdr, const char * fn)
 {
 	int fd = INTERNAL_SYSCALL_int80(open, 2,
 			fn, O_RDONLY);
-	assert(fd >= 0);
+	if (fd < 0)
+		FATAL(LOADER, "open file %s failed: %d\n", fn, fd);
 
 	int err = INTERNAL_SYSCALL_int80(read, 3,
 			fd, hdr, sizeof(*hdr));
@@ -84,7 +85,8 @@ compute_total_map_sz(struct elf32_phdr * phdrs, int nr_phdrs,
 		})
 
 void *
-load_elf(const char * fn, void ** p_load_bias)
+load_elf(const char * fn, void ** p_load_bias,
+		struct elf32_phdr ** ppuser_phdrs, int * p_nr_user_phdrs)
 {
 	assert(fn != NULL);
 	TRACE(LOADER, "loading %s\n", fn);
@@ -124,6 +126,7 @@ load_elf(const char * fn, void ** p_load_bias)
 	/* map the first section with total_map_sz, and 
 	 * unmap unneed pages. This is to make sure we have a
 	 * continuous memory space to hold the whole mem image. */
+	assert(phdrs[nr_first].p_offset == 0);
 	uint32_t first_prot = get_map_prot(phdrs[nr_first].p_flags);
 	map_addr = (void*)INTERNAL_SYSCALL_int80(mmap2, 6,
 			map_addr, total_map_sz, first_prot, map_type,
@@ -141,6 +144,15 @@ load_elf(const char * fn, void ** p_load_bias)
 	/* unmap the padding pages */
 	void * unmap_start = load_bias + phdrs[nr_first].p_vaddr + phdrs[nr_first].p_memsz;
 	void * unmap_end = load_bias + (uint32_t)(end_addr);
+
+	/* pad first physical region */
+	if ((phdrs[nr_first].p_filesz < phdrs[nr_first].p_memsz) &&
+			(phdrs[nr_first].p_flags & PF_W))
+	{
+		memset(load_bias + phdrs[nr_first].p_filesz,
+				'\0',
+				phdrs[nr_first].p_memsz - phdrs[nr_first].p_filesz);
+	}
 
 	unmap_start = ALIGN_UP_PTR(unmap_start, 4096);
 	unmap_end = ALIGN_UP_PTR(unmap_end, 4096);
@@ -168,15 +180,17 @@ load_elf(const char * fn, void ** p_load_bias)
 				start_addr, fend_addr - start_addr,
 				prot, MAP_PRIVATE | MAP_FIXED,
 				fd, (phdrs[i].p_offset) >> 12);
-		TRACE(LOADER, "map file at 0x%x\n", err);
+		TRACE(LOADER, "map file from 0x%x to %p\n", err, fend_addr);
 		assert(err == (uint32_t)start_addr);
 
 		/* map additional pages */
 		if (mend_addr > fend_addr) {
 			/* we need more pages */
+			TRACE(LOADER, "mapping zero page from %p to %p\n",
+					fend_addr, mend_addr);
 			err = INTERNAL_SYSCALL_int80(mmap2, 6,
 					fend_addr, mend_addr - fend_addr,
-					prot, MAP_PRIVATE | MAP_FIXED,
+					prot, MAP_PRIVATE | MAP_ANONYMOUS | MAP_DENYWRITE | MAP_FIXED,
 					0, 0);
 			assert(err == (uint32_t)fend_addr);
 			TRACE(LOADER, "pad at 0x%x\n", err);
@@ -189,11 +203,13 @@ load_elf(const char * fn, void ** p_load_bias)
 			fd);
 	if (p_load_bias)
 		*p_load_bias = load_bias;
+	/* e_phoff is offset in file. don't use load_bias */
+	if (ppuser_phdrs)
+		*ppuser_phdrs = map_addr + hdr.e_phoff;
+	if (p_nr_user_phdrs)
+		*p_nr_user_phdrs = hdr.e_phnum;
 	return load_bias + hdr.e_entry;
 }
-
-
-
 
 // vim:ts=4:sw=4
 
