@@ -169,7 +169,7 @@ xmain(void * __esp, volatile void * __retaddr)
 	
 	reexec(oldesp);
 
-	/* needs change!! */
+	/* needs changes!! */
 	void * interp_entry =
 		load_elf(INTERP_FILE, &real_interp_address, NULL, NULL);
 

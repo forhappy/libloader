@@ -72,7 +72,6 @@ compute_total_map_sz(struct elf32_phdr * phdrs, int nr_phdrs,
 	return end - start;
 }
 
-/* make executable section writable */
 #define get_map_prot(__f) ({			\
 		uint32_t __map_prot = 0;		\
 		if ((__f) & PF_R)				\
@@ -80,7 +79,7 @@ compute_total_map_sz(struct elf32_phdr * phdrs, int nr_phdrs,
 		if ((__f) & PF_W)				\
 			__map_prot |= PROT_WRITE;	\
 		if ((__f) & PF_X)				\
-			__map_prot |= (PROT_EXEC | PROT_WRITE);	\
+			__map_prot |= PROT_EXEC;	\
 		__map_prot;						\
 		})
 
@@ -123,8 +122,8 @@ load_elf(const char * fn, void ** p_load_bias,
 		assert(map_addr == NULL);
 	}
 
-	/* map the first section with total_map_sz, and 
-	 * unmap unneed pages. This is to make sure we have a
+	/* map the first segment with total_map_sz, and 
+	 * unmap unneed pages. This is to make sure we have enough
 	 * continuous memory space to hold the whole mem image. */
 	assert(phdrs[nr_first].p_offset == 0);
 	uint32_t first_prot = get_map_prot(phdrs[nr_first].p_flags);
@@ -161,7 +160,7 @@ load_elf(const char * fn, void ** p_load_bias,
 	INTERNAL_SYSCALL_int80(munmap, 2,
 			unmap_start, unmap_end - unmap_start);
 
-	/* map other sections */
+	/* map other segments */
 	for (int i = 0; i < nr_phdrs; i++) {
 		if (i == nr_first)
 			continue;
