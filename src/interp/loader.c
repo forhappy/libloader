@@ -78,15 +78,10 @@ static int * p_nr_user_phdrs = NULL;
 static void ** p_base = NULL;
 static const char ** p_execfn = NULL;
 
-static void * real_interp_address = NULL;
-
 
 static void
-fix_aux(void * oldesp)
+find_aux(void * oldesp)
 {
-	/* fix the aux vector */
-	assert(real_interp_address != NULL);
-
 	/* find the aux vector */
 	uintptr_t * p = oldesp;
 	p++;
@@ -98,7 +93,7 @@ fix_aux(void * oldesp)
 	p ++;
 
 	/* now p is pointed to aux vector */
-	SILENT(LOADER, "auxv start from %p\n", p);
+	TRACE(LOADER, "auxv start from %p\n", p);
 	while (*p != AT_NULL) {
 		switch (p[0]) {
 			case AT_ENTRY: {
@@ -109,7 +104,6 @@ fix_aux(void * oldesp)
 			case AT_BASE: {
 				p_base = (void*)&p[1];
 				SILENT(LOADER, "interp base = %p\n", *p_base);
-				*p_base = real_interp_address;
 				break;
 			}
 			case AT_PHDR: {
@@ -139,7 +133,7 @@ fix_aux(void * oldesp)
 }
 
 static int
-adjust_direct_args(void * esp)
+load_real_exec(void * esp)
 {
 	int * pargc = (int*)(esp);
 	const char ** argv = &((const char**)(esp))[1];
@@ -166,21 +160,36 @@ xmain(void * __esp, volatile void * __retaddr)
 	void * oldesp = __esp + sizeof(uintptr_t);
 
 	VERBOSE(LOADER, "oldesp=%p\n", oldesp);
-	
+
 	reexec(oldesp);
+	find_aux(oldesp);
 
-	/* needs changes!! */
-	void * interp_entry =
-		load_elf(INTERP_FILE, &real_interp_address, NULL, NULL);
+	assert(ppuser_phdrs != NULL);
+	assert(p_nr_user_phdrs != NULL);
 
-	fix_aux(oldesp);
-
+	/* shell we load the target executable first? */
 	int esp_add = 0;
 	if (_start == *p_user_entry) {
 		VERBOSE(LOADER, "loader is called directly\n");
-		esp_add = adjust_direct_args(oldesp);
+		esp_add = load_real_exec(oldesp);
 	}
-	__retaddr = interp_entry;
+
+	/* now the p_user_entry, ppuser_phdrs and p_nr_user_phdrs
+	 * are adjusted */
+
+	/* shell we load the real interp? */
+	for (int i = 0; i < *p_nr_user_phdrs; i++) {
+		if ((*ppuser_phdrs)[i].p_type == PT_INTERP) {
+			/* this is dynamically linked executable */
+			void * interp_entry =
+				load_elf(INTERP_FILE, p_base, NULL, NULL);
+
+			__retaddr = interp_entry;
+			return esp_add;
+		}
+	}
+	/* this is a statically linked executable */
+	__retaddr = *p_user_entry;
 	return esp_add;
 }
 
