@@ -154,10 +154,10 @@ load_real_exec(void * esp)
  * avoid to generate R_386_GLOB_DAT relocation */
 extern int _start[] ATTR_HIDDEN;
 __attribute__((used, unused)) static int
-xmain(void * __esp, volatile void * __retaddr)
+xmain(volatile struct pusha_regs regs)
 {
 	relocate_interp();
-	void * oldesp = __esp + sizeof(uintptr_t);
+	void * oldesp = (void*)stack_top(&regs) + sizeof(uintptr_t);
 
 	VERBOSE(LOADER, "oldesp=%p\n", oldesp);
 
@@ -174,6 +174,9 @@ xmain(void * __esp, volatile void * __retaddr)
 		esp_add = load_real_exec(oldesp);
 	}
 
+	stack_top(&regs) += esp_add * sizeof(uintptr_t);
+	void ** pretaddr = (void**)(stack_top(&regs));
+
 	/* now the p_user_entry, ppuser_phdrs and p_nr_user_phdrs
 	 * are adjusted */
 
@@ -184,12 +187,12 @@ xmain(void * __esp, volatile void * __retaddr)
 			void * interp_entry =
 				load_elf(INTERP_FILE, p_base, NULL, NULL);
 
-			__retaddr = interp_entry;
+			*pretaddr = interp_entry;
 			return esp_add;
 		}
 	}
 	/* this is a statically linked executable */
-	__retaddr = *p_user_entry;
+	*pretaddr = *p_user_entry;
 	return esp_add;
 }
 
