@@ -2,7 +2,7 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}
 	)
 SET(SRC
-	relocate.c
+	elf.c
 	utils.c
 	scan_opcode.c
 	x86_opcode.h
@@ -23,6 +23,7 @@ ADD_CUSTOM_COMMAND(OUTPUT x86_opcode.c.h
 ADD_SUBDIRECTORY(printf)
 
 TARGET_LINK_LIBRARIES(platform printf)
+TARGET_LINK_LIBRARIES(platform interp_common)
 
 # vim:ts=4:sw=4
 

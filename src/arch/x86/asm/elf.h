@@ -152,5 +152,10 @@ struct elf32_sym {
   Elf32_Section	st_shndx;		/* Section index */
 };
 
+/* return value is the executable's entry address */
+extern void *
+load_elf(const char * fn, void ** p_load_bias,
+		struct elf32_phdr ** ppuser_phdrs,
+		int * p_nr_user_phdrs);
 #endif
 
