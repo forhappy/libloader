@@ -28,6 +28,7 @@ enum __debug_level {
 enum __debug_component {
 	SYSTEM	= 0,
 	LOADER,
+	TLS,
 	NR_DEBUG_COMPONENTS,
 };
 
@@ -48,6 +49,7 @@ static const char *
 __debug_component_names[NR_DEBUG_COMPONENTS] = {
 	[SYSTEM]	= "SYS",
 	[LOADER]	= "LOD",
+	[TLS]		= "TLS",
 };
 #endif
 
@@ -55,6 +57,7 @@ static const enum __debug_level
 __debug_component_levels[NR_DEBUG_COMPONENTS] = {
 	[SYSTEM]	= DBG_LV_TRACE,
 	[LOADER]	= DBG_LV_TRACE,
+	[TLS]		= DBG_LV_TRACE,
 };
 
 

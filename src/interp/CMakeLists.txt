@@ -5,6 +5,8 @@ SET(SRC
 	auxv.c
 	auxv.h
 	loader.c
+	mm.h
+	mm.c
 	)
 ADD_LIBRARY(interp SHARED
 	${SRC})

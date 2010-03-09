@@ -70,6 +70,11 @@ xmain(volatile struct pusha_regs regs)
 
 	stack_top(&regs) += esp_add * sizeof(uintptr_t);
 	void ** pretaddr = (void**)(stack_top(&regs));
+
+	/* build first thread local area */
+	/* init code cache */
+	/* redirect control flow to code cache */
+
 	*pretaddr = retaddr;
 	return esp_add;
 }

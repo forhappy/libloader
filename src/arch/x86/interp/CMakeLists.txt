@@ -3,6 +3,7 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR}
 	)
 SET(SRC
 	elf.c
+	tls.c
 	utils.c
 	scan_opcode.c
 	x86_opcode.h
