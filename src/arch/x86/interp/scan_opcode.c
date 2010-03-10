@@ -2,11 +2,12 @@
  * scan_opcode.c
  */
 
+#include <config.h>
+#include <common/defs.h>
+#include <common/debug.h>
 #include <stdint.h>
 #include "x86_opcode.h"
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <assert.h>
 
 /* x86_opcode.c.h is generated file */
@@ -90,8 +91,7 @@ group_restart:
 				address_size = 2;
 			goto restart;
 		case INST_INVALID:
-			printf("invalid instruction 0x%x\n", opc);
-			exit(-1);
+			FATAL(DECODER, "invalid instruction 0x%x\n", opc);
 			break;
 		case INST_NORMAL:
 			break;
@@ -145,19 +145,19 @@ group_restart:
 			break;
 
 		case INST_ESCAPE_2B:
-			printf("0x%x ", opc);
+			TRACE(DECODER, "0x%x ", opc);
 			opcode_table = twobytes_insts;
 			goto restart;
 		case INST_ESCAPE_3B_0x38:
-			printf("0x%x ", opc);
+			TRACE(DECODER, "0x%x ", opc);
 			opcode_table = threebytes_0f38_insts;
 			goto restart;
 		case INST_ESCAPE_3B_0x3a:
-			printf("0x%x ", opc);
+			TRACE(DECODER, "0x%x ", opc);
 			opcode_table = threebytes_0f3a_insts;
 			goto restart;
 		case INST_ESCAPE_COP:
-			printf("coprocessor instruction 0x%x\n", opc);
+			TRACE(DECODER, "coprocessor instruction 0x%x\n", opc);
 			modrm = *stream;
 			stream ++;
 			return scan_modrm(stream, modrm, address_size);
@@ -174,11 +174,10 @@ group_restart:
 			break;
 		case INST_SPECIAL:
 		default:
-			printf("type %d not implelented\n", e->type);
-			exit(-1);
+			FATAL(DECODER, "type %d not implelented\n", e->type);
 	}
 
-	printf("instruction 0x%x:%s\n", opc, e->name);
+	TRACE(DECODER, "instruction 0x%x:%s\n", opc, e->name);
 
 	if (e->jmpnote != 0)
 		return NULL;
@@ -227,9 +226,8 @@ group_restart:
 				if (!((addressing & REQ_MODRM) ||
 						(addressing & OPERADE_ADDRESSING_CONSTANT) ||
 				   		(addressing & OPERADE_ADDRESSING_REGISTER)))  {
-					printf("wrong addressing 0x%x\n", 
+					FATAL(DECODER, "wrong addressing 0x%x\n", 
 							addressing);
-					exit(-1);
 				}
 		}
 	}

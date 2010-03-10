@@ -27,7 +27,7 @@ load_real_exec(void * esp)
 	const char ** argv = &((const char**)(esp))[1];
 	assert(*pargc > 0);
 	if (*pargc == 1) {
-		printf("Usage: %s EXECUTABLE-FILE [ARGS-FOR-PROGRAM...]\n",
+		__printf("Usage: %s EXECUTABLE-FILE [ARGS-FOR-PROGRAM...]\n",
 				argv[0]);
 		__exit(0);
 	}

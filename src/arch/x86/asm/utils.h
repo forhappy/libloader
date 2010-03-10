@@ -16,7 +16,7 @@ extern int
 vfdprintf(int fd, const char * fmt, va_list args);
 
 extern int ATTR(format(printf, 1, 2))
-printf(const char * fmt, ...);
+__printf(const char * fmt, ...);
 
 extern void
 relocate_interp(void);

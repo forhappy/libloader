@@ -119,11 +119,11 @@ SET(MARCH ${CMAKE_SYSTEM_PROCESSOR} CACHE STRING
 	"gcc -march option")
 # Build types
 SET(MARCH_CFLAGS "-march=${MARCH} -mtune=${MARCH}")
-SET(CMAKE_C_FLAGS "-std=gnu99 -Wall -D_GNU_SOURCE ${MARCH_CFLAGS}" CACHE
+SET(CMAKE_C_FLAGS "-std=gnu99 -Wall -Wextra -D_GNU_SOURCE ${MARCH_CFLAGS}" CACHE
 	STRING "Flags used by the compiler during all build types." FORCE)
 SET(CMAKE_C_FLAGS_DEBUG "-g -O0 -DSNITCHASER_DEBUG" CACHE
 	STRING "Flags used by the compiler during debug builds." FORCE)
-SET(CMAKE_C_FLAGS_RELEASE "-O2" CACHE
+SET(CMAKE_C_FLAGS_RELEASE "-g -O2" CACHE
 	STRING "Flags used by the compiler during release builds." FORCE)
 
 # Environment

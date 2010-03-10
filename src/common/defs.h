@@ -8,6 +8,7 @@
 #include <endian.h>
 #include <assert.h>
 #include <stddef.h>
+#include <alloca.h>
 
 #ifdef HAVE_STDBOOL_H
 #include <stdbool.h>

@@ -14,7 +14,7 @@ ADD_LIBRARY(interp SHARED
 ADD_LIBRARY(interp_common STATIC
 	debug.c)
 
-TARGET_LINK_LIBRARIES(interp platform)
+TARGET_LINK_LIBRARIES(interp interp_common platform)
 
 set_interp_properties(interp)
 set_interp_properties(interp_common)

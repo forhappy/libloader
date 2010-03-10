@@ -178,7 +178,7 @@ const struct x86_register i386_registers[] =
 };
 
 
-static void inline
+static inline void
 str_tolower(char * str)
 {
 	char * p = str;
@@ -189,7 +189,7 @@ str_tolower(char * str)
 }
 
 
-static void inline
+static inline void
 str_toupper(char * str)
 {
 	char * p = str;
@@ -206,7 +206,7 @@ find_register(const char * _name)
 	char * name = strdupa(_name);
 	str_tolower(name);
 
-	for (int i = 0;
+	for (unsigned int i = 0;
 			i < (sizeof(i386_registers) / sizeof(i386_registers[0]));
 			i++)
 	{

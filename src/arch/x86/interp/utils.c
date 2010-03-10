@@ -28,7 +28,7 @@ fdprintf(int fd, const char * fmt, ...)
 }
 
 int
-printf(const char * fmt, ...)
+__printf(const char * fmt, ...)
 {
 	va_list ap;
 	va_start(ap, fmt);

@@ -54,8 +54,13 @@ relocate_interp(void)
 			case DT_SYMTAB:
 				symtab = (void*)dyn->d_un.d_ptr + load_bias;
 				break;
+#if 0
+			case DT_PLTGOT:
+			case DT_PLTRELSZ:
+			case DT_PLTREL:
+			case DT_JMPREL:
+#endif
 		}
-		
 	}
 	
 	assert(reltab != NULL);
@@ -87,10 +92,11 @@ relocate_interp(void)
 				real_val = sym_val + load_bias;
 				break;
 			}
-			default:
-				printf("relocate error: unknown relocate type 0x%x\n", type);
+			default: {
+				/* printf may be unusable now */
+				/* printf("relocate error: unknown relocate type 0x%x\n", type); */
 				__exit(-1);
-				break;
+			}
 		}
 		*(uint32_t*)(address) = real_val;
 	}
@@ -126,7 +132,7 @@ load_phdrs(int fd, struct elf32_phdr * dest, struct elf32_hdr * h)
 	assert(err >= 0);
 	err = INTERNAL_SYSCALL_int80(read, 3,
 			fd, dest, sizeof(*dest) * h->e_phnum);
-	assert(err == sizeof(*dest) * h->e_phnum);
+	assert(err == (int)(sizeof(*dest) * h->e_phnum));
 }
 
 static int
@@ -182,7 +188,7 @@ load_elf(const char * fn, void ** p_load_bias,
 	assert(phdrs != NULL);
 	load_phdrs(fd, phdrs, &hdr);
 
-	int start, end, nr_first;
+	int start = 0, end = 0, nr_first = 0;
 	int total_map_sz = compute_total_map_sz(phdrs, nr_phdrs,
 			&start, &end, &nr_first);
 	TRACE(LOADER, "total mem sz of %s = 0x%x: 0x%x -- 0x%x, %d\n",

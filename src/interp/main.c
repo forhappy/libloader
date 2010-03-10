@@ -15,7 +15,7 @@
 #include <asm/syscall.h>
 #include <asm/vsprintf.h>
 #include <asm/utils.h>
-
+#include <asm/tls.h>
 #include <interp/auxv.h>
 
 /* reexec reset the personality bit ADDR_NO_RANDOMIZE to make sure
@@ -72,6 +72,8 @@ xmain(volatile struct pusha_regs regs)
 	void ** pretaddr = (void**)(stack_top(&regs));
 
 	/* build first thread local area */
+	init_tls();
+
 	/* init code cache */
 	/* redirect control flow to code cache */
 

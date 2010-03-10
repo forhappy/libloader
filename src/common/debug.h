@@ -6,9 +6,6 @@
 #ifndef __DEBUG_H
 #define __DEBUG_H
 #include <common/defs.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <malloc.h>
 
 __BEGIN_DECLS
 
@@ -29,6 +26,7 @@ enum __debug_component {
 	SYSTEM	= 0,
 	LOADER,
 	TLS,
+	DECODER,
 	NR_DEBUG_COMPONENTS,
 };
 
@@ -50,6 +48,7 @@ __debug_component_names[NR_DEBUG_COMPONENTS] = {
 	[SYSTEM]	= "SYS",
 	[LOADER]	= "LOD",
 	[TLS]		= "TLS",
+	[DECODER]	= "DEC",
 };
 #endif
 
@@ -58,6 +57,7 @@ __debug_component_levels[NR_DEBUG_COMPONENTS] = {
 	[SYSTEM]	= DBG_LV_TRACE,
 	[LOADER]	= DBG_LV_TRACE,
 	[TLS]		= DBG_LV_TRACE,
+	[DECODER]	= DBG_LV_TRACE,
 };
 
 
