@@ -17,6 +17,22 @@ static long int __tgkill(int x, int y, int z)
 	return syscall(__NR_tgkill, x, y, z);
 }
 
+static long int __kill(int x, int y)
+{
+	return syscall(__NR_kill, x, y);
+}
+
+static long int __exit(int x)
+{
+	return syscall(__NR_exit, x);
+}
+
+static long int __exit_group(int x)
+{
+	return syscall(__NR_exit_group, x);
+}
+
+
 static void
 sighandler(int num)
 {
@@ -61,10 +77,14 @@ int main()
 	assert(err == 0);
 
 	sleep(1);
-	__tgkill(getpid(), getpid(), SIGUSR1);
+//	__kill(getpid() + 1, SIGKILL);
+//	__tgkill(getpid(), getpid(), SIGUSR1);
+
+	__exit_group(10);
 
 	pthread_join(th1, NULL);
 	pthread_join(th2, NULL);
+	printf("finished\n");
 
 	return 0;
 }

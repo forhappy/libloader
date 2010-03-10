@@ -18,6 +18,12 @@
 #include <asm/tls.h>
 #include <interp/auxv.h>
 
+void ATTR(visibility ("default"))
+exported_func(void)
+{
+	VERBOSE(SYSTEM, "this is exported func, for test use only\n");
+}
+
 /* reexec reset the personality bit ADDR_NO_RANDOMIZE to make sure
  * the process' memory layout is idential */
 static void
@@ -73,6 +79,11 @@ xmain(volatile struct pusha_regs regs)
 
 	/* build first thread local area */
 	init_tls();
+
+	struct thread_private_data * tpd = 
+		get_tpd();
+	DEBUG(LOADER, "pid from tpd: %d; tid from tpd: %d\n",
+			tpd->pid, tpd->tid);
 
 	/* init code cache */
 	/* redirect control flow to code cache */

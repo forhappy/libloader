@@ -1,7 +1,7 @@
-extern void relocate_interp(void);
+extern void exported_func(void);
 int main()
 {
-	relocate_interp();
+	exported_func();
 	return 0;
 }
 

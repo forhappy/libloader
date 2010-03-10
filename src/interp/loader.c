@@ -20,6 +20,14 @@
 
 #define INTERP_FILE		"/lib/ld-linux.so.2"
 
+static void
+usage(const char ** argv)
+{
+	__printf("Usage: %s EXECUTABLE-FILE [ARGS-FOR-PROGRAM...]\n",
+			argv[0]);
+	__exit(0);
+}
+
 static int
 load_real_exec(void * esp)
 {
@@ -27,9 +35,7 @@ load_real_exec(void * esp)
 	const char ** argv = &((const char**)(esp))[1];
 	assert(*pargc > 0);
 	if (*pargc == 1) {
-		__printf("Usage: %s EXECUTABLE-FILE [ARGS-FOR-PROGRAM...]\n",
-				argv[0]);
-		__exit(0);
+		usage(argv);
 	}
 
 	*auxv_info.p_user_entry =
