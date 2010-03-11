@@ -13,13 +13,28 @@
 void *
 alloc_cont_space(int sz)
 {
-	sz = ALIGN_UP(sz, PAGE_SIZE);
+	sz = ALIGN_UP(sz + sizeof(struct cont_space_header), PAGE_SIZE);
 	int nr = sz >> PAGE_SHIFT;
 	void * start = alloc_pages(nr, FALSE);
 	assert(start != NULL);
 	struct cont_space_header * head = start;
 	head->real_sz = sz;
+	TRACE(MEM, "alloc continuous mem space at %p, length=%d\n",
+			head, sz);
 	return (void*)(head->__data);
+}
+
+void
+free_cont_space(void * ptr)
+{
+	struct cont_space_header * head = container_of(
+			ptr, struct cont_space_header, __data);
+	int sz = head->real_sz;
+	int nr = sz >> PAGE_SHIFT;
+	assert((((uintptr_t)head) % PAGE_SIZE) == 0);
+	free_pages(head, nr);
+	TRACE(MEM, "free continuous mem space from %p, length=%d\n",
+			head, sz);
 }
 
 static struct obj_page_head *
@@ -56,7 +71,8 @@ alloc_obj(struct obj_page_head ** phead, int sz)
 	}
 	/* we need alloc new page */
 	TRACE(MEM, "unable to find enough free space\n");
-	struct obj_page_head * new_head = alloc_obj_pages(sz, *phead);
+	struct obj_page_head * new_head = alloc_obj_pages(sz + sizeof(struct obj_page_head),
+			*phead);
 	assert(new_head != NULL);
 	void * ptr;
 	ptr = new_head->next_free_byte;

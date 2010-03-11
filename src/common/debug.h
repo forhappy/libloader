@@ -60,7 +60,7 @@ __debug_component_levels[NR_DEBUG_COMPONENTS] = {
 	[LOADER]	= DBG_LV_TRACE,
 	[TLS]		= DBG_LV_TRACE,
 	[DECODER]	= DBG_LV_TRACE,
-	[MEM]		= DBG_LV_TRACE,
+	[MEM]		= DBG_LV_DEBUG,
 };
 
 

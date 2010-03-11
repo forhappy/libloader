@@ -179,14 +179,15 @@ clear_tls(void)
 	spin_lock(&__tls_ctl_lock);
 	struct thread_private_data * tpd = get_tpd();
 	unsigned int tnr = tpd->tnr;
-	clear_tls_slot(tnr);
-
 	void * stack_base = get_tls_base();
 	assert((uint32_t)stack_base == (uint32_t)TNR_TO_STACK(tnr));
+
+	clear_tls_slot(tnr);
 	/* unmap 2 pages from stack_base to stack_base = TLS_STACK_SIZE */
 	int err;
 	err = INTERNAL_SYSCALL_int80(munmap, 2,
 			stack_base, TLS_STACK_SIZE);
+	DEBUG(TLS, "tls for tnr=%d is cleared\n", tnr);
 	spin_unlock(&__tls_ctl_lock);
 	assert(err == 0);
 	return;

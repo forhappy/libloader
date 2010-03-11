@@ -19,12 +19,6 @@
 #include <interp/auxv.h>
 #include <interp/mm.h>
 
-void ATTR(visibility ("default"))
-exported_func(void)
-{
-	VERBOSE(SYSTEM, "this is exported func, for test use only\n");
-}
-
 /* reexec reset the personality bit ADDR_NO_RANDOMIZE to make sure
  * the process' memory layout is idential */
 static void
@@ -90,8 +84,6 @@ xmain(volatile struct pusha_regs regs)
 	/* redirect control flow to code cache */
 
 	*pretaddr = retaddr;
-
-	clear_obj_pages(&obj_base);
 
 	return esp_add;
 }

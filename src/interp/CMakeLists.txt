@@ -2,6 +2,7 @@ INCLUDE_DIRECTORIES(${SNITCHASER_CURRENT_SOURCE_DIR})
 
 SET(SRC
 	main.c
+	test.c
 	auxv.c
 	auxv.h
 	loader.c
