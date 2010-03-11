@@ -17,6 +17,7 @@
 #include <asm/utils.h>
 #include <asm/tls.h>
 #include <interp/auxv.h>
+#include <interp/mm.h>
 
 void ATTR(visibility ("default"))
 exported_func(void)
@@ -89,6 +90,9 @@ xmain(volatile struct pusha_regs regs)
 	/* redirect control flow to code cache */
 
 	*pretaddr = retaddr;
+
+	clear_obj_pages(&obj_base);
+
 	return esp_add;
 }
 

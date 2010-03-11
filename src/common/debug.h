@@ -27,6 +27,7 @@ enum __debug_component {
 	LOADER,
 	TLS,
 	DECODER,
+	MEM,
 	NR_DEBUG_COMPONENTS,
 };
 
@@ -49,6 +50,7 @@ __debug_component_names[NR_DEBUG_COMPONENTS] = {
 	[LOADER]	= "LOD",
 	[TLS]		= "TLS",
 	[DECODER]	= "DEC",
+	[MEM]		= "MEM"
 };
 #endif
 
@@ -58,6 +60,7 @@ __debug_component_levels[NR_DEBUG_COMPONENTS] = {
 	[LOADER]	= DBG_LV_TRACE,
 	[TLS]		= DBG_LV_TRACE,
 	[DECODER]	= DBG_LV_TRACE,
+	[MEM]		= DBG_LV_TRACE,
 };
 
 

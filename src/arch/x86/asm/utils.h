@@ -38,6 +38,14 @@ __exit(int n)
 	while(1);
 }
 
+#define PAGE_SHIFT	(12)
+#define PAGE_SIZE	(1 << (PAGE_SHIFT))
+
+extern void *
+alloc_pages(int nr, bool_t exec);
+
+extern void
+free_pages(void * start, int nr);
 
 #endif
 // vim:ts=4:sw=4

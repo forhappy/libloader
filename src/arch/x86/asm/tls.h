@@ -29,6 +29,7 @@
  */
 struct thread_private_data {
 	void * ret_address;
+	/* still need: head address of dict; head address of code cache */
 	/* tnr is thread identifier using in snitchaser */
 	int tid, pid;
 	unsigned int tnr;
