@@ -1,4 +1,4 @@
-INCLUDE_DIRECTORIES(${SNITCHASER_CURRENT_SOURCE_DIR})
+# INCLUDE_DIRECTORIES(${SNITCHASER_CURRENT_SOURCE_DIR})
 
 SET(SRC
 	main.c
@@ -8,8 +8,8 @@ SET(SRC
 	loader.c
 	mm.h
 	mm.c
-	dict.h
-	dict.c
+#	dict.h
+#	dict.c
 	)
 ADD_LIBRARY(interp SHARED
 	${SRC})

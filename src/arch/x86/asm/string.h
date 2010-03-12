@@ -1,6 +1,10 @@
 #ifndef _I386_STRING_H_
 #define _I386_STRING_H_
 
+#ifndef __always_inline
+# define __always_inline __attribute__((always_inline))
+#endif
+
 /* Let gcc decide wether to inline or use the out of line functions */
 
 extern char *
