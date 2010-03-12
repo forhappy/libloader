@@ -11,6 +11,8 @@
 #include <common/debug.h>
 #include <common/assert.h>
 #include <asm/syscall.h>
+#include <interp/dict.h>
+#include <interp/code_cache.h>
 
 /* thread thread stack: from 0x3000, each for 3 pages(8k + 4k)
  * the upper 1 page is protected to prevent stack overflow
@@ -29,6 +31,8 @@
  */
 struct thread_private_data {
 	void * ret_address;
+	struct block_exit_target_t exit_target;
+	struct dict_t * code_cache_dict;
 	/* still need: head address of dict; head address of code cache */
 	/* tnr is thread identifier using in snitchaser */
 	int tid, pid;
