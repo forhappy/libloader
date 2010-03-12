@@ -11,6 +11,7 @@
 #include <asm/string.h>
 
 #include <interp/mm.h>
+#include <interp/dict.h>
 
 void ATTR_EXPORT
 test_debug(void)
@@ -47,6 +48,17 @@ test_mm(void)
 	clear_obj_pages(&obj_pages);
 	VERBOSE(SYSTEM, "obj_pages become %p\n", obj_pages);
 
+}
+
+void ATTR_EXPORT
+test_dict(void)
+{
+	VERBOSE(SYSTEM, "--- testing dict\n");
+	struct dict_t * dict = NULL;
+	for (int i = 0; i < 100; i++) {
+		dict_insert(&dict, 0x80048000 + i * 123, i);
+	}
+	destroy_dict(dict);
 }
 
 // vim:ts=4:sw=4
