@@ -8,7 +8,7 @@
 
 #include <common/defs.h>
 #include <common/debug.h>
-#include <sys/personality.h>
+#include <common/sys/personality.h>
 
 #include <asm/startup.h>
 #include <asm/debug.h>

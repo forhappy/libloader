@@ -2,7 +2,7 @@
 #define _I386_STRING_H_
 
 #ifndef __always_inline
-# define __always_inline __attribute__((always_inline))
+# define __always_inline __attribute__((always_inline, unused))
 #endif
 
 /* Let gcc decide wether to inline or use the out of line functions */

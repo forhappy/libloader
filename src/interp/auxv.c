@@ -8,7 +8,7 @@
 #include <common/debug.h>
 #include <common/assert.h>
 #include <interp/auxv.h>
-#include <linux/auxvec.h>
+#include <common/linux/auxvec.h>
 #include <asm/elf.h>
 
 struct auxv_info auxv_info = {
