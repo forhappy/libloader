@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <sys/user.h>
 #include "defs.h"
+#include "syscall_nr.h"
 
 #ifndef IN_INJECTOR
 # include "ptraceutils.h"

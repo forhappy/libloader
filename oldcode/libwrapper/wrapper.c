@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#include "syscall_nr.h"
 #include "injector.h"
 #include "checkpoint/checkpoint.h"
 #include "injector_utils.h"

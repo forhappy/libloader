@@ -3,6 +3,7 @@ SET(HANDLERS
 	simple.c
 	brk.c
 	uname.c
+	mmap.c
 	mmap2.c
 	open.c
 	fstat64.c

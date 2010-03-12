@@ -86,6 +86,7 @@ struct _fpstate {
 	unsigned long	padding[56];
 };
 
+typedef int pid_t;
 
 typedef struct siginfo {
 	int si_signo;

@@ -2,7 +2,6 @@
  * by WN @ Jun. 25, 2009
  */
 
-#include <asm/unistd.h>
 #include "checkpoint.h"
 #include "syscalls.h"
 
@@ -29,6 +28,7 @@ dummy(const struct syscall_regs * regs)
 SCOPE struct syscall_tabent syscall_table[] = {
 	def_syscall_entry(brk, NULL),
 	def_syscall_entry(uname, NULL),
+	def_syscall_entry(mmap, NULL),
 	def_syscall_entry(mmap2, NULL),
 	def_simple_syscall_entry(access),
 	def_syscall_entry(open, NULL),

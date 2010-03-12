@@ -11,7 +11,7 @@
 #endif
 
 #include <stdint.h>
-#include <asm/unistd.h>
+#include "syscall_nr.h"
 #include "defs.h"
 #include "config.h"
 
@@ -193,6 +193,10 @@ extern SCOPE volatile struct syscall_latch __syscall_latch;
 
 #define IS_BREAK_SYSCALL() (__syscall_reenter_counter > __syscall_reenter_base)
 #define IS_REENTER_SYSCALL() (__syscall_reenter_counter > 1)
+
+#ifndef __always_inline
+# define __always_inline __attribute__((always_inline))
+#endif
 
 __END_DECLS
 

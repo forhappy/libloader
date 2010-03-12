@@ -6,7 +6,7 @@
 #ifndef __SYSCALL_HANDLERS_H
 #define __SYSCALL_HANDLERS_H
 
-#include <asm/unistd.h>
+#include "syscall_nr.h"
 #include "checkpoint.h"
 #include <stdint.h>
 
@@ -37,6 +37,7 @@ define_post_handler(simple);
 
 define_post_handler(brk);
 define_post_handler(uname);
+define_post_handler(mmap);
 define_post_handler(mmap2);
 define_post_handler(open);
 define_post_handler(fstat64);
