@@ -8,8 +8,8 @@ SET(SRC
 	loader.c
 	mm.h
 	mm.c
-#	dict.h
-#	dict.c
+	dict.h
+	dict.c
 	)
 ADD_LIBRARY(interp SHARED
 	${SRC})

@@ -11,7 +11,7 @@
 #include <common/debug.h>
 #include <common/assert.h>
 #include <asm/syscall.h>
-//#include <interp/dict.h>
+#include <interp/dict.h>
 #include <interp/code_cache.h>
 
 /* thread thread stack: from 0x3000, each for 3 pages(8k + 4k)
