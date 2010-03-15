@@ -10,7 +10,7 @@
 #include <common/debug.h>
 #include <common/sys/personality.h>
 
-#include <asm/startup.h>
+#include <asm/processor.h>
 #include <asm/debug.h>
 #include <asm/syscall.h>
 #include <asm/vsprintf.h>
@@ -58,7 +58,7 @@ reexec(void * old_esp)
 }
 
 extern void * loader(void * oldesp, int * pesp_add);
-__attribute__((used, unused)) static int
+__attribute__((used, unused, visibility("hidden"))) int
 xmain(volatile struct pusha_regs regs)
 {
 	relocate_interp();

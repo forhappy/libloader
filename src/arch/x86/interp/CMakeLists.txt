@@ -6,6 +6,7 @@ SET(CAN_USE_ASSEMBLER TRUE)
 ENABLE_LANGUAGE(ASM-S)
 
 SET(SRC
+	startup.S
 	elf.c
 	tls.c
 	utils.c
