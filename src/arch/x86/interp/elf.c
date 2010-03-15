@@ -207,8 +207,6 @@ load_elf(const char * fn, void ** p_load_bias,
 
 	if (hdr.e_type == ET_EXEC) {
 		map_type |= MAP_FIXED;
-	} else {
-		assert(map_addr == NULL);
 	}
 
 	/* map the first segment with total_map_sz, and 
@@ -226,8 +224,11 @@ load_elf(const char * fn, void ** p_load_bias,
 	if (hdr.e_type == ET_EXEC) {
 		load_bias = NULL;
 	} else {
-		load_bias = map_addr;
+		load_bias = (void*)((uintptr_t)map_addr -
+			(uintptr_t)(phdrs[nr_first].p_vaddr));
 	}
+	TRACE(LOADER, "load_bias is set to %p\n",
+			load_bias);
 
 	/* unmap the padding pages */
 	void * unmap_start = load_bias + phdrs[nr_first].p_vaddr + phdrs[nr_first].p_memsz;

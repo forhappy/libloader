@@ -8,6 +8,8 @@
 
 #include <config.h>
 #include <common/defs.h>
+#include <common/list.h>
+#include <interp/dict.h>
 
 #include <stdint.h>
 
@@ -31,10 +33,21 @@ struct block_exit_target_t {
 	} taken;
 	/* how about 'ret'? */
 	uintptr_t untaken_target;
+	/* when compile, untaken_addr_in_cache
+	 * points to compiled code's untaken target address.
+	 * after such codeblock compiled, change this
+	 * address in cache can avoid code to transfer to
+	 * compiler. */
+	uintptr_t * untaken_addr_in_cache;
 };
 
 struct code_block_t {
 	uintptr_t entry;
+	/* block can be linked together to
+	 * form a LRU list */
+	struct list_head lru_list;
+	/* the dict entry this block blongs to */
+	struct dict_entry_t * dict_entry;
 	struct block_exit_target_t exit;
 	uint8_t __code[];
 };
