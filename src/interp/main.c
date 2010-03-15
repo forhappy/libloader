@@ -82,10 +82,7 @@ xmain(volatile struct pusha_regs regs)
 			tpd->pid, tpd->tid);
 
 	/* init code cache */
-	/* we needn't do anything to init code cache.
-	 * the dict and obj pages are reset to NULL when
-	 * init tls */
-
+	init_code_cache();
 	*pretaddr = retaddr;
 	return esp_add;
 }

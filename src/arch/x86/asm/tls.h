@@ -30,7 +30,14 @@
  * What's in the tls data section?
  */
 struct thread_private_data {
-	void * ret_address;
+	/* before we enter TLS, the stack point.
+	 * use it for restore stack */
+	void * old_stack_top;
+	/* this is used for compiler. call *%fs:0xxxx is
+	 * easier to generate than call 0xxxxxxxxx.
+	 * however, it may slower because call *%fs:0xxxx
+	 * is an indirect jmp and require one more memory access */
+	void * compiler_entry;
 	struct tls_code_cache_t code_cache;
 	/* still need: head address of dict; head address of code cache */
 	/* tnr is thread identifier using in snitchaser */

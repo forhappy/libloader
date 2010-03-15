@@ -16,7 +16,8 @@
 static void
 compute(void)
 {
-	PRINT(ret_address, RET_ADDRESS);
+	PRINT(old_stack_top, OLD_STACK_TOP);
+	PRINT(compiler_entry, COMPILER_ENTRY);
 	PRINT(code_cache, CODE_CACHE);
 	PRINT(code_cache.target, CODE_CACHE_TARGET);
 	PRINT(code_cache.if_taken, CODE_CACHE_IF_TAKEN);

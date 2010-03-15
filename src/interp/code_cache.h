@@ -50,6 +50,8 @@ struct tls_code_cache_t {
 extern void
 clear_code_cache(struct tls_code_cache_t * cc);
 
+extern void
+init_code_cache(void);
 #endif
 
 // vim:ts=4:sw=4

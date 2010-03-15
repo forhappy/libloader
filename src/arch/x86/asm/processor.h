@@ -18,3 +18,5 @@ struct pusha_regs {
 
 #endif
 
+// vim:ts=4:sw=4
+

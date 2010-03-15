@@ -29,6 +29,7 @@ enum __debug_component {
 	DECODER,
 	MEM,
 	DICT,
+	COMPILER,
 	NR_DEBUG_COMPONENTS,
 };
 
@@ -53,6 +54,7 @@ __debug_component_names[NR_DEBUG_COMPONENTS] = {
 	[DECODER]	= "DEC",
 	[MEM]		= "MEM",
 	[DICT]		= "DIC",
+	[COMPILER]	= "CPL",
 };
 #endif
 
@@ -64,6 +66,7 @@ __debug_component_levels[NR_DEBUG_COMPONENTS] = {
 	[DECODER]	= DBG_LV_TRACE,
 	[MEM]		= DBG_LV_DEBUG,
 	[DICT]		= DBG_LV_TRACE,
+	[COMPILER]	= DBG_LV_TRACE,
 };
 
 

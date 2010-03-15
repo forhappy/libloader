@@ -35,7 +35,7 @@ compile_code_block(void * stream);
 extern void
 recompile_ud_code_block(struct code_block_t * block, uintptr_t exit_addr);
 
-/* this is VERY important entry: each time
+/* this is the MOST important entry: each time
  * a new code block is hit, control is redirected here */
 /* no param, all information is set using TLS code cache section. */
 extern void
