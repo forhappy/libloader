@@ -33,7 +33,7 @@ extern struct dict_t *
 create_dict(int max_slots);
 
 extern void
-destroy_dict(struct dict_t * dict);
+destroy_dict(struct dict_t ** dict);
 
 extern void
 dict_insert(struct dict_t ** pdict, uintptr_t key, uintptr_t value);

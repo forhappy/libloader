@@ -51,7 +51,7 @@ struct obj_page_head {
 	uint8_t __data[];
 };
 
-/* /
+/* 
  * object pages always executable
  * */
 

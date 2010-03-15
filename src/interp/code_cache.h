@@ -13,44 +13,42 @@
 
 #include <stdint.h>
 
-enum jmp_type {
-	UNCONDITIONAL,
-	CONDITIONAL,
+#define BE_CONDITIONAL		(1)
+#define BE_UNCONDITIONAL	(0)
+#define BE_DIRECT			(2)
+#define BE_INDIRECT			(0)
+
+enum exit_type {
+	EXIT_COND_DIRECT = BE_CONDITIONAL | BE_DIRECT,
+	EXIT_COND_INDIRECT = BE_CONDITIONAL,
+	EXIT_UNCOND_DIRECT = BE_DIRECT,
+	EXIT_UNCOND_INDIRECT = 0,
 };
 
-enum jmp_target_type {
-	DIRECT,
-	INDIRECT,
-};
-
-struct block_exit_target_t {
-	enum jmp_type type;
-	enum jmp_target_type target_type;
-	uintptr_t exit_inst;
-	union {
-		uintptr_t taken_indirect_target_addr;
-		uintptr_t taken_target;
-	} taken;
-	/* how about 'ret'? */
-	uintptr_t untaken_target;
-	/* when compile, untaken_addr_in_cache
-	 * points to compiled code's untaken target address.
-	 * after such codeblock compiled, change this
-	 * address in cache can avoid code to transfer to
-	 * compiler. */
-	uintptr_t * untaken_addr_in_cache;
-};
-
+/* code block is saved in codecache */
 struct code_block_t {
+	/* the real entry of the code */
+	/* the key in code cache */
 	uintptr_t entry;
-	/* block can be linked together to
-	 * form a LRU list */
-	struct list_head lru_list;
-	/* the dict entry this block blongs to */
-	struct dict_entry_t * dict_entry;
-	struct block_exit_target_t exit;
+	/* exit_inst_addr is used for code recompilation */
+	uintptr_t exit_inst_addr;
+	enum exit_type exit_type;
 	uint8_t __code[];
 };
+
+/* code_cache_t is storged in TLS */
+struct tls_code_cache_t {
+	/* set by compiled code to notify the real target address */
+	uintptr_t target;
+	/* filled by compiled code to indicate whether this branch is taken */
+	uint32_t if_taken;
+	struct dict_t * cache_dict;
+	struct obj_page_head * code_blocks;
+	struct code_block_t * last_block;
+};
+
+extern void
+clear_code_cache(struct tls_code_cache_t * cc);
 
 #endif
 

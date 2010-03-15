@@ -31,8 +31,7 @@
  */
 struct thread_private_data {
 	void * ret_address;
-	struct block_exit_target_t exit_target;
-	struct dict_t * code_cache_dict;
+	struct tls_code_cache_t code_cache;
 	/* still need: head address of dict; head address of code cache */
 	/* tnr is thread identifier using in snitchaser */
 	int tid, pid;
@@ -40,7 +39,7 @@ struct thread_private_data {
 	/* we also need some code cache stuff */
 	/* when enter snitchaser's code, stack should be set to it */
 	struct thread_private_data * stack_top;	
-	/* access: *fs:(0x2000 - 4); stores: the base (lowest)
+	/* access: *fs:(0x3000 - 4); stores: the base (lowest)
 	 * address of the TLS section */
 	void * tls_base;	
 };

@@ -5,6 +5,7 @@
 #include <config.h>
 #include <common/defs.h>
 #include <common/debug.h>
+#include <asm/compiler.h>
 #include <stdint.h>
 #include "x86_opcode.h"
 
@@ -51,7 +52,7 @@ scan_modrm(uint8_t * stream, uint8_t modrm, int address_size)
 
 /* if this instruction is jmp, then return NULL. if not, return
  * the address of next instruction */
-uint8_t *
+static uint8_t *
 next_inst(uint8_t * stream)
 {
 	uint8_t prefix1 = 0;
@@ -230,6 +231,17 @@ group_restart:
 							addressing);
 				}
 		}
+	}
+	return stream;
+}
+
+void *
+scan_insts(void * stream)
+{
+	void * next;
+	while ((next = next_inst(stream)) != NULL) {
+		TRACE(DECODER, "%p\n", next);
+		stream = next;
 	}
 	return stream;
 }

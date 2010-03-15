@@ -9,6 +9,9 @@ next_inst(uint8_t * stream);
 static void func5(void)
 {
 	asm volatile(
+			"sete %ah\n"
+			"setle %al\n"
+			"setge %al\n"
 		"movmskps %xmm0, %eax\n"
 		"movmskpd %xmm0, %eax\n"
 		"sqrtps %xmm1, %xmm0\n"

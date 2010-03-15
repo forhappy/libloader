@@ -58,7 +58,7 @@ test_dict(void)
 	for (int i = 0; i < 100; i++) {
 		dict_insert(&dict, 0x80048000 + i * 123, i);
 	}
-	destroy_dict(dict);
+	destroy_dict(&dict);
 }
 
 // vim:ts=4:sw=4

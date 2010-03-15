@@ -27,12 +27,15 @@ create_dict(int max_slots)
 }
 
 void
-destroy_dict(struct dict_t * dict)
+destroy_dict(struct dict_t ** pdict)
 {
+	assert(pdict != NULL);
+	struct dict_t * dict = *pdict;
 	if (dict == NULL)
 		return;
 	TRACE(DICT, "dict %p destroied\n", dict);
 	free_cont_space(dict);
+	*pdict = NULL;
 }
 
 static struct dict_entry_t *
@@ -106,7 +109,7 @@ dict_insert(struct dict_t **pdict, uintptr_t key, uintptr_t value)
 		/* copy entries */
 		copy_dict(new_dict, dict);
 		/* destroy old dict */
-		destroy_dict(dict);
+		destroy_dict(&dict);
 		dict = new_dict;
 		*pdict = dict;
 	}

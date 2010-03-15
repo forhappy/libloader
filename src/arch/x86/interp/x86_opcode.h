@@ -6,7 +6,6 @@
 #ifndef X86_OPCODE_H
 #define X86_OPCODE_H
 
-
 enum group_table_name {
 	TABLE_GROUP1_0x80,
 	TABLE_GROUP1_0x81,

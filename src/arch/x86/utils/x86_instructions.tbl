@@ -703,14 +703,14 @@ table twobytes {
 	0x8e: jle Jz | !
 	0x8f: jg  Jz | !
 
-	0x98: sets  Jz | !
-	0x99: setns Jz | !
-	0x9a: setp  Jz | !
-	0x9b: setnp Jz | !
-	0x9c: setl  Jz | !
-	0x9d: setge Jz | !
-	0x9e: setle Jz | !
-	0x9f: setg  Jz | !
+	0x98: sets  Eb 
+	0x99: setns Eb 
+	0x9a: setp  Eb 
+	0x9b: setnp Eb 
+	0x9c: setl  Eb 
+	0x9d: setge Eb 
+	0x9e: setle Eb 
+	0x9f: setg  Eb 
 
 	0xa8: pushgs | d64
 	0xa9: popgs | d64

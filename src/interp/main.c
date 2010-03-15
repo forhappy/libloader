@@ -16,6 +16,7 @@
 #include <asm/vsprintf.h>
 #include <asm/utils.h>
 #include <asm/tls.h>
+#include <asm/compiler.h>
 #include <interp/auxv.h>
 #include <interp/mm.h>
 
@@ -81,13 +82,13 @@ xmain(volatile struct pusha_regs regs)
 			tpd->pid, tpd->tid);
 
 	/* init code cache */
-	/* redirect control flow to code cache */
+	/* we needn't do anything to init code cache.
+	 * the dict and obj pages are reset to NULL when
+	 * init tls */
 
 	*pretaddr = retaddr;
-
 	return esp_add;
 }
-
 
 #undef __LOADER_MAIN_C
 

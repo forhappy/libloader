@@ -8,6 +8,7 @@
 #include <common/debug.h>
 #include <common/spinlock.h>
 #include <common/bithacks.h>
+#include <interp/code_cache.h>
 #include <asm/tls.h>
 #include <asm/syscall.h>
 #include <asm/utils.h>
@@ -182,6 +183,7 @@ clear_tls(void)
 	void * stack_base = get_tls_base();
 	assert((uint32_t)stack_base == (uint32_t)TNR_TO_STACK(tnr));
 
+	clear_code_cache(&tpd->code_cache);
 	clear_tls_slot(tnr);
 	/* unmap 2 pages from stack_base to stack_base = TLS_STACK_SIZE */
 	int err;
@@ -197,6 +199,7 @@ ATTR(noreturn) void
 __thread_exit(int n)
 {
 	WARNING(TLS, "isn't finished! needs to clear all TLS status\n");
+	clear_tls();
 	INTERNAL_SYSCALL_int80(exit, 1, n);
 	while(1);
 }
