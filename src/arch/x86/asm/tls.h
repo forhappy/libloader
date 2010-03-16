@@ -26,18 +26,30 @@
  * the stack never clobber code section.
  */
 
-/* 
- * What's in the tls data section?
- */
 struct thread_private_data {
 	/* before we enter TLS, the stack point.
 	 * use it for restore stack */
 	void * old_stack_top;
-	/* this is used for compiler. call *%fs:0xxxx is
+	/* this is used for logger. call *%fs:0xxxx is
 	 * easier to generate than call 0xxxxxxxxx.
 	 * however, it may slower because call *%fs:0xxxx
 	 * is an indirect jmp and require one more memory access */
-	void * compiler_entry;
+	/* logger_entry is useful only the first time the logger
+	 * process an branch. */
+	void * logger_entry;
+	/* 4 fast logger entry */
+	void * ud_logger_entry;
+	void * ui_logger_entry;
+	void * cd_logger_entry;
+	void * ci_logger_entry;
+
+	unsigned long log_buffer_sz;
+	void * log_buffer;
+
+	/* when exit TLS code, logger set this exit_addr then
+	 * when logger exits, restore stack and transfer
+	 * to it */
+	void * exit_addr;
 	struct tls_code_cache_t code_cache;
 	/* still need: head address of dict; head address of code cache */
 	/* tnr is thread identifier using in snitchaser */

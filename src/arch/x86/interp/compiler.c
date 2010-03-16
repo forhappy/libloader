@@ -8,6 +8,7 @@
 #include <common/debug.h>
 #include <common/assert.h>
 #include <interp/mm.h>
+#include <interp/dict.h>
 #include <interp/code_cache.h>
 #include <asm/compiler.h>
 #include <asm/tls.h>

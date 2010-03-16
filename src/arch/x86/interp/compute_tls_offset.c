@@ -17,7 +17,14 @@ static void
 compute(void)
 {
 	PRINT(old_stack_top, OLD_STACK_TOP);
-	PRINT(compiler_entry, COMPILER_ENTRY);
+	PRINT(logger_entry, LOGGER_ENTRY);
+	PRINT(ud_logger_entry, UD_LOGGER_ENTRY);
+	PRINT(ui_logger_entry, UI_LOGGER_ENTRY);
+	PRINT(cd_logger_entry, CD_LOGGER_ENTRY);
+	PRINT(ci_logger_entry, CI_LOGGER_ENTRY);
+	PRINT(log_buffer_sz, LOG_BUFFER_SZ);
+	PRINT(log_buffer, LOG_BUFFER);
+	PRINT(exit_addr, EXIT_ADDR);
 	PRINT(code_cache, CODE_CACHE);
 	PRINT(code_cache.target, CODE_CACHE_TARGET);
 	PRINT(code_cache.if_taken, CODE_CACHE_IF_TAKEN);

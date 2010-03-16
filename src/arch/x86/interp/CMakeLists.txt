@@ -7,6 +7,7 @@ ENABLE_LANGUAGE(ASM-S)
 
 SET(SRC
 	startup.S
+	logger.S
 	elf.c
 	tls.c
 	utils.c

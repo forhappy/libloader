@@ -5,11 +5,12 @@
 
 #include <config.h>
 #include <common/defs.h>
+#include <common/debug.h>
 #include <interp/code_cache.h>
 #include <interp/mm.h>
 #include <interp/dict.h>
 #include <asm/tls.h>
-#include <asm/compiler.h>
+#include <asm/logger.h>
 
 void
 clear_code_cache(struct tls_code_cache_t * cc)
@@ -28,7 +29,20 @@ void
 init_code_cache(void)
 {
 	struct thread_private_data * tpd = get_tpd();
-	tpd->compiler_entry = compiler_entry;
+	tpd->logger_entry = logger_entry;
+	/* 4 fast logger entry */
+	tpd->ud_logger_entry = ud_logger_entry;
+	tpd->ui_logger_entry = ui_logger_entry;
+	tpd->cd_logger_entry = cd_logger_entry;
+	tpd->ci_logger_entry = ci_logger_entry;
+}
+
+/* called by tpd->logger_entry */
+void
+heavy_logger_entry(void)
+{
+	TRACE(LOGGER, "come into heavy_logger_entry\n");
+#warning add buffer size and buffer into TLS !!!
 }
 
 // vim:ts=4:sw=4

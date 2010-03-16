@@ -124,6 +124,8 @@ dict_get(struct dict_t * dict, uintptr_t key)
 	if (ep == NULL)
 		return NO_SUCH_KEY;
 	assert(ep->key == key);
+	if (ep->value == DUMMY_KEY)
+		return NO_SUCH_KEY;
 	return ep->value;
 }
 
