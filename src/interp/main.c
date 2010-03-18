@@ -19,6 +19,8 @@
 #include <asm/compiler.h>
 #include <interp/auxv.h>
 #include <interp/mm.h>
+#include <interp/code_cache.h>
+#include <interp/logger.h>
 
 /* reexec reset the personality bit ADDR_NO_RANDOMIZE to make sure
  * the process' memory layout is idential */
@@ -76,13 +78,14 @@ xmain(volatile struct pusha_regs regs)
 	/* build first thread local area */
 	init_tls();
 
-	struct thread_private_data * tpd = 
-		get_tpd();
 	DEBUG(LOADER, "pid from tpd: %d; tid from tpd: %d\n",
-			tpd->pid, tpd->tid);
+			get_tpd()->pid, get_tpd()->tid);
 
 	/* init code cache */
 	init_code_cache();
+	/* init logger */
+	init_logger();
+
 	*pretaddr = retaddr;
 	return esp_add;
 }

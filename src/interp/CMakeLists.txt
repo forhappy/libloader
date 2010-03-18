@@ -12,6 +12,8 @@ SET(SRC
 	dict.c
 	code_cache.h
 	code_cache.c
+	logger.h
+	logger.c
 	)
 ADD_LIBRARY(interp SHARED
 	${SRC})

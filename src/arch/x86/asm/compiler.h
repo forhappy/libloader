@@ -33,7 +33,7 @@ compile_code_block(void * stream);
  * This is not a very strick problem. 
  * */
 extern void
-recompile_ud_code_block(struct code_block_t * block, uintptr_t exit_addr);
+recompile_ud_code_block(void);
 
 /* this is the MOST important entry: each time
  * a new code block is hit, control is redirected here */

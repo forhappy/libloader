@@ -240,7 +240,6 @@ scan_insts(void * stream)
 {
 	void * next;
 	while ((next = next_inst(stream)) != NULL) {
-		TRACE(DECODER, "%p\n", next);
 		stream = next;
 	}
 	return stream;

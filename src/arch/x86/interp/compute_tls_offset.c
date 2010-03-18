@@ -17,20 +17,18 @@ static void
 compute(void)
 {
 	PRINT(old_stack_top, OLD_STACK_TOP);
-	PRINT(logger_entry, LOGGER_ENTRY);
-	PRINT(ud_logger_entry, UD_LOGGER_ENTRY);
-	PRINT(ui_logger_entry, UI_LOGGER_ENTRY);
-	PRINT(cd_logger_entry, CD_LOGGER_ENTRY);
-	PRINT(ci_logger_entry, CI_LOGGER_ENTRY);
-	PRINT(log_buffer_sz, LOG_BUFFER_SZ);
-	PRINT(log_buffer, LOG_BUFFER);
-	PRINT(exit_addr, EXIT_ADDR);
+	PRINT(target, TARGET);
+	PRINT(logger, LOGGER);
+	PRINT(logger.ud_logger_entry, LOGGER_UD_LOGGER_ENTRY);
+	PRINT(logger.log_branch_target, LOGGER_LOG_BRANCH_TARGET);
+	PRINT(logger.log_buffer_start, LOGGER_LOG_BUFFER_START);
+	PRINT(logger.log_buffer_current, LOGGER_LOG_BUFFER_CURRENT);
+	PRINT(logger.log_buffer_end, LOGGER_LOG_BUFFER_END);
+
 	PRINT(code_cache, CODE_CACHE);
-	PRINT(code_cache.target, CODE_CACHE_TARGET);
-	PRINT(code_cache.if_taken, CODE_CACHE_IF_TAKEN);
 	PRINT(code_cache.cache_dict, CODE_CACHE_CACHE_DICT);
 	PRINT(code_cache.code_blocks, CODE_CACHE_CODE_BLOCKS);
-	PRINT(code_cache.last_block, CODE_CACHE_LAST_BLOCK);
+
 	PRINT(tid, PID);
 	PRINT(pid, TID);
 	PRINT(tnr, TNR);

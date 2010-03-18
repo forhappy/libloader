@@ -97,6 +97,8 @@ dict_insert(struct dict_t **pdict, uintptr_t key, uintptr_t value)
 {
 	assert(pdict != NULL);
 	assert(key != 0);
+	TRACE(DICT, "insert (0x%x, 0x%x) into dict %p\n", key, value, *pdict);
+
 	struct dict_t * dict = *pdict;
 	if (dict == NULL) {
 		dict = create_dict(DEFAULT_DICT_SLOTS);
@@ -120,6 +122,8 @@ dict_insert(struct dict_t **pdict, uintptr_t key, uintptr_t value)
 uintptr_t
 dict_get(struct dict_t * dict, uintptr_t key)
 {
+	if (dict == NULL)
+		return 0;
 	struct dict_entry_t * ep = get_entry(dict, key);
 	if (ep == NULL)
 		return NO_SUCH_KEY;

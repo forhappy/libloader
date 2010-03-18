@@ -28,21 +28,7 @@ clear_code_cache(struct tls_code_cache_t * cc)
 void
 init_code_cache(void)
 {
-	struct thread_private_data * tpd = get_tpd();
-	tpd->logger_entry = logger_entry;
-	/* 4 fast logger entry */
-	tpd->ud_logger_entry = ud_logger_entry;
-	tpd->ui_logger_entry = ui_logger_entry;
-	tpd->cd_logger_entry = cd_logger_entry;
-	tpd->ci_logger_entry = ci_logger_entry;
-}
-
-/* called by tpd->logger_entry */
-void
-heavy_logger_entry(void)
-{
-	TRACE(LOGGER, "come into heavy_logger_entry\n");
-#warning add buffer size and buffer into TLS !!!
+	/* nothing todo */
 }
 
 // vim:ts=4:sw=4

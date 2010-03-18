@@ -30,10 +30,9 @@
 	movl -20(%esp), %esp
 	/* begin running */
 	2:
-	popl %fs:OFFSET_CODE_CACHE_TARGET
-	movl $0, %fs:OFFSET_CODE_CACHE_IF_TAKEN
+	popl %fs:OFFSET_TARGET
 	/* logger_entry resets esp.
 	 * we reset esp after we pop the target. this is
 	 * because we are not in a real 'call'ed func */
-	jmp *%fs:OFFSET_LOGGER_ENTRY
+	jmp *%fs:OFFSET_LOGGER_UD_LOGGER_ENTRY
 

@@ -8,22 +8,11 @@
 
 #include <config.h>
 #include <common/defs.h>
-
-extern ATTR_HIDDEN void
-logger_entry(void);
-
 extern ATTR_HIDDEN void
 ud_logger_entry(void);
 
 extern ATTR_HIDDEN void
-ui_logger_entry(void);
-
-extern ATTR_HIDDEN void
-cd_logger_entry(void);
-
-extern ATTR_HIDDEN void
-ci_logger_entry(void);
-
+log_branch_target(void);
 
 #endif
 

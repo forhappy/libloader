@@ -12,6 +12,7 @@
 #include <common/assert.h>
 #include <asm/syscall.h>
 #include <interp/dict.h>
+#include <interp/logger.h>
 #include <interp/code_cache.h>
 
 /* thread thread stack: from 0x3000, each for 3 pages(8k + 4k)
@@ -30,26 +31,11 @@ struct thread_private_data {
 	/* before we enter TLS, the stack point.
 	 * use it for restore stack */
 	void * old_stack_top;
-	/* this is used for logger. call *%fs:0xxxx is
-	 * easier to generate than call 0xxxxxxxxx.
-	 * however, it may slower because call *%fs:0xxxx
-	 * is an indirect jmp and require one more memory access */
-	/* logger_entry is useful only the first time the logger
-	 * process an branch. */
-	void * logger_entry;
-	/* 4 fast logger entry */
-	void * ud_logger_entry;
-	void * ui_logger_entry;
-	void * cd_logger_entry;
-	void * ci_logger_entry;
-
-	unsigned long log_buffer_sz;
-	void * log_buffer;
-
-	/* when exit TLS code, logger set this exit_addr then
-	 * when logger exits, restore stack and transfer
-	 * to it */
-	void * exit_addr;
+	/* when enter TLS code, target indicate the real address of the exit
+	 * target. when exiting TLS code, target indicate the target address
+	 * in code cache */
+	void * target;
+	struct tls_logger logger;
 	struct tls_code_cache_t code_cache;
 	/* still need: head address of dict; head address of code cache */
 	/* tnr is thread identifier using in snitchaser */
