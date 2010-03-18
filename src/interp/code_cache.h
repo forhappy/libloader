@@ -15,14 +15,14 @@
 
 #define BE_CONDITIONAL		(1)
 #define BE_UNCONDITIONAL	(0)
-#define BE_DIRECT			(2)
-#define BE_INDIRECT			(0)
+#define BE_DIRECT			(0)
+#define BE_INDIRECT			(2)
 
 enum exit_type {
 	EXIT_COND_DIRECT = BE_CONDITIONAL | BE_DIRECT,
-	EXIT_COND_INDIRECT = BE_CONDITIONAL,
-	EXIT_UNCOND_DIRECT = BE_DIRECT,
-	EXIT_UNCOND_INDIRECT = 0,
+	EXIT_COND_INDIRECT = BE_CONDITIONAL | BE_INDIRECT,
+	EXIT_UNCOND_DIRECT = BE_UNCONDITIONAL | BE_DIRECT,
+	EXIT_UNCOND_INDIRECT = BE_UNCONDITIONAL | BE_INDIRECT,
 };
 
 /* code block is saved in codecache */
@@ -33,7 +33,7 @@ struct code_block_t {
 	/* exit_inst_addr is used for code recompilation */
 	void * exit_inst_addr;
 	/* a pointer to the first byte after
-	 * the unmodified code */
+	 * the unmodified code, used for recompile */
 	void * ori_code_end;
 	enum exit_type exit_type;
 	uint8_t __code[];
