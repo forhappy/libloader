@@ -43,7 +43,11 @@ struct code_block_t {
 struct tls_code_cache_t {
 	struct dict_t * cache_dict;
 	struct obj_page_head * code_blocks;
-	struct code_block_t * last_ud_block;
+	/* not only ud block should be record.
+	 * We MUST save current_block because of
+	 * signal handling: When signal arises,
+	 * signal handler can know the exact signal point. */
+	struct code_block_t * current_block;
 };
 
 extern void

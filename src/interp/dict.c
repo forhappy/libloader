@@ -52,7 +52,8 @@ get_entry(struct dict_t * dict, uintptr_t key)
 		ep = &(ep0[i & dict->mask]);
 		TRACE(DICT, "n = %d\n", i & dict->mask);
 		if ((ep->key == key) || (ep->key == NO_SUCH_KEY)) {
-			TRACE(DICT, "found 0x%x for 0x%x at %p\n", ep->key, key, ep);
+			TRACE(DICT, "found 0x%x for 0x%x at %p, value is 0x%x\n",
+					ep->key, key, ep, ep->value);
 			return ep;
 		}
 		if (ep->key == DUMMY_KEY)
@@ -126,10 +127,13 @@ dict_get(struct dict_t * dict, uintptr_t key)
 		return 0;
 	struct dict_entry_t * ep = get_entry(dict, key);
 	if (ep == NULL)
-		return NO_SUCH_KEY;
+		return 0;
+	if (ep->key == NO_SUCH_KEY)
+		return 0;
+	if (ep->key == DUMMY_KEY)
+		return 0;
+
 	assert(ep->key == key);
-	if (ep->value == DUMMY_KEY)
-		return NO_SUCH_KEY;
 	return ep->value;
 }
 

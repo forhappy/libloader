@@ -18,6 +18,7 @@ compute(void)
 {
 	PRINT(old_stack_top, OLD_STACK_TOP);
 	PRINT(target, TARGET);
+	PRINT(reg_saver, REG_SAVER);
 	PRINT(logger, LOGGER);
 	PRINT(logger.ud_logger_entry, LOGGER_UD_LOGGER_ENTRY);
 	PRINT(logger.log_branch_target, LOGGER_LOG_BRANCH_TARGET);
@@ -28,6 +29,7 @@ compute(void)
 	PRINT(code_cache, CODE_CACHE);
 	PRINT(code_cache.cache_dict, CODE_CACHE_CACHE_DICT);
 	PRINT(code_cache.code_blocks, CODE_CACHE_CODE_BLOCKS);
+	PRINT(code_cache.current_block, CODE_CACHE_CURRENT_BLOCK);
 
 	PRINT(tid, PID);
 	PRINT(pid, TID);

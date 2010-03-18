@@ -20,17 +20,6 @@ scan_insts(void * stream);
 extern void
 compile_code_block(void);
 
-/* if the target address of an code block is
- * fixed (this is a unconditional, direct, branch),
- * then recompile it. 
- *
- * !!NOTE!!
- * after recompilation, the size of the block MUST shrink.
- * This is not a very strick problem. 
- * */
-extern void
-recompile_ud_code_block(void);
-
 #endif
 
 // vim:ts=4:sw=4

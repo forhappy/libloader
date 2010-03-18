@@ -31,6 +31,8 @@ struct thread_private_data {
 	/* before we enter TLS, the stack point.
 	 * use it for restore stack */
 	void * old_stack_top;
+	/* used to temporary save some registers */
+	uintptr_t reg_saver;
 	/* when enter TLS code, target indicate the real address of the exit
 	 * target. when exiting TLS code, target indicate the target address
 	 * in code cache */

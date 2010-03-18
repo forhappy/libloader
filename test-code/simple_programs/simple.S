@@ -2,7 +2,7 @@
 .globl _start
 
 _start:
-	movl $0x123, %ecx;
+	movl $0x2, %ecx;
 	1:
 	decl %ecx
 	jnz 1b

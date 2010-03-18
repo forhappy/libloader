@@ -17,6 +17,19 @@
 
 #define MAX_PATCH_SIZE	(256)
 
+static __AI void
+reset_movl(void * inst, uint32_t data)
+{
+	*((uint32_t*)(inst + 1)) = data;
+}
+
+extern uint8_t __set_current_block_template_start[];
+extern uint8_t __set_current_block_template_end[];
+extern uint8_t __set_current_block_template_movl[];
+extern uint8_t __set_current_block_template_before_set_ccb[];
+extern uint8_t __set_current_block_template_before_restore_eax[];
+
+
 static int
 compile_branch(uint8_t patch_code[], void * branch,
 		enum exit_type * pexit_type)
@@ -73,8 +86,11 @@ do_compile(void * target, struct obj_page_head ** phead,
 	int patch_sz = compile_branch(patch_code, branch_start, &exit_type);
 
 	int ori_sz = (uintptr_t)(branch_start) - (uintptr_t)(target);
+	int head_sz = (uintptr_t)(__set_current_block_template_end) -
+		(uintptr_t)(__set_current_block_template_start);
 
 	int block_sz = sizeof(struct code_block_t) +
+		head_sz +
 		ori_sz +
 		patch_sz;
 	struct code_block_t * block = alloc_obj(phead, block_sz);
@@ -82,10 +98,17 @@ do_compile(void * target, struct obj_page_head ** phead,
 
 	block->entry = target;
 	block->exit_inst_addr = branch_start;
-	block->ori_code_end = (&(block->__code[ori_sz]));
+	block->ori_code_end = (&(block->__code[head_sz + ori_sz]));
 	block->exit_type = exit_type;
-	memcpy(block->__code, target, ori_sz);
-	memcpy(&(block->__code[ori_sz]), patch_code, patch_sz);
+	memcpy(block->__code,
+			__set_current_block_template_start, head_sz);
+	reset_movl(block->__code +
+				(__set_current_block_template_movl -
+				 __set_current_block_template_start), (uintptr_t)(block));
+	memcpy(block->__code + head_sz,
+			target, ori_sz);
+	memcpy(block->__code + head_sz + ori_sz,
+			patch_code, patch_sz);
 
 	dict_insert(pdict, (uintptr_t)(target), (uintptr_t)(block));
 	return block;
@@ -124,7 +147,7 @@ __recompile_ud(struct code_block_t * block, void * target)
 }
 
 static __AI void
-__compile_code_block(bool_t recompild_ud)
+__compile_code_block(void)
 {
 	struct thread_private_data * tpd = get_tpd();
 	struct tls_code_cache_t * cache = &(tpd->code_cache);
@@ -133,41 +156,26 @@ __compile_code_block(bool_t recompild_ud)
 	void * target = tpd->target;
 	assert(cache != NULL);
 
-	DEBUG(COMPILER, "recompile block %p, target is %p\n",
-			cache->last_ud_block, target);
-
 	struct code_block_t * block = get_block(cache, target);
 	assert(block != NULL);
 	/* recompile */
-	if (recompild_ud) {
-		struct code_block_t * last_ud_block = cache->last_ud_block;
-		if (last_ud_block != NULL) {
-			assert(last_ud_block->exit_type == EXIT_UNCOND_DIRECT);
-			__recompile_ud(last_ud_block, block->__code);
-		}
+	if (cache->current_block &&
+			(cache->current_block->exit_type == 
+			 EXIT_UNCOND_DIRECT))
+	{
+		__recompile_ud(cache->current_block, block->__code);
 	}
-
-#warn how about signal???
-	/* reset last_ud_block */
-	if (block->exit_type == EXIT_UNCOND_DIRECT)
-		cache->last_ud_block = block;
 	tpd->target = block->__code;
 	TRACE(COMPILER, "target address: %p\n", tpd->target);
 	return;
 	
 }
 
-void
-recompile_ud_code_block(void)
-{
-	__compile_code_block(TRUE);
-}
-
 /* block entry is taken from tpd->target */
 void
 compile_code_block(void)
 {
-	__compile_code_block(FALSE);
+	__compile_code_block();
 }
 
 // vim:ts=4:sw=4

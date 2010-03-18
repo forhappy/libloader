@@ -12,6 +12,7 @@
 #include <asm/utils.h>
 #include <asm/tls.h>
 #include <asm/logger.h>
+#include <asm/compiler.h>
 
 void
 init_logger(void)
@@ -36,7 +37,8 @@ init_logger(void)
 void
 heavy_log_branch_target(void)
 {
-	TRACE(LOGGER, "come into heavy_log_branch_target\n");
+	struct thread_private_data * tpd = get_tpd();
+	VERBOSE(LOGGER, "target is %p\n", tpd->target);
 }
 
 // vim:ts=4:sw=4
