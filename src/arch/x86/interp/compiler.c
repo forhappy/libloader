@@ -31,12 +31,12 @@ extern uint8_t __set_current_block_template_before_restore_eax[];
 
 
 static int
-compile_branch(uint8_t patch_code[], void * branch,
+compile_branch(uint8_t patch_code[], uint8_t * branch,
 		enum exit_type * pexit_type)
 {
 #warning unfinished
 	TRACE(COMPILER, "compiling branch %p\n", branch);
-	uint8_t inst = *(uint8_t*)(branch);
+	uint8_t inst = *branch;
 	switch (inst) {
 #define COMP_Jxx(x, n)	\
 		case x:	{		\
@@ -66,7 +66,16 @@ compile_branch(uint8_t patch_code[], void * branch,
 		COMP_Jxx(0x75, jnz)
 		COMP_Jxx(0x76, jna)
 		COMP_Jxx(0x77, ja)
+#undef COMP_Jxx
 
+		case 0xcd: {
+			/* this is 'int' */
+			if (branch[1] == 0x80) {
+				/* this is system call */
+			} else {
+				FATAL(COMPILER, "doesn't support int 0x%x\n", branch[1]);
+			}
+		}
 		default:
 			FATAL(COMPILER, "unknown branch inst: 0x%x\n", inst);
 	}
@@ -83,7 +92,8 @@ do_compile(void * target, struct obj_page_head ** phead,
 	void * branch_start = scan_insts(target);
 	enum exit_type exit_type;
 
-	int patch_sz = compile_branch(patch_code, branch_start, &exit_type);
+	int patch_sz = compile_branch(patch_code,
+			(uint8_t*)(branch_start), &exit_type);
 
 	int ori_sz = (uintptr_t)(branch_start) - (uintptr_t)(target);
 	int head_sz = (uintptr_t)(__set_current_block_template_end) -
@@ -146,8 +156,9 @@ __recompile_ud(struct code_block_t * block, void * target)
 	return;
 }
 
-static __AI void
-__compile_code_block(void)
+/* block entry is taken from tpd->target */
+void
+compile_code_block(void)
 {
 	struct thread_private_data * tpd = get_tpd();
 	struct tls_code_cache_t * cache = &(tpd->code_cache);
@@ -169,13 +180,6 @@ __compile_code_block(void)
 	TRACE(COMPILER, "target address: %p\n", tpd->target);
 	return;
 	
-}
-
-/* block entry is taken from tpd->target */
-void
-compile_code_block(void)
-{
-	__compile_code_block();
 }
 
 // vim:ts=4:sw=4

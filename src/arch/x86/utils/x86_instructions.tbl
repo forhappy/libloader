@@ -360,14 +360,14 @@ table twobytes {
 	0x34: sysenter | !
 	0x35: sysexit | !
 
-	0x40: cmovo Gv, Ev | !
-	0x41: cmovno Gv, Ev | !
-	0x42: cmovb Gv, Ev | !
-	0x43: cmovae Gv, Ev | !
-	0x44: cmove Gv, Ev | !
-	0x45: cmovne Gv, Ev | !
-	0x46: cmovbe Gv, Ev | !
-	0x47: cmova Gv, Ev | !
+	0x40: cmovo Gv, Ev
+	0x41: cmovno Gv, Ev
+	0x42: cmovb Gv, Ev
+	0x43: cmovae Gv, Ev
+	0x44: cmove Gv, Ev
+	0x45: cmovne Gv, Ev
+	0x46: cmovbe Gv, Ev
+	0x47: cmova Gv, Ev 
 
 	0x50: [none] movmskps Gd, Ups
 	0x50: [0x66] movmskpd Gd, Ups
@@ -479,14 +479,14 @@ table twobytes {
 	0x38: ESCAPETHREEBYTESA
 	0x3a: ESCAPETHREEBYTESB
 
-	0x48: cmovs Gv, Ev | !
-	0x49: cmovns Gv, Ev | !
-	0x4a: cmovp Gv, Ev | !
-	0x4b: cmovnp Gv, Ev | !
-	0x4c: cmovl Gv, Ev | !
-	0x4d: cmovge Gv, Ev | !
-	0x4e: cmovle Gv, Ev | !
-	0x4f: cmovg Gv, Ev | !
+	0x48: cmovs Gv, Ev
+	0x49: cmovns Gv, Ev
+	0x4a: cmovp Gv, Ev
+	0x4b: cmovnp Gv, Ev
+	0x4c: cmovl Gv, Ev
+	0x4d: cmovge Gv, Ev
+	0x4e: cmovle Gv, Ev
+	0x4f: cmovg Gv, Ev
 
 	0x58: [none] addps Vps, Wps
 	0x58: [0xf3] addss Vss, Wss
