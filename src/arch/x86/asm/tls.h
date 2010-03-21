@@ -32,11 +32,18 @@ struct thread_private_data {
 	 * use it for restore stack */
 	void * old_stack_top;
 	/* used to temporary save some registers */
-	uintptr_t reg_saver;
+	uint32_t reg_saver1;
+	uint32_t reg_saver2;
 	/* when enter TLS code, target indicate the real address of the exit
 	 * target. when exiting TLS code, target indicate the target address
 	 * in code cache */
 	void * target;
+
+	/* func pointers */
+	void * real_branch;
+	void * recompile_ud_branch;
+	void * syscall_entry;
+
 	struct tls_logger logger;
 	struct tls_code_cache_t code_cache;
 	/* still need: head address of dict; head address of code cache */

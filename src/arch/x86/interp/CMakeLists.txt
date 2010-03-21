@@ -6,13 +6,14 @@ SET(CAN_USE_ASSEMBLER TRUE)
 ENABLE_LANGUAGE(ASM-S)
 
 SET(SRC
+	branch_template.S
 	startup.S
 	logger.S
-	branch_template.S
+	compiler.c
+	compiler.S
 	elf.c
 	tls.c
 	utils.c
-	compiler.c
 	scan_opcode.c
 	x86_opcode.h
 	x86_opcode.c.h

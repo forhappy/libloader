@@ -18,10 +18,14 @@ compute(void)
 {
 	PRINT(old_stack_top, OLD_STACK_TOP);
 	PRINT(target, TARGET);
-	PRINT(reg_saver, REG_SAVER);
+	PRINT(reg_saver1, REG_SAVER1);
+	PRINT(reg_saver2, REG_SAVER2);
+	PRINT(real_branch, REAL_BRANCH);
+	PRINT(recompile_ud_branch, RECOMPILE_UD_BRANCH);
+	PRINT(syscall_entry, SYSCALL_ENTRY);
+	PRINT(logger.check_logger_buffer, LOGGER_CHECK_LOGGER_BUFFER);
 	PRINT(logger, LOGGER);
-	PRINT(logger.ud_logger_entry, LOGGER_UD_LOGGER_ENTRY);
-	PRINT(logger.log_branch_target, LOGGER_LOG_BRANCH_TARGET);
+	PRINT(logger.check_buffer_return, LOGGER_CHECK_BUFFER_RETURN);
 	PRINT(logger.log_buffer_start, LOGGER_LOG_BUFFER_START);
 	PRINT(logger.log_buffer_current, LOGGER_LOG_BUFFER_CURRENT);
 	PRINT(logger.log_buffer_end, LOGGER_LOG_BUFFER_END);

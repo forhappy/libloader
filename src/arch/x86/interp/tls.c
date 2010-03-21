@@ -9,6 +9,9 @@
 #include <common/spinlock.h>
 #include <common/bithacks.h>
 #include <interp/code_cache.h>
+#include <interp/logger.h>
+#include <asm/logger.h>
+#include <asm/compiler.h>
 #include <asm/tls.h>
 #include <asm/syscall.h>
 #include <asm/utils.h>
@@ -148,8 +151,15 @@ setup_tls_area(int tnr)
 static void
 build_tpd(struct thread_private_data * tpd)
 {
-	/* nothing todo now */
-	(void)tpd;
+	tpd->real_branch = real_branch;
+	tpd->recompile_ud_branch = recompile_ud_branch;
+	tpd->syscall_entry = syscall_entry;
+
+	/* init code cache */
+	init_code_cache();
+	/* init logger */
+	init_logger();
+
 }
 
 void

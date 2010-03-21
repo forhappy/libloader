@@ -1,26 +1,18 @@
 /* 
- * x86/asm/compiler.h
- * by WN @ Mar. 15, 2010
+ * asm/x86/compiler.h
+ * by WN @ Mar. 22, 2010
  */
 
-#ifndef X86_ASM_COMPILER_H
-#define X86_ASM_COMPILER_H
+#ifndef __X86_COMPILER_H
+#define __X86_COMPILER_H
 
-#include <stdint.h>
-#include <interp/code_cache.h>
+#include <config.h>
+#include <common/defs.h>
 
-/* 
- * implemented in scan_opcode.c, used in compile_code_block
- * input is the entry of the instruction stream,
- * return value is its exit instruction
- */
-extern void *
-scan_insts(void * stream);
+extern ATTR_HIDDEN void
+real_branch(void);
 
-extern void
-compile_code_block(void);
-
+extern ATTR_HIDDEN void
+recompile_ud_branch(void);
 #endif
-
-// vim:ts=4:sw=4
 

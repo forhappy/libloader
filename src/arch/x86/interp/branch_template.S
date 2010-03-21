@@ -13,58 +13,60 @@
  * to the difference between eip in signal stack and the
  * address of compiled code, signal handler can determine
  * the exact instruction before which signal arrives.
- *
- * However, if signal raises during the template code, the
- * identification is not so easy.
- * The signal handler should check the specific instruction of
- * eip in signal frame.
- * if it is 'movl %eax, %fs:OFFSET_CODE_CACHE_CURRENT_BLOCK',
- * then it knows the value of eax has been changed. It shoule restore signal
- * frame using reg_saver.
- * if it is 'movl %fs:OFFSET_REG_SAVER, %eax', signal handler should
- * do the same thing.
- * in both situation, the signal itself is identified as raised after
- * the branch instruction and before the first instruction of the new block.
  */
 .globl __set_current_block_template_start
 .globl __set_current_block_template_end
-.globl __set_current_block_template_movl
-.globl __set_current_block_template_before_set_ccb
-.globl __set_current_block_template_before_restore_eax
 __set_current_block_template_start:
-	movl %eax, %fs:OFFSET_REG_SAVER
-__set_current_block_template_movl:
-	movl $0xffffffff, %eax
-__set_current_block_template_before_set_ccb:
-	movl %eax, %fs:OFFSET_CODE_CACHE_CURRENT_BLOCK
-__set_current_block_template_before_restore_eax:
-	movl %fs:OFFSET_REG_SAVER, %eax
+	movl $0xffffffff, %fs:OFFSET_CODE_CACHE_CURRENT_BLOCK
 __set_current_block_template_end:
 	nop
 
-	/* effective inst is used for signal handling. if signal eip
-	 * less than effective_inst, then the signal raise befor the branch;
-	 * if else, the signal raise after the branch.
-	 * this is useful for some instructions which have side effects, such as call.
-	 */
+.globl __log_phase_template_start
+.globl __log_phase_template_end
+.globl __log_phase_template_commit
+.globl __log_phase_template_save_return_ebx
+.globl __log_phase_template_save_return_addr
+__log_phase_template_start:
+	movl %eax, %fs:OFFSET_REG_SAVER1
+__log_phase_template_save_ebx:
+	movl %ebx, %fs:OFFSET_REG_SAVER2
+	movl %fs:OFFSET_LOGGER_LOG_BUFFER_CURRENT, %ebx
+	movl %fs:OFFSET_TARGET, %eax
+	movl %eax, (%ebx)
+	movl %fs:OFFSET_REG_SAVER1, %eax
+	movl %fs:OFFSET_REG_SAVER2, %ebx
+__log_phase_template_commit:
+	addl $4, %fs:OFFSET_LOGGER_LOG_BUFFER_CURRENT
+__log_phase_template_save_return_addr:
+	movl $0xffffffff, %fs:OFFSET_LOGGER_CHECK_BUFFER_RETURN
+	jmpl *%fs:OFFSET_LOGGER_CHECK_LOGGER_BUFFER
+__log_phase_template_end:
+	nop
+
+.globl __real_branch_phase_template_start
+.globl __real_branch_phase_template_end
+__real_branch_phase_template_start:
+	jmpl *%fs:OFFSET_REAL_BRANCH
+__real_branch_phase_template_end:
+	nop
+
+
+
+/* this is only 'set target' phase. following is log phase */
 #define DEF_Jxx_TEMPLATE(jxx)	\
 .text;	\
 .globl __##jxx##_template_start;	\
 .globl __##jxx##_template_end;	\
 .globl __##jxx##_template_taken_movl;	\
 .globl __##jxx##_template_untaken_movl;	\
-.globl __##jxx##_template_effective_inst;	\
 __##jxx##_template_start:	;	\
-	movl %eax, %fs:OFFSET_TARGET;	\
-__##jxx##_template_effective_inst:	;	\
 	jxx 1f;				\
 __##jxx##_template_untaken_movl:	;	\
-	movl $0xffffffff, %eax;		\
+	movl $0xffffffff, %fs:OFFSET_TARGET;		\
 	jmp 2f;				\
 __##jxx##_template_taken_movl:			\
-	1: movl $0xffffffff, %eax;	\
-	2: xchgl %eax, %fs:OFFSET_TARGET;  \
-	jmpl *%fs:OFFSET_LOGGER_LOG_BRANCH_TARGET;	\
+	1: movl $0xffffffff, %fs:OFFSET_TARGET;	\
+	2: ;\
 __##jxx##_template_end: nop
 
 DEF_Jxx_TEMPLATE(jo)
@@ -86,30 +88,132 @@ DEF_Jxx_TEMPLATE(ja)
 	 * raise before the syscall.
 	 */
 __int80_syscall_template_start:
-	movl %eax, %fs:OFFSET_TARGET
-__int80_syscall_template_movl:
-	movl $0xffffffff, %eax
-	xchgl %eax, %fs:OFFSET_TARGET
+	movl $0xffffffff, %fs:OFFSET_TARGET
 	jmpl *%fs:OFFSET_SYSCALL_ENTRY
 __int80_syscall_template_end:
 	nop
 
 
-	/* if signal arise:
-	 * before the real processing, we MUST determine the exact instruction
-	 * after that the signal arise. in the normal situation (signal raise
-	 * between 2 normal instructions), we can determine the exact instruction
-	 * by comparing the eip in signal frame and the CURRENT_BLOCK in %fs.
-	 * if eip < ori_code_end, then by (eip - __code + entry) we can get the exact
-	 * instruction. if eip > ori_code_end: if eip < xxx_effect_inst, then signal
-	 * raise before the branch; if not, then signal arise after the branch.
-	 * for system call, we don't need determine the exact signal point by instruction
-	 * address. during replay, if signal mark before the system call mark, then
-	 * the signal is identified as 'raise before system call'; if signal mark
-	 * after syscall mark and before syscall data, then it raise inside system call.
-	 * if signal mark after all syscall data, then it raise after system call.
+	/* if signal arise: before the real processing, we MUST determine the
+	 * exact instruction after that the signal arise. in the normal
+	 * situation (signal raise between 2 normal instructions), we can
+	 * determine the exact instruction by comparing the eip in signal frame
+	 * and the CURRENT_BLOCK in %fs.  if eip < ori_code_end, then by (eip -
+	 * __code + entry) we can get the exact instruction. if eip >
+	 * ori_code_end, things become complex. We must consider the
+	 * interaction between branch and log.
+	 *
+	 * Finally we decide that the log order is important. If the signal
+	 * raise before we append log, it is identified as 'raise before
+	 * branch'. If not, it is identified as 'raise after branch'. This
+	 * simple policy moves the computation to replay phase. Some branched,
+	 * such as 'call', operate the stack.  the replayer MUST compare the
+	 * esp in signal frame and the real esp. If there're different, then
+	 * the signal is actually raise after the 'call', the stack must be
+	 * adjusted.  restoring the esp is not very hard, but restoring the
+	 * traget address is different.  for 'call', it is not very hard.
+	 * 'call' will return to the next instruction, the target address can
+	 * also be computed.  for 'ret', the target address can be fetched from
+	 * (%esp), for 'indirect call', the return address (put onto stack) is
+	 * also its next instruction, but what's the target address?
+	 *
+	 * Here we show our solution:
+	 * the instructions such as 'indirect call' and 'ret' will be compiled
+	 * into 3 phase:
+	 * 0. set target; (movl $0xffffffff, %fs:TARGET)
+	 * 1. log;
+	 * 2. take effect;
+	 * 3. real transfer.
+	 * log phase appends target address into log buffer. It needs following
+	 * instructions:
+	 *  movl %eax, %fs:REG_TMP
+	 *  movl %fs:LOGGER_LOG_BUFFER_CURRENT, %eax
+	 *  movl $0xffffffff, (%eax)
+	 *  movl %fs:REG_TMP, %eax
+	 *  addl $4, %fs:LOGGER_LOG_BUFFER_CURRENT
+	 *  movl $0xffffffff, %fs:TMP_TARGET
+	 *  jmp check_buffer
+	 *
+	 * Here, the buffer contain at least 4 bytes additional space.
+	 * If signal raises inside the log phase, the signal handler must check the exact instruction
+	 * it arise. if signal raise after the first movl but before the addl, then it must revert
+	 * all works (reset eax and eip).
+	 * by above method, we make the log phase atomic.
+	 * the check_buffer shoule be:
+	 *
+	 *  movl %esp, %fs:OLD_ESP
+	 *  movl %fs:ESP, %esp
+	 *  do stuff
+	 *  movl %fs:OLD_ESP, %esp
+	 *  jmp *%fs:TMP_TARGET
+	 *
+	 * we don't care about signals raise after the first movl. following code are
+	 * cacahe size checker, if they find the cache is not full, they will return to
+	 * the original target. if signal raise after the comparation and before the flush,
+	 * there is potential inconsistency.
+	 * At the first situation, after the signal finally return,
+	 * the sigreturn handler will flush cache if cache is full, so the check code
+	 * got correct result. At the second situation, before it really fulsh cache,
+	 * it will mask all signals, then recheck the buffer index. If signal raises before
+	 * signal are blocked and after the comparation, the following comparation can still get
+	 * correct result, and won't flush anything.
+	 *
+	 * some branch, such as jmp and call, doesn't have log phase. for 'jmp', put the signal
+	 * before or after the instruction is nothing different. If record phase decide
+	 * to identify signal as 'before jmp', it only work is adjust eip. If it decide to identify
+	 * signal as 'after jmp', it still need to adjust eip. During replay, do the same work
+	 * is enough. for 'call', replay phase can infer its place by comparing esp.
+	 *
+	 * 'take effect' phase is used only for such instruction which have side effect and
+	 * need to be logged, such as 'ret' and indirect call. 'ret' will be compiled as
+	 * an 'popl' instruction, and indirect call will be compiled as a 'push' instruction.
+	 * if signal raise after log phase but before 'take effect' phase, it will be identified as
+	 * 'after the branch', but the stack has not been modified. In record phase, if the eip is
+	 * not between the effective instruction (exclusive) and the end of the code piece, and not 
+	 * at the head of the new block, 
+	 * it will reset eip to the real branch. if not (after the effective inst, it won't trigger
+	 * tls code), it will reset eip to the branch target.
+	 *
+	 * so, for such instructions, if eip in signal frame is after the 'take effect' instruction and
+	 * before the last instruction, the eip addr will be adjusted to the branch target; if not,
+	 * the eip addr will be adjusted to the branch instruction.
+	 *
+	 * Then there have an inconsistance: if signal raises after log phase but before the effective
+	 * instruction, it will be identified as 'before the signal' during record, and identified as
+	 * 'after the signal' during replay. we left the work in replay phase: if it meet such an
+	 * instructiion, it mush save stack values in and make it recoverable. After it execute
+	 * the instruction, before following execution, it must check signal status. if following
+	 * signal raise after it (according to its eip (it is set during record phase, eip point to
+	 * the instruction or its target(its target has been saved during its replay execution))),
+	 * it will check the signal eip. if it is points to the branch itself, then replayer must
+	 * roll-back the branch by reset esp, move saved stack value back and properly set signal frame
+	 * (copy from log).
+	 *
+	 * 
+	 * summary:
+	 *  when compiling branch, the branch instructions (exclude unconditional direct branches)
+	 *  are diveide into 4 phase:
+	 *   1. set target (one inst)
+	 *   2. log phase
+	 *   3. take effect;
+	 *   4. real branch.
+	 * when signal arises, the signal handler should do following things:
+	 *   1. check the eip in signal frame, if it is inside the critical code of log phase,
+	 *      handler must reset eax from REG_TMP, then reset the eip to the head of
+	 *      the compiled branch instructions;
+	 *   2. save the signal frame and make a fake frame. The fake frame's eip is determined by
+	 *      original eip: for no-side effect instructions, if eip is before the first critical log
+	 *      instruction (less than it) then reset the frame's eip to the branch instruction it self.
+	 *      if not, set it to its branch target; for those 'have side effect' branch (indirect call
+	 *      and ret), if eip is after the 'take effect' instruction, or it is the first instruction
+	 *      of compiled branch target, set the fake eip to the branch target, if not, set the fake eip
+	 *      to the branch itself.
+	 *   3. when signal return, retrives the saved frame. (in fact, only the eip is changed, so we can
+	 *      save eip only. however, some tls state also need to be saved).
+	 *
+	 *   during replay, when hit side-effect branch, must save the stack value. after that, if
+	 *   the next log entry is a signal mark, and points to the branch instruction (according to esp
+	 *   we can check this), this instruction must be reverted, and reexec when signal return.
+	 *
 	 */
-	/* The log problem: when we append an entry into log, we need to do 2 things:
-	 * 1: adjust the buffer index, 2: append the entry. These 2 things can't be done
-	 * by one instruction, so signal may raise between those instructions.
-	 * because we */
+

@@ -9,10 +9,10 @@
 #include <config.h>
 #include <common/defs.h>
 extern ATTR_HIDDEN void
-ud_logger_entry(void);
+check_logger_buffer(void);
 
 extern ATTR_HIDDEN void
-log_branch_target(void);
+syscall_entry(void);
 
 #endif
 

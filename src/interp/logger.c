@@ -18,22 +18,18 @@ void
 init_logger(void)
 {
 	struct thread_private_data * tpd = get_tpd();
-
-	tpd->logger.ud_logger_entry = ud_logger_entry;
-	tpd->logger.log_branch_target = log_branch_target;
+	tpd->logger.check_logger_buffer = check_logger_buffer;
 
 	tpd->logger.log_buffer_start = alloc_pages(LOG_PAGES_NR, FALSE);
 	assert(tpd->logger.log_buffer_start != NULL);
+
 	tpd->logger.log_buffer_current = tpd->logger.log_buffer_start;
+	/* for additional bytes! see branch_template.S */
 	tpd->logger.log_buffer_end = tpd->logger.log_buffer_start +
-		LOG_PAGES_NR * PAGE_SIZE;
+		LOG_PAGES_NR * PAGE_SIZE - 4;
+
 }
 
-/* 
- * called by ud_logger_entry or log_branch_target when
- * buffer shortage
- * before calling heavy_log_branch_target, caller should set 
- */
 void
 heavy_log_branch_target(void)
 {

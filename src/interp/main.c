@@ -81,11 +81,6 @@ xmain(volatile struct pusha_regs regs)
 	DEBUG(LOADER, "pid from tpd: %d; tid from tpd: %d\n",
 			get_tpd()->pid, get_tpd()->tid);
 
-	/* init code cache */
-	init_code_cache();
-	/* init logger */
-	init_logger();
-
 	*pretaddr = retaddr;
 	return esp_add;
 }

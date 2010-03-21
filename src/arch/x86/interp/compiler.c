@@ -18,11 +18,43 @@
 #define MAX_PATCH_SIZE	(256)
 
 static __AI void
-reset_movl(void * inst, uint32_t data)
+reset_movl_imm(uint8_t * inst, uint32_t data)
 {
-	*((uint32_t*)(inst + 1)) = data;
+	if ((inst[0] == 0x64) && (inst[1] == 0xc7) && (inst[2] == 0x05)) {
+		/* this is movl $0xffffffff, %fs:0x12345678 */
+		*((uint32_t*)(inst + 7)) = data;
+	} else if ((inst[0] == 0xc7) && (inst[1] == 0x05)) {
+		/* this is movl $0xffffffff, 0x12345678 */
+		*((uint32_t*)(inst + 6)) = data;
+	}
 }
 
+#define template_sym(s)		extern ATTR_HIDDEN uint8_t n[]
+
+template_sym(__set_current_block_template_start);
+template_sym(__set_current_block_template_end);
+template_sym(__log_phase_template_start);
+template_sym(__log_phase_template_end);
+template_sym(__log_phase_template_commit);
+template_sym(__log_phase_template_return_ebx);
+template_sym(__log_phase_template_return_addr);
+
+void
+do_real_branch(void)
+{
+	/* this is the entry of compiler */
+	FATAL(COMPILER, "XXXX\n");
+	return;
+}
+
+void
+do_recompile_ud_branch(void)
+{
+	FATAL(COMPILER, "YYYY\n");
+	return;
+}
+
+#if 0
 extern uint8_t __set_current_block_template_start[];
 extern uint8_t __set_current_block_template_end[];
 extern uint8_t __set_current_block_template_movl[];
@@ -148,10 +180,10 @@ static __AI void
 __recompile_ud(struct code_block_t * block, void * target)
 {
 #warning need test
-	/* this is ljmp *0xxxxxxxxx */
+	/* this is jmpl *0xxxxxxxxx */
 	uint8_t * branch = block->ori_code_end;
 	branch[0] = 0xff;
-	branch[1] = 0x2d;
+	branch[1] = 0x25;
 	*((void**)(branch + 2)) = target;
 	return;
 }
@@ -181,6 +213,7 @@ compile_code_block(void)
 	return;
 	
 }
+#endif
 
 // vim:ts=4:sw=4
 

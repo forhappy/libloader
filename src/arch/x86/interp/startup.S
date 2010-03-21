@@ -6,7 +6,7 @@
 #include <asm_offsets.h>
 
 .globl _start
- _start:
+_start:
  	push $0
 	pusha
 	pushf
@@ -31,8 +31,5 @@
 	/* begin running */
 	2:
 	popl %fs:OFFSET_TARGET
-	/* logger_entry resets esp.
-	 * we reset esp after we pop the target. this is
-	 * because we are not in a real 'call'ed func */
-	jmp *%fs:OFFSET_LOGGER_UD_LOGGER_ENTRY
+	jmpl *%fs:OFFSET_REAL_BRANCH
 
