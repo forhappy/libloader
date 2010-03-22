@@ -87,6 +87,8 @@ DEF_Jxx_TEMPLATE(ja)
 	 * mark, then it raise 'inside' syscall. If not, the signal
 	 * raise before the syscall.
 	 */
+.globl __int80_syscall_template_start
+.globl __int80_syscall_template_end
 __int80_syscall_template_start:
 	movl $0xffffffff, %fs:OFFSET_TARGET
 	jmpl *%fs:OFFSET_SYSCALL_ENTRY

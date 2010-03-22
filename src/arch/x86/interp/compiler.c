@@ -123,6 +123,23 @@ compile_branch(uint8_t * patch_code, uint8_t * branch,
 #undef CASE_Jxx_8b
 #undef COMP_Jxx_8bitrel
 #undef COMP_Jxx
+
+		case 0xcd: {
+			if (inst2 == 0x80) {
+				template_sym(__int80_syscall_template_start);
+				template_sym(__int80_syscall_template_end);
+				/* this is int80 system call */
+				*pexit_type = EXIT_SYSCALL;
+				int patch_sz = template_sz(__int80_syscall_template);
+				memcpy(patch_code, (void*)__int80_syscall_template_start,
+						patch_sz);
+				reset_movl_imm(patch_code, (uint32_t)(branch + 2));
+				assert(patch_sz <= MAX_PATCH_SIZE);
+				return patch_sz;
+			} else {
+				FATAL(COMPILER, "doesn't support int 0x%x\n", inst2);
+			}
+		}
 		default:
 			FATAL(COMPILER, "unknown branch instruction: 0x%x 0x%x 0x%x\n",
 					inst1, inst2, inst3);

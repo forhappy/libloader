@@ -22,6 +22,8 @@ check_logger_buffer:
 
 .globl syscall_entry
 syscall_entry:
+	int $0x80
+	jmpl *%fs:OFFSET_REAL_BRANCH
 	nop
 
 // vim:ts=4:sw=4
