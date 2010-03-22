@@ -16,8 +16,8 @@ extern void
 restore_signals(void);
 
 #ifdef RELAX_SIGNAL
-# define block_signals do {  } while(0)
-# define restore_signals do {  } while(0)
+# define block_signals() do {  } while(0)
+# define restore_signals() do {  } while(0)
 #endif
 
 #endif

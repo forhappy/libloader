@@ -106,9 +106,10 @@ EXECUTE_PROCESS(COMMAND stat ${KERNEL_BUILD_SOURCE}/include2
 	RESULT_VARIABLE have_include2)
 IF (have_include2 STREQUAL "0")
 	# source and build tree are different
-	SET(KERNEL_CFLAGS "-nostdinc -isystem ${gcc_inc} -I${KERNEL_BUILD_SOURCE}/include -I${KERNEL_BUILD_SOURCE}/include2 -I${KERNEL_SOURCE}/include -I${KERNEL_SOURCE}/arch/${KARCH}/include -include ${KERNEL_BUILD_SOURCE}/include/linux/autoconf.h -I${KERNEL_SOURCE}/arch/${KARCH}/kernel -I${KERNEL_BUILD_SOURCE}/arch/${KARCH}/kernel -D__KERNEL__ -DCONFIG_AS_CFI=1 -DCONFIG_AS_CFI_SIGNAL_FRAME=1 -Wno-unused")
+	SET(KERNEL_CFLAGS "-nostdinc -isystem ${gcc_inc} -I${KERNEL_BUILD_SOURCE}/include -I${KERNEL_BUILD_SOURCE}/include2 -I${KERNEL_SOURCE}/include -I${KERNEL_SOURCE}/arch/${KARCH}/include -include ${KERNEL_BUILD_SOURCE}/include/linux/autoconf.h -I${KERNEL_SOURCE}/arch/${KARCH}/kernel -I${KERNEL_BUILD_SOURCE}/arch/${KARCH}/kernel -D__KERNEL__ -DCONFIG_AS_CFI=1 -DCONFIG_AS_CFI_SIGNAL_FRAME=1 -Wno-unused -Wno-strict-aliasing")
+
 ELSE (have_include2 STREQUAL "0")
-	SET(KERNEL_CFLAGS "-nostdinc -isystem ${gcc_inc} -I${KERNEL_BUILD_SOURCE}/include -I${KERNEL_SOURCE}/arch/${KARCH}/include -include ${KERNEL_BUILD_SOURCE}/include/linux/autoconf.h -D__KERNEL__ -DCONFIG_AS_CFI=1 -DCONFIG_AS_CFI_SIGNAL_FRAME=1 -Wno-unused")
+	SET(KERNEL_CFLAGS "-nostdinc -isystem ${gcc_inc} -I${KERNEL_BUILD_SOURCE}/include -I${KERNEL_SOURCE}/arch/${KARCH}/include -include ${KERNEL_BUILD_SOURCE}/include/linux/autoconf.h -D__KERNEL__ -DCONFIG_AS_CFI=1 -DCONFIG_AS_CFI_SIGNAL_FRAME=1 -Wno-unused -Wno-strict-aliasing")
 ENDIF (have_include2 STREQUAL "0")
 
 unset(have_include2)

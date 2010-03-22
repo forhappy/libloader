@@ -2,8 +2,6 @@
  * xasm/debug.c
  */
 
-/* for size_t */
-#include <stdio.h>
 #include <xasm/syscall.h>
 #include <xasm/vsprintf.h>
 #include <xasm/utils.h>

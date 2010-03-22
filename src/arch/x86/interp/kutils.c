@@ -15,6 +15,10 @@ static sigset_t all_mask = {
 static sigset_t old_mask;
 static int block_level = 0;
 
+#ifdef block_signals
+# undef block_signals
+#endif
+
 void
 block_signals(void)
 {
@@ -24,6 +28,9 @@ block_signals(void)
 	block_level ++;
 }
 
+#ifdef restore_signals
+# undef restore_signals
+#endif
 void
 restore_signals(void)
 {

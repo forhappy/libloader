@@ -18,7 +18,7 @@ ENDMACRO(build_tests testlist libs)
 MACRO(set_interp_properties target)
 SET_PROPERTY(TARGET ${target}
 	APPEND
-	PROPERTY COMPILE_FLAGS "-fvisibility=hidden -fPIC -fno-builtin-printf")
+	PROPERTY COMPILE_FLAGS "-fvisibility=hidden -fPIC -fno-builtin-printf -fno-builtin-vsnprintf")
 SET_PROPERTY(TARGET ${target}
 	APPEND
 	PROPERTY LINK_FLAGS "-nostartfiles -nodefaultlibs -nostdlib")

@@ -35,13 +35,6 @@ struct tls_logger {
 extern void
 init_logger(void);
 
-extern void
-flush_logger_buffer(void);
-
-/* target is got from tls storage fs:OFFSET_TARGET */
-extern void
-heavy_log_branch_target(void);
-
 #endif
 
 // vim:ts=4:sw=4
