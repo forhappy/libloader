@@ -24,7 +24,7 @@ __set_current_block_template_end:
 .globl __log_phase_template_start
 .globl __log_phase_template_end
 .globl __log_phase_template_commit
-.globl __log_phase_template_save_return_ebx
+.globl __log_phase_template_save_ebx
 .globl __log_phase_template_save_return_addr
 __log_phase_template_start:
 	movl %eax, %fs:OFFSET_REG_SAVER1

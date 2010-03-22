@@ -10,7 +10,6 @@
 #include <config.h>
 #include <common/defs.h>
 #include <common/debug.h>
-#include <asm/atomic.h>
 
 struct raw_spinlock_t {
 	volatile unsigned int lock;

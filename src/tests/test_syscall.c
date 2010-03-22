@@ -1,5 +1,5 @@
 
-#include <asm/syscall.h>
+#include <xasm/syscall.h>
 
 int main()
 {

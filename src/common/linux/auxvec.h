@@ -1,7 +1,7 @@
 #ifndef _LINUX_AUXVEC_H
 #define _LINUX_AUXVEC_H
 
-#include <asm/auxvec.h>
+#include <xasm/auxvec.h>
 
 /* Symbolic values for the entries in the auxiliary table
    put on the initial stack */

@@ -9,6 +9,10 @@
 #include <config.h>
 #include <common/defs.h>
 
+extern ATTR_HIDDEN void *
+scan_insts(void * stream);
+
+
 extern ATTR_HIDDEN void
 real_branch(void);
 

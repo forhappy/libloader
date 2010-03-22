@@ -6,7 +6,7 @@
 #include <config.h>
 #include <common/defs.h>
 #include <common/debug.h>
-#include <asm/utils.h>
+#include <xasm/utils.h>
 
 #include <interp/mm.h>
 

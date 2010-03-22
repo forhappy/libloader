@@ -10,12 +10,12 @@
 #include <common/bithacks.h>
 #include <interp/code_cache.h>
 #include <interp/logger.h>
-#include <asm/logger.h>
-#include <asm/compiler.h>
-#include <asm/tls.h>
-#include <asm/syscall.h>
-#include <asm/utils.h>
-#include <asm/string.h>
+#include <xasm/logger.h>
+#include <xasm/compiler.h>
+#include <xasm/tls.h>
+#include <xasm/syscall.h>
+#include <xasm/utils.h>
+#include <xasm/string.h>
 
 #include <sys/mman.h>
 

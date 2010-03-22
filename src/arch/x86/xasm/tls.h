@@ -10,7 +10,7 @@
 #include <common/defs.h>
 #include <common/debug.h>
 #include <common/assert.h>
-#include <asm/syscall.h>
+#include <xasm/syscall.h>
 #include <interp/dict.h>
 #include <interp/logger.h>
 #include <interp/code_cache.h>

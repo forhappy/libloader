@@ -9,7 +9,7 @@
 #include <common/assert.h>
 #include <interp/auxv.h>
 #include <common/linux/auxvec.h>
-#include <asm/elf.h>
+#include <xasm/elf.h>
 
 struct auxv_info auxv_info = {
 	.p_user_entry = NULL,

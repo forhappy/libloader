@@ -7,7 +7,7 @@
 #define WRAPPER_PRINTF_H
 
 #include <stdarg.h>
-#include <asm/string.h>
+#include <xasm/string.h>
 
 extern long
 simple_strtol(const char *cp,char **endp,unsigned int base);

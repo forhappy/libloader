@@ -7,7 +7,7 @@
 #include <common/defs.h>
 #include <common/debug.h>
 #include <common/bithacks.h>
-#include <asm/string.h>
+#include <xasm/string.h>
 #include <interp/mm.h>
 #include <interp/dict.h>
 

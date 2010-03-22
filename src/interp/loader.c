@@ -8,11 +8,11 @@
 #include <common/debug.h>
 #include <common/assert.h>
 
-#include <asm/debug.h>
-#include <asm/syscall.h>
-#include <asm/vsprintf.h>
-#include <asm/utils.h>
-#include <asm/elf.h>
+#include <xasm/debug.h>
+#include <xasm/syscall.h>
+#include <xasm/vsprintf.h>
+#include <xasm/utils.h>
+#include <xasm/elf.h>
 
 #include <interp/auxv.h>
 

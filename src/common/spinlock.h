@@ -9,8 +9,8 @@
 #include <config.h>
 #include <common/defs.h>
 #include <common/assert.h>
-#include <asm/raw_spinlock.h>
-#include <asm/syscall.h>
+#include <xasm/raw_spinlock.h>
+#include <xasm/syscall.h>
 
 struct spinlock_t {
 	struct raw_spinlock_t raw_lock;

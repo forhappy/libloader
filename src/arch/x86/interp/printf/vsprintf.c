@@ -9,8 +9,8 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <limits.h>
-#include <asm/__ctype.h>
-#include <asm/vsprintf.h>
+#include <xasm/__ctype.h>
+#include <xasm/vsprintf.h>
 #define PAGE_SIZE (4096)
 #define noinline __attribute__((noinline))
 typedef unsigned int size_t;

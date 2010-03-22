@@ -14,7 +14,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <limits.h>
-#include <asm/__ctype.h>
+#include <xasm/__ctype.h>
 #define PAGE_SIZE (4096)
 char *strcpy(char * dest,const char *src)
 {

@@ -5,7 +5,7 @@
 #include <config.h>
 #include <common/defs.h>
 #include <common/debug.h>
-#include <asm/compiler.h>
+#include <xasm/compiler.h>
 #include <stdint.h>
 #include "x86_opcode.h"
 

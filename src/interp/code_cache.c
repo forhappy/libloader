@@ -9,8 +9,8 @@
 #include <interp/code_cache.h>
 #include <interp/mm.h>
 #include <interp/dict.h>
-#include <asm/tls.h>
-#include <asm/logger.h>
+#include <xasm/tls.h>
+#include <xasm/logger.h>
 
 void
 clear_code_cache(struct tls_code_cache_t * cc)

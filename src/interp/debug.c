@@ -6,7 +6,7 @@
 
 #include <common/debug.h>
 #include <common/assert.h>
-#include <asm/utils.h>
+#include <xasm/utils.h>
 #include <stdarg.h>
 #include <unistd.h>
 

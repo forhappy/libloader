@@ -10,13 +10,13 @@
 #include <common/debug.h>
 #include <common/sys/personality.h>
 
-#include <asm/processor.h>
-#include <asm/debug.h>
-#include <asm/syscall.h>
-#include <asm/vsprintf.h>
-#include <asm/utils.h>
-#include <asm/tls.h>
-#include <asm/compiler.h>
+#include <xasm/processor.h>
+#include <xasm/debug.h>
+#include <xasm/syscall.h>
+#include <xasm/vsprintf.h>
+#include <xasm/utils.h>
+#include <xasm/tls.h>
+#include <xasm/compiler.h>
 #include <interp/auxv.h>
 #include <interp/mm.h>
 #include <interp/code_cache.h>

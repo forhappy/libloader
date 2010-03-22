@@ -9,8 +9,16 @@
 
 .globl check_logger_buffer
 check_logger_buffer:
+	movl %esp, %fs:OFFSET_OLD_STACK_TOP
+	movl %fs:OFFSET_STACK_TOP, %esp
+	pusha
+	pushf
+	/* defined in interp/logger.c */
+	call do_check_logger_buffer
+	popf
+	popa
+	movl %fs:OFFSET_OLD_STACK_TOP, %esp
 	jmpl *%fs:OFFSET_LOGGER_CHECK_BUFFER_RETURN
-	nop
 
 .globl syscall_entry
 syscall_entry:

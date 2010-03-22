@@ -4,7 +4,7 @@
  */
 
 #include <stdio.h>
-#include <asm/tls.h>
+#include <xasm/tls.h>
 
 #define PRINT(element, name)	\
 	do {						\

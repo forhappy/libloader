@@ -1,10 +1,12 @@
 /* 
- * asm/debug.c
+ * xasm/debug.c
  */
 
-#include <asm/syscall.h>
-#include <asm/vsprintf.h>
-#include <asm/utils.h>
+/* for size_t */
+#include <stdio.h>
+#include <xasm/syscall.h>
+#include <xasm/vsprintf.h>
+#include <xasm/utils.h>
 #include <sys/mman.h>
 
 static char fdprintf_buf[1024];

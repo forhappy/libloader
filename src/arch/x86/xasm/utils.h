@@ -1,12 +1,12 @@
 /* 
- * asm/utils.h
+ * xasm/utils.h
  */
 
 #ifndef __ASM_UTILS_H
 #define __ASM_UTILS_H
 
 #include <common/defs.h>
-#include <asm/syscall.h>
+#include <xasm/syscall.h>
 #include <stdarg.h>
 
 extern int ATTR(format(printf, 2, 3))
@@ -46,7 +46,6 @@ alloc_pages(int nr, bool_t exec);
 
 extern void
 free_pages(void * start, int nr);
-
 #endif
 // vim:ts=4:sw=4
 

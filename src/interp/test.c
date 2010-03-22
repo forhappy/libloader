@@ -7,8 +7,8 @@
 #include <common/defs.h>
 #include <common/debug.h>
 
-#include <asm/tls.h>
-#include <asm/string.h>
+#include <xasm/tls.h>
+#include <xasm/string.h>
 
 #include <interp/mm.h>
 #include <interp/dict.h>

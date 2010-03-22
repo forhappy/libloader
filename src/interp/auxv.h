@@ -6,7 +6,7 @@
 #ifndef __AUXV_H
 #define __AUXV_H
 
-#include <asm/elf.h>
+#include <xasm/elf.h>
 #include <common/linux/auxvec.h>
 
 void find_auxv(void * oldesp);

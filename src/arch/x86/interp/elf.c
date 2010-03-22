@@ -1,5 +1,5 @@
 /* 
- * asm/relocate.c
+ * xasm/relocate.c
  * by WN @ Feb. 23, 2010
  */
 
@@ -8,10 +8,11 @@
 #include <common/assert.h>
 #include <common/debug.h>
 
-#include <asm/syscall.h>
-#include <asm/utils.h>
-#include <asm/elf.h>
-#include <asm/string.h>
+#include <xasm/syscall.h>
+#include <xasm/utils.h>
+#include <xasm/elf.h>
+#include <xasm/string.h>
+#include <fcntl.h>
 
 #include <sys/mman.h>
 

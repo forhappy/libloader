@@ -14,11 +14,15 @@ SET(SRC
 	elf.c
 	tls.c
 	utils.c
+	kutils.c
 	scan_opcode.c
 	x86_opcode.h
 	x86_opcode.c.h
 	asm_offsets.h
 	)
+
+SET_SOURCE_FILES_PROPERTIES(kutils.c
+	PROPERTIES COMPILE_FLAGS ${KERNEL_CFLAGS})
 
 ADD_LIBRARY(platform STATIC ${SRC})
 
@@ -34,8 +38,6 @@ ADD_CUSTOM_COMMAND(OUTPUT asm_offsets.h
 	COMMAND ${CMAKE_CURRENT_BINARY_DIR}/compute_tls_offset > asm_offsets.h
 	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 	)
-
-
 
 ADD_SUBDIRECTORY(printf)
 

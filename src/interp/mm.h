@@ -9,7 +9,7 @@
 #include <config.h>
 #include <common/defs.h>
 /* for page size */
-#include <asm/utils.h>
+#include <xasm/utils.h>
 
 /* 
  * the usage of mm:

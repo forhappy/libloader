@@ -5,12 +5,7 @@
 
 #ifndef __SYSCALL_H
 #define __SYSCALL_H
-#include <stdint.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <asm/unistd.h>
-#include <common/defs.h>
-__BEGIN_DECLS
+#include <xasm/unistd.h>
 
 /* code from glibc 2.7 */
 /* We need some help from the assembler to generate optimal code.  We
@@ -85,7 +80,7 @@ asm (".L__X'%ebx = 1\n\t"
 
 #define INTERNAL_SYSCALL_0_5(name, enter_kernel, nr, args...) \
 	({								\
-	 	register int32_t ___retval;				\
+	 	register long ___retval;				\
 	 	EXTRAVAR_##nr						\
 		asm volatile (						\
 			LOADARGS_##nr					\
@@ -100,8 +95,8 @@ asm (".L__X'%ebx = 1\n\t"
 
 #define __INTERNAL_SYSCALL_6(name, enter_kernel, arg1, arg2, arg3, arg4, arg5, arg6)	\
 	     ({								\
-	      	register int32_t ___retval;				\
-		int32_t ___xv1, ___xv2;					\
+	      	register long ___retval;				\
+		long ___xv1, ___xv2;					\
 		___xv2 = arg6;						\
 		asm volatile (						\
 			"movl %%ebx, %3\n"				\
@@ -143,6 +138,5 @@ asm (".L__X'%ebx = 1\n\t"
 #define INTERNAL_SYSCALL_int80_6(name, args...)	__INTERNAL_SYSCALL_6(name, "int $0x80\n", args)
 #endif
 
-__END_DECLS
 // vim:ts=4:sw=4
 
