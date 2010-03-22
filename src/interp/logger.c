@@ -35,6 +35,10 @@ init_logger(void)
 static void
 flush_logger_buffer(struct tls_logger * logger)
 {
+	/* we need check buffer again because signal may raise after
+	 * the previous check and before we close signal */
+	if (logger->log_buffer_current < logger->log_buffer_end)
+		return;
 	int sz = (uintptr_t)(logger->log_buffer_end) -
 		(uintptr_t)(logger->log_buffer_start) + 4;
 	DEBUG(COMPILER, "----------- flush logger buffer ------------\n");
@@ -48,9 +52,9 @@ do_check_logger_buffer(void)
 	struct thread_private_data * tpd = get_tpd();
 	if (tpd->logger.log_buffer_current < tpd->logger.log_buffer_end)
 		return;
-	block_signals();
+	BLOCK_SIGNALS(tpd);
 	flush_logger_buffer(&tpd->logger);
-	restore_signals();
+	UNBLOCK_SIGNALS(tpd);
 	return;
 }
 

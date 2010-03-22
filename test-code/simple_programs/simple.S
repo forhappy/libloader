@@ -2,7 +2,7 @@
 .globl _start
 
 _start:
-	movl $900000000, %ecx
+	movl $100000000, %ecx
 	1:
 	decl %ecx
 	jnz 1b

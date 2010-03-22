@@ -52,7 +52,9 @@ struct thread_private_data {
 	unsigned int tnr;
 	/* we also need some code cache stuff */
 	/* when enter snitchaser's code, stack should be set to it */
-	struct thread_private_data * stack_top;	
+	struct thread_private_data * stack_top;
+	uint32_t sigmask[4];
+	int sig_block_level;
 	/* access: *fs:(0x3000 - 4); stores: the base (lowest)
 	 * address of the TLS section */
 	void * tls_base;	

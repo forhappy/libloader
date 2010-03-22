@@ -18,5 +18,6 @@ real_branch(void);
 
 extern ATTR_HIDDEN void
 recompile_ud_branch(void);
+
 #endif
 
