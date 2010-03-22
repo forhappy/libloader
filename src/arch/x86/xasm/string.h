@@ -5,6 +5,8 @@
 # define __always_inline __attribute__((always_inline, unused))
 #endif
 
+typedef unsigned int size_t;
+
 /* Let gcc decide wether to inline or use the out of line functions */
 
 extern char *
