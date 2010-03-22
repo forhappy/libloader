@@ -152,7 +152,6 @@ static void
 build_tpd(struct thread_private_data * tpd)
 {
 	tpd->real_branch = real_branch;
-	tpd->recompile_ud_branch = recompile_ud_branch;
 	tpd->syscall_entry = syscall_entry;
 
 	/* init code cache */

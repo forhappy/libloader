@@ -37,6 +37,10 @@ struct code_block_t {
 	/* a pointer to the first byte after
 	 * the unmodified code, used for recompile */
 	void * ori_code_end;
+	/* if this is a ud block, we replace the code
+	 * after recompile_start with a single jmp in the
+	 * 2nd pass compilation. */
+	void * recompile_start;
 	enum exit_type exit_type;
 	struct code_block_t * next;
 	uint8_t __code[];

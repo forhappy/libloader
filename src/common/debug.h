@@ -60,6 +60,7 @@ __debug_component_names[NR_DEBUG_COMPONENTS] = {
 };
 #endif
 
+#if 0
 static const enum __debug_level
 __debug_component_levels[NR_DEBUG_COMPONENTS] = {
 	[SYSTEM]	= DBG_LV_TRACE,
@@ -71,6 +72,20 @@ __debug_component_levels[NR_DEBUG_COMPONENTS] = {
 	[COMPILER]	= DBG_LV_TRACE,
 	[LOGGER]	= DBG_LV_TRACE,
 };
+#endif
+
+static const enum __debug_level
+__debug_component_levels[NR_DEBUG_COMPONENTS] = {
+	[SYSTEM]	= DBG_LV_VERBOSE,
+	[LOADER]	= DBG_LV_VERBOSE,
+	[TLS]		= DBG_LV_VERBOSE,
+	[DECODER]	= DBG_LV_VERBOSE,
+	[MEM]		= DBG_LV_VERBOSE,
+	[DICT]		= DBG_LV_VERBOSE,
+	[COMPILER]	= DBG_LV_VERBOSE,
+	[LOGGER]	= DBG_LV_VERBOSE,
+};
+
 
 #endif
 

@@ -21,7 +21,6 @@ compute(void)
 	PRINT(reg_saver1, REG_SAVER1);
 	PRINT(reg_saver2, REG_SAVER2);
 	PRINT(real_branch, REAL_BRANCH);
-	PRINT(recompile_ud_branch, RECOMPILE_UD_BRANCH);
 	PRINT(syscall_entry, SYSCALL_ENTRY);
 	PRINT(logger.check_logger_buffer, LOGGER_CHECK_LOGGER_BUFFER);
 	PRINT(logger, LOGGER);
