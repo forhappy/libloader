@@ -150,14 +150,19 @@ compile_branch(uint8_t * patch_code, uint8_t * branch,
 #undef COMP_Jxx_8b
 #undef CASE_Jxx_8b
 
+		case 0xe9:
 		case 0xeb: {
 			template_sym(__direct_jmp_template_start);
 			template_sym(__direct_jmp_template_end);
-			/* this is short jmp */
+			/* 0xeb is short jmp, 0xe9 is long jmp */
 			*pexit_type = EXIT_UNCOND_DIRECT;
 			int patch_sz = template_sz(__direct_jmp_template) +
 				real_branch_template_sz;
-			void * target = branch + 2 + *((int8_t*)(branch + 1));
+			void * target;
+			if (inst1 == 0xeb)
+				target = branch + 2 + *((int8_t*)(branch + 1));
+			else
+				target = branch + 5 + *((int32_t*)(branch + 1));
 			memcpy(patch_code, __direct_jmp_template_start,
 					template_sz(__direct_jmp_template));
 			reset_movl_imm(patch_code, (uint32_t)(target));
