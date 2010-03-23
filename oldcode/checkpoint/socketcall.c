@@ -41,8 +41,10 @@ post_socketcall(const struct syscall_regs * regs)
 	unsigned long a0, a1, a2, a[6];
 	uint32_t retval = regs->eax;
 
-	__dup_mem(a, args, nargs[call]);
-	write_mem(args, nargs[call]);
+	int sz = nargs[call];
+
+	__dup_mem(a, args, sz);
+	write_mem(args, sz);
 
 	a0 = a[0];
 	a1 = a[1];
@@ -101,9 +103,10 @@ replay_socketcall(const struct syscall_regs * regs)
 	unsigned long a0, a1, a2, a[6];
 
 	uint32_t retval = eax;
-	read_mem(a, nargs[call]);
+	int sz = nargs[call];
+	read_mem(a, sz);
 	INJ_TRACE("replay socketcall 0x%x\n", call);
-	ASSERT(memcmp(a, (void*)args, nargs[call]) == 0, regs, "!@!@#\n");
+	ASSERT(memcmp(a, (void*)args, sz) == 0, regs, "!@!@#\n");
 
 	a0 = a[0];
 	a1 = a[1];
@@ -193,7 +196,8 @@ output_socketcall(int nr)
 
 	retval = read_eax();
 	unsigned long a0, a1, a2, a[6];
-	read_mem(a, nargs[call]);
+	int sz = nargs[call];
+	read_mem(a, sz);
 	a0 = a[0];
 	a1 = a[1];
 	a2 = a[2];
