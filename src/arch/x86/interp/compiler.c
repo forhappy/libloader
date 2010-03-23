@@ -207,6 +207,35 @@ compile_branch(uint8_t * patch_code, uint8_t * branch,
 			return patch_sz;
 		}
 
+		case 0x0f: {
+			switch (inst2) {
+				case 0x31: {
+					/* this is rdtsc */
+					template_sym(__rdtsc_template_start);
+					template_sym(__rdtsc_template_end);
+					template_sym(__rdtsc_template_save_return_addr);
+					int tmpsz = template_sz(__rdtsc_template);
+					int patch_sz = tmpsz +
+						real_branch_template_sz;
+					memcpy(patch_code, (void*)__rdtsc_template_start, tmpsz);
+					reset_movl_imm(patch_code, (uint32_t)(branch + 2));
+					*log_phase_retaddr_fix =
+						reset_movl_imm(
+								inst_in_template(patch_code, 
+									__rdtsc_template, save_return_addr),
+								(uint32_t)(uintptr_t)inst_in_template(patch_code,
+									__rdtsc_template, end));
+					memcpy(patch_code + tmpsz,
+							__real_branch_phase_template_start,
+							real_branch_template_sz);
+					return patch_sz;
+				}
+				default:
+					FATAL(COMPILER, "unknown branch instruction: 0x%x 0x%x 0x%x\n",
+							inst1, inst2, inst3);
+			}
+		}
+
 		case 0xcd: {
 			if (inst2 == 0x80) {
 				template_sym(__int80_syscall_template_start);

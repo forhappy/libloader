@@ -26,9 +26,9 @@ init_logger(void)
 	assert(tpd->logger.log_buffer_start != NULL);
 
 	tpd->logger.log_buffer_current = tpd->logger.log_buffer_start;
-	/* 4 additional bytes! see branch_template.S */
+	/* additional bytes! see branch_template.S */
 	tpd->logger.log_buffer_end = tpd->logger.log_buffer_start +
-		LOG_PAGES_NR * PAGE_SIZE - 4;
+		LOG_PAGES_NR * PAGE_SIZE - LOGGER_ADDITIONAL_BYTES;
 
 }
 
@@ -40,7 +40,7 @@ flush_logger_buffer(struct tls_logger * logger)
 	if (logger->log_buffer_current < logger->log_buffer_end)
 		return;
 	int sz = (uintptr_t)(logger->log_buffer_end) -
-		(uintptr_t)(logger->log_buffer_start) + 4;
+		(uintptr_t)(logger->log_buffer_start) + LOGGER_ADDITIONAL_BYTES;
 	DEBUG(COMPILER, "----------- flush logger buffer ------------\n");
 	memset(logger->log_buffer_start, '\0', sz);
 	logger->log_buffer_current = logger->log_buffer_start;

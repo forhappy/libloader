@@ -126,6 +126,24 @@ __ret_template_start:
 __ret_template_end:
 	nop
 
+.globl __rdtsc_template_start
+.globl __rdtsc_template_end
+.globl __rdtsc_template_save_return_addr
+__rdtsc_template_start:
+	movl $0xffffffff, %fs:OFFSET_TARGET
+	rdtsc
+	movl %ebx, %fs:OFFSET_REG_SAVER1
+	movl %fs:OFFSET_LOGGER_LOG_BUFFER_CURRENT, %ebx
+	movl %eax, (%ebx)
+	movl %edx, 4(%ebx)
+	movl %fs:OFFSET_REG_SAVER1, %ebx
+	addl $8, %fs:OFFSET_LOGGER_LOG_BUFFER_CURRENT
+__rdtsc_template_save_return_addr:
+	movl $0xffffffff, %fs:OFFSET_LOGGER_CHECK_BUFFER_RETURN
+	jmpl *%fs:OFFSET_LOGGER_CHECK_LOGGER_BUFFER
+__rdtsc_template_end:
+	nop
+
 	/* if signal arise: before the real processing, we MUST determine the
 	 * exact instruction after that the signal arise. in the normal
 	 * situation (signal raise between 2 normal instructions), we can
