@@ -6,6 +6,7 @@
 #ifndef X86_OPCODE_H
 #define X86_OPCODE_H
 
+
 enum group_table_name {
 	TABLE_GROUP1_0x80,
 	TABLE_GROUP1_0x81,
@@ -33,7 +34,8 @@ enum group_table_name {
 	TABLE_GROUP12_0x0f71,
 	TABLE_GROUP13_0x0f72,
 	TABLE_GROUP14_0x0f73,
-	TABLE_GROUP15_0x0fae,
+	TABLE_GROUP15_0x0fae_mem,
+	TABLE_GROUP15_0x0fae_11b,
 	TABLE_GROUP16_0x0f18,
 	NR_GROUPS,
 };
@@ -72,11 +74,13 @@ enum inst_type {
 	INST_GROUP12_0x0f71,
 	INST_GROUP13_0x0f72,
 	INST_GROUP14_0x0f73,
-	INST_GROUP15_0x0fae,
+	INST_GROUP15_0x0fae_mem,
+	INST_GROUP15_0x0fae_11b,
 	INST_GROUP16_0x0f18,
 	INST_GROUP_end,
 	/* group 7 is defferent from other groups */
 	INST_GROUP7,
+	INST_GROUP15,
 	INST_ESCAPE_2B,
 	INST_ESCAPE_3B_0x38,
 	INST_ESCAPE_3B_0x3a,
@@ -111,7 +115,7 @@ enum operade_addressing {
 	OP_ADDR_S = REQ_MODRM | 14,		/* have modrm, reg field selects a segment register */
 	OP_ADDR_U = REQ_MODRM | 15,		/* modrm R/M field selects select a 128bit XMM register */
 	OP_ADDR_V = REQ_MODRM | 16,		/* modrm reg field selects a 128bit XMM register */
-	OP_ADDR_W = REQ_MODRM | 17,		/* modrm R/M field selects a 128bit XMM register  */
+	OP_ADDR_W = REQ_MODRM | 17,		/* modrm R/M field selects a 128bit XMM register or memory address  */
 	OP_ADDR_X = NON_MODRM | 18,		/* memory, addressed by DS:rSI (movs, cmps ...) */
 	OP_ADDR_Y = NON_MODRM | 19,		/* memory, addredded by ES:rDI (movs, cmps ...)  */
 };
