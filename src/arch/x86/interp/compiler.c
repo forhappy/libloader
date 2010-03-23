@@ -244,7 +244,7 @@ recompile_ud(struct code_block_t * block, void * target)
 	return;
 }
 
-static void
+static struct code_block_t *
 do_compile(struct thread_private_data * tpd)
 {
 	/* this is the entry of compiler */
@@ -268,21 +268,50 @@ do_compile(struct thread_private_data * tpd)
 		recompile_ud(cache->current_block, block->__code);
 	}
 
-	tpd->target = block->__code;
-	TRACE(COMPILER, "target address: %p\n", tpd->target);
-	return;
+	return block;
 }
 
 void
 do_real_branch(void)
 {
 	struct thread_private_data * tpd = get_tpd();
-	if (tpd->code_cache.current_block->entry ==
-			 tpd->target) {
-		tpd->target = tpd->code_cache.current_block->__code;
-	} else {
-		do_compile(tpd);
+	struct tls_code_cache_t * cache = &tpd->code_cache;
+
+	if (cache->current_block->entry ==
+			 tpd->target)
+	{
+		tpd->target = cache->current_block->__code;
+		return;
 	}
+
+	if (cache->fast_block1->entry ==
+			 tpd->target)
+	{
+		tpd->target = cache->fast_block1->__code;
+		return;
+	}
+	if (cache->fast_block2->entry ==
+			 tpd->target)
+	{
+		tpd->target = cache->fast_block2->__code;
+		cache->fast_block2 = cache->fast_block1;
+		return;
+	}
+
+	if (cache->fast_block3->entry ==
+			 tpd->target)
+	{
+		tpd->target = cache->fast_block2->__code;
+		cache->fast_block3 = cache->fast_block2;
+		cache->fast_block2 = cache->fast_block1;
+		return;
+	}
+
+	struct code_block_t * block = do_compile(tpd);
+	tpd->target = block->__code;
+	cache->fast_block3 = cache->fast_block2;
+	cache->fast_block2 = cache->fast_block1;
+	cache->fast_block1 = block;
 }
 
 // vim:ts=4:sw=4

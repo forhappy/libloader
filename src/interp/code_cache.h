@@ -42,7 +42,6 @@ struct code_block_t {
 	 * 2nd pass compilation. */
 	void * recompile_start;
 	enum exit_type exit_type;
-	struct code_block_t * next;
 	uint8_t __code[];
 };
 
@@ -50,7 +49,9 @@ struct code_block_t {
 struct tls_code_cache_t {
 	struct dict_t * cache_dict;
 	struct obj_page_head * code_blocks;
-	struct code_block_t * fast_block;
+	struct code_block_t * fast_block1;
+	struct code_block_t * fast_block2;
+	struct code_block_t * fast_block3;
 	/* not only ud block should be record.
 	 * We MUST save current_block because of
 	 * signal handling: When signal arises,
