@@ -78,6 +78,15 @@ DEF_Jxx_TEMPLATE(jnz)
 DEF_Jxx_TEMPLATE(jna)
 DEF_Jxx_TEMPLATE(ja)
 
+DEF_Jxx_TEMPLATE(js)
+DEF_Jxx_TEMPLATE(jns)
+DEF_Jxx_TEMPLATE(jp)
+DEF_Jxx_TEMPLATE(jnp)
+DEF_Jxx_TEMPLATE(jl)
+DEF_Jxx_TEMPLATE(jge)
+DEF_Jxx_TEMPLATE(jle)
+DEF_Jxx_TEMPLATE(jg)
+
 	/* we needn't save anything: according
 	 * to CURRENT_BLOCK we can decide where to return. However,
 	 * saves its target address can make things simpler.

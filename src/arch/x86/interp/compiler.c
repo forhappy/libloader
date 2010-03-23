@@ -138,10 +138,17 @@ compile_branch(uint8_t * patch_code, uint8_t * branch,
 		CASE_Jxx_8b(0x76, jna)
 		CASE_Jxx_8b(0x77, ja)
 
+		CASE_Jxx_8b(0x78, js)
+		CASE_Jxx_8b(0x79, jns)
+		CASE_Jxx_8b(0x7a, jp)
+		CASE_Jxx_8b(0x7b, jnp)
+		CASE_Jxx_8b(0x7c, jl)
+		CASE_Jxx_8b(0x7d, jge)
+		CASE_Jxx_8b(0x7e, jle)
+		CASE_Jxx_8b(0x7f, jg)
+
 #undef COMP_Jxx_8b
 #undef CASE_Jxx_8b
-#undef COMP_Jxx_8bitrel
-#undef COMP_Jxx
 
 		case 0xeb: {
 			template_sym(__direct_jmp_template_start);
@@ -209,6 +216,29 @@ compile_branch(uint8_t * patch_code, uint8_t * branch,
 
 		case 0x0f: {
 			switch (inst2) {
+#define COMP_Jxx_32b(jxx) COMP_Jxx(jxx, branch + 6, branch + 6 + *((int32_t*)(branch + 2)))
+#define CASE_Jxx_32b(num, jxx)	case (num): {COMP_Jxx_32b(jxx); break;}
+
+				CASE_Jxx_32b(0x80, jo)
+				CASE_Jxx_32b(0x81, jno)
+				CASE_Jxx_32b(0x82, jb)
+				CASE_Jxx_32b(0x83, jnb)
+				CASE_Jxx_32b(0x84, jz)
+				CASE_Jxx_32b(0x85, jnz)
+				CASE_Jxx_32b(0x86, jna)
+				CASE_Jxx_32b(0x87, ja)
+
+				CASE_Jxx_32b(0x88, js)
+				CASE_Jxx_32b(0x89, jns)
+				CASE_Jxx_32b(0x8a, jp)
+				CASE_Jxx_32b(0x8b, jnp)
+				CASE_Jxx_32b(0x8c, jl)
+				CASE_Jxx_32b(0x8d, jge)
+				CASE_Jxx_32b(0x8e, jle)
+				CASE_Jxx_32b(0x8f, jg)
+
+#undef CASE_Jxx_32b
+#undef COMP_Jxx_32b
 				case 0x31: {
 					/* this is rdtsc */
 					template_sym(__rdtsc_template_start);
@@ -235,6 +265,7 @@ compile_branch(uint8_t * patch_code, uint8_t * branch,
 							inst1, inst2, inst3);
 			}
 		}
+#undef COMP_Jxx
 
 		case 0xcd: {
 			if (inst2 == 0x80) {
