@@ -113,6 +113,19 @@ __direct_call_template_movl:
 __direct_call_template_end:
 	nop
 
+	/* ret is special: if signal raise inside the compiled branch
+	 * and not just before the first instruction, it must be identified
+	 * as 'after the branch'. Signal handler then check whether its eip
+	 * between the top of template and the 'commit' instruction of log phase.
+	 * if it is, it MUST restore eax and ebx then reset eip to the real branch phase.
+	 * after that, signal handler should append ret target into log. */
+.globl __ret_template_start
+.globl __ret_template_end
+__ret_template_start:
+	popl %fs:OFFSET_TARGET
+__ret_template_end:
+	nop
+
 	/* if signal arise: before the real processing, we MUST determine the
 	 * exact instruction after that the signal arise. in the normal
 	 * situation (signal raise between 2 normal instructions), we can
@@ -235,4 +248,3 @@ __direct_call_template_end:
 	 *   we can check this), this instruction must be reverted, and reexec when signal return.
 	 *
 	 */
-

@@ -186,6 +186,27 @@ compile_branch(uint8_t * patch_code, uint8_t * branch,
 			return patch_sz;
 		}
 
+		case 0xc3: {
+			template_sym(__ret_template_start);
+			template_sym(__ret_template_end);
+			/* this is normal 'ret' */
+			*pexit_type = EXIT_UNCOND_INDIRECT;
+			int tmpsz = template_sz(__ret_template);
+			/* ret is special: it should have an 'effect phase' but we
+			 * cut it out. see comments in branch_template.S */
+			int patch_sz = tmpsz +
+				log_phase_template_sz +
+				real_branch_template_sz;
+			memcpy(patch_code, (void*)__ret_template_start,
+					tmpsz);
+			*log_phase_retaddr_fix = copy_log_phase(patch_code +
+					tmpsz);
+			memcpy(patch_code + tmpsz + log_phase_template_sz,
+					__real_branch_phase_template_start,
+					real_branch_template_sz);
+			return patch_sz;
+		}
+
 		case 0xcd: {
 			if (inst2 == 0x80) {
 				template_sym(__int80_syscall_template_start);
@@ -287,12 +308,13 @@ static struct code_block_t *
 do_compile(struct thread_private_data * tpd)
 {
 	/* this is the entry of compiler */
-	TRACE(COMPILER, "branch: target=%p\n", tpd->target);
+	TRACE(COMPILER, "finding %p in do_compile\n", tpd->target);
 	void * target = tpd->target;
 	struct tls_code_cache_t * cache = &(tpd->code_cache);
 	struct code_block_t * block = get_block(cache, target);
 
 	if (block == NULL) {
+		TRACE(COMPILER, "unable to find %p, real compile\n", tpd->target);
 		block = compile_code_block(target, &cache->code_blocks);
 		assert(block != NULL);
 		dict_insert(&cache->cache_dict,
