@@ -102,6 +102,17 @@ __direct_jmp_template_start:
 __direct_jmp_template_end:
 	nop
 
+.globl __direct_call_template_start
+.globl __direct_call_template_end
+.globl __direct_call_template_movl
+__direct_call_template_start:
+	/* don't use 0xffffffff: if not, as will use '6a ff' */
+	pushl $0x12345678
+__direct_call_template_movl:
+	movl $0xffffffff, %fs:OFFSET_TARGET
+__direct_call_template_end:
+	nop
+
 	/* if signal arise: before the real processing, we MUST determine the
 	 * exact instruction after that the signal arise. in the normal
 	 * situation (signal raise between 2 normal instructions), we can

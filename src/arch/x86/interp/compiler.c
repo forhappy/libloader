@@ -35,6 +35,19 @@ reset_movl_imm(uint8_t * inst, uint32_t data)
 	return val_addr;
 }
 
+static __AI uint32_t *
+reset_push_imm(uint8_t * inst, uint32_t data)
+{
+	uint32_t * val_addr;
+	if (inst[0] == 0x68) {
+		val_addr = (uint32_t*)(&inst[1]);
+	} else {
+		assert(0);
+	}
+	*val_addr = data;
+	return val_addr;
+}
+
 #define template_sym(s)		extern ATTR_HIDDEN uint8_t s[]
 
 template_sym(__set_current_block_template_start);
@@ -137,15 +150,39 @@ compile_branch(uint8_t * patch_code, uint8_t * branch,
 			*pexit_type = EXIT_UNCOND_DIRECT;
 			int patch_sz = template_sz(__direct_jmp_template) +
 				real_branch_template_sz;
+			void * target = branch + 2 + *((int8_t*)(branch + 1));
 			memcpy(patch_code, __direct_jmp_template_start,
 					template_sz(__direct_jmp_template));
-			void * target = branch + 2 + *((int8_t*)(branch + 1));
 			reset_movl_imm(patch_code, (uint32_t)(target));
 			/* no log phase */
 			memcpy(patch_code + template_sz(__direct_jmp_template),
 					__real_branch_phase_template_start,
 					real_branch_template_sz);
 			*recompile_branch_offset = 0;
+			return patch_sz;
+		}
+
+		case 0xe8: {
+			template_sym(__direct_call_template_start);
+			template_sym(__direct_call_template_end);
+			template_sym(__direct_call_template_movl);
+			/* this is 'call rel32' */
+			*pexit_type = EXIT_UNCOND_DIRECT;
+			int patch_sz = template_sz(__direct_call_template) +
+				real_branch_template_sz;
+			void * target = branch + 5 + *((int32_t*)(branch + 1));
+			void * next_inst = branch + 5;
+			memcpy(patch_code, __direct_call_template_start,
+					template_sz(__direct_call_template));
+			reset_push_imm(patch_code, (uint32_t)(next_inst));
+			reset_movl_imm(inst_in_template(patch_code, __direct_call_template, movl),
+					            (uint32_t)target);
+			/* no log phase */
+			memcpy(patch_code + template_sz(__direct_call_template),
+					__real_branch_phase_template_start,
+					real_branch_template_sz);
+			*recompile_branch_offset = template_offset(__direct_call_template,
+					movl);
 			return patch_sz;
 		}
 
@@ -165,6 +202,7 @@ compile_branch(uint8_t * patch_code, uint8_t * branch,
 				FATAL(COMPILER, "doesn't support int 0x%x\n", inst2);
 			}
 		}
+
 		default:
 			FATAL(COMPILER, "unknown branch instruction: 0x%x 0x%x 0x%x\n",
 					inst1, inst2, inst3);
@@ -220,7 +258,8 @@ compile_code_block(void * target, struct obj_page_head ** phead)
 	} else {
 		block->recompile_start = NULL;
 	}
-
+	TRACE(COMPILER, "new block %p compiled, __code is %p\n",
+			block, block->__code);
 	return block;
 }
 

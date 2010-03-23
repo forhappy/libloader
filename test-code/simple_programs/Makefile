@@ -1,17 +1,17 @@
-TARGETS=simple simple2
+TARGETS=simple.exe simple2.exe simple3.exe
 
 all: $(TARGETS)
 
-simple: simple.o
-	ld -shared -dynamic-linker /home/wn/work/snitchaser/build/src/interp/libinterp.so $^ -o $@
-simple.o: simple.S
+%.exe: %.o
+	ld $^ -o $@
 
-simple2: simple2.o
-	ld -shared -dynamic-linker /home/wn/work/snitchaser/build/src/interp/libinterp.so $^ -o $@
-simple2.o: simple2.S
+#simple.exe: simple.o
+#simple.o: simple.S
+#simple2.exe: simple2.o
+#simple2.o: simple2.S
 
 .PHONY: clean
 
 clean:
-	rm *.o $(TARGETS)
+	rm -f *.o $(TARGETS)
 
