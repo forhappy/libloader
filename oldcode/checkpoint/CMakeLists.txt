@@ -68,6 +68,7 @@ SET(HANDLERS
 	setitimer.c
 	epoll_wait.c
 	times.c
+	pread64.c
 	)
 
 ADD_LIBRARY(checkpoint

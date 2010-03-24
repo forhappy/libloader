@@ -36,6 +36,7 @@ SCOPE struct syscall_tabent syscall_table[] = {
 	def_syscall_entry(close, NULL),
 	def_syscall_entry(stat64, NULL),
 	def_syscall_entry(read, NULL),
+	def_syscall_entry(pread64, NULL),
 	def_syscall_entry(set_thread_area, NULL),
 	def_syscall_entry(mprotect, NULL),
 	def_syscall_entry(munmap, NULL),
@@ -99,6 +100,7 @@ SCOPE struct syscall_tabent syscall_table[] = {
 	def_syscall_entry(epoll_wait, NULL),
 	def_simple_syscall_entry(madvise),
 	def_syscall_entry(times, NULL),
+	def_simple_syscall_entry(pwrite64),
 #ifndef SYSCALL_PRINTER
 	[NR_SYSCALLS]	= {NULL, NULL, NULL},
 #else

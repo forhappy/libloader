@@ -219,6 +219,7 @@ compile_branch(uint8_t * patch_code, uint8_t * branch,
 			return patch_sz;
 		}
 
+
 		case 0x0f: {
 			switch (inst2) {
 #define COMP_Jxx_32b(jxx) COMP_Jxx(jxx, branch + 6, branch + 6 + *((int32_t*)(branch + 2)))

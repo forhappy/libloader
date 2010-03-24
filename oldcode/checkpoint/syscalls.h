@@ -100,6 +100,7 @@ define_post_handler(wait4);
 define_post_handler(setitimer);
 define_post_handler(epoll_wait);
 define_post_handler(times);
+define_post_handler(pread64);
 
 __END_DECLS
 
