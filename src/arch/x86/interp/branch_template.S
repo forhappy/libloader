@@ -18,6 +18,7 @@
 .globl __set_current_block_template_end
 __set_current_block_template_start:
 	movl $0xffffffff, %fs:OFFSET_CODE_CACHE_CURRENT_BLOCK
+//	int3
 __set_current_block_template_end:
 	nop
 

@@ -304,7 +304,7 @@ compile_code_block(void * target, struct obj_page_head ** phead)
 	
 	uint8_t patch_code[MAX_PATCH_SIZE];
 	void * branch_start = scan_insts(target);
-	enum exit_type exit_type;
+	enum exit_type exit_type = EXIT_UNCOND_DIRECT;
 
 	uint32_t * log_phase_retaddr_fix = NULL;
 	int recompile_offset = 0;
@@ -344,8 +344,8 @@ compile_code_block(void * target, struct obj_page_head ** phead)
 	} else {
 		block->recompile_start = NULL;
 	}
-	TRACE(COMPILER, "new block %p compiled, __code is %p\n",
-			block, block->__code);
+	TRACE(COMPILER, "new block %p compiled, __code=%p, ori_code_end=%p\n",
+			block, block->__code, block->ori_code_end);
 	return block;
 }
 
@@ -420,16 +420,21 @@ do_real_branch(void)
 			 tpd->target)
 	{
 		tpd->target = cache->fast_block2->__code;
-		cache->fast_block2 = cache->fast_block1;
+		struct code_block_t * tmp;
+		tmp = cache->fast_block1;
+		cache->fast_block1 = cache->fast_block2;
+		cache->fast_block2 = tmp;
 		return;
 	}
 
 	if (cache->fast_block3->entry ==
 			 tpd->target)
 	{
-		tpd->target = cache->fast_block2->__code;
+		tpd->target = cache->fast_block3->__code;
+		struct code_block_t * tmp = cache->fast_block3;
 		cache->fast_block3 = cache->fast_block2;
 		cache->fast_block2 = cache->fast_block1;
+		cache->fast_block1 = tmp;
 		return;
 	}
 
