@@ -154,6 +154,21 @@ __rdtsc_template_save_return_addr:
 __rdtsc_template_end:
 	nop
 
+.globl __save_eax_to_saver1_start
+.globl __save_eax_to_saver1_end
+__save_eax_to_saver1_start:
+	movl %eax, %fs:OFFSET_REG_SAVER1
+__save_eax_to_saver1_end:
+	nop
+
+.globl __set_target_restore_eax_start
+.globl __set_target_restore_eax_end
+__set_target_restore_eax_start:
+	movl %eax, %fs:OFFSET_TARGET
+	movl %fs:OFFSET_REG_SAVER1, %eax
+__set_target_restore_eax_end:
+	nop
+
 	/* if signal arise: before the real processing, we MUST determine the
 	 * exact instruction after that the signal arise. in the normal
 	 * situation (signal raise between 2 normal instructions), we can

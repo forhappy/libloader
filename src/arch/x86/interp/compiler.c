@@ -14,6 +14,7 @@
 #include <xasm/tls.h>
 #include <xasm/debug.h>
 #include <xasm/string.h>
+#include <asm_offsets.h>
 
 #define MAX_PATCH_SIZE	(256)
 
@@ -81,6 +82,105 @@ copy_log_phase(uint8_t * target)
 			__log_phase_template, save_return_addr);
 	return reset_movl_imm(movl_inst, (uint32_t)(uintptr_t)inst_in_template(target,
 				__log_phase_template, end));
+}
+
+#define MODRM_MOD(x)	(((x) & 0xc0)>>6)
+#define MODRM_REG(x)	(((x) & 0x38)>>3)
+#define MODRM_RM(x)		(((x) & 0x7))
+#define BUILD_MODRM(__mod, __reg, __rm)	(((__mod) << 6) + ((__reg) << 3) + ((__rm)))
+
+/* according to the value of modrm (RM and MOD field), generate following code:
+ * for register:
+ * movl %exx, %fs:OFFSET_TARGET
+ *
+ * for memory:
+ * movl %eax, %fs:OFFSET_REG_SAVER1
+ * movl (xxxxx), %eax
+ * movl %eax, %fs:OFFSET_TARGET
+ * movl %fs:OFFSET_REG_SAVER1, %eax
+ *
+ * then, copy log phase code.
+ *
+ * info_sz is the size of the extra info of original instruction.
+ * */
+static uint8_t *
+compile_modrm_target(uint8_t * patch_code, uint8_t * pmodrm,
+		uint32_t ** log_phase_retaddr_fix, int * info_sz)
+{
+	uint8_t * pos = patch_code;
+#warning Need test!!
+	/* FIXME */
+//	*(pos++) = 0xcc;
+	uint8_t modrm = *pmodrm;
+	(*info_sz) = 1;
+	if (MODRM_MOD(modrm) == 3) {
+		/* target is from reg */
+		switch (MODRM_RM(modrm)) {
+			case 0: {
+				/* this is eax */
+				/* movl %eax, %fs:???? */
+				pos[0] = 0x64;
+				pos[1] = 0xa3;
+				pos += 2;
+				break;
+			}
+			default: {
+				pos[0] = 0x64;
+				pos[1] = 0x89;
+				/* mod = 0, reg=MODRM_RM(modrm), rm=101 */
+				pos[2] = BUILD_MODRM(0, MODRM_RM(modrm), 5);
+				pos += 3;
+			}
+		}
+		*(uint32_t*)(pos) = OFFSET_TARGET;
+		pos += 4;
+	} else {
+		/* this is normal memory access */
+		template_sym(__save_eax_to_saver1_start);
+		template_sym(__save_eax_to_saver1_end);
+		template_sym(__set_target_restore_eax_start);
+		template_sym(__set_target_restore_eax_end);
+		/* copy movl %eax, %fs:OFFSET_REG_SAVER1 */
+		memcpy(pos, __save_eax_to_saver1_start,
+				template_sz(__save_eax_to_saver1));
+		pos += template_sz(__save_eax_to_saver1);
+
+		/* move target to eax */
+		/* use 0x8b: movl (xxx), %exx */
+		*(pos++) = 0x8b;
+		uint8_t new_modrm = BUILD_MODRM(
+				MODRM_MOD(modrm),
+				1,
+				MODRM_RM(modrm));
+
+		*(pos++) = new_modrm;
+		pmodrm ++;
+		if (MODRM_RM(new_modrm) == 4) {
+			/* has following SIB */
+			*(pos++) = pmodrm[0];
+			pmodrm ++;
+			(*info_sz) ++;
+		}
+		if (MODRM_MOD(new_modrm) == 1) {
+			/* have disp8 */
+			*(pos++) = *pmodrm;
+			(*info_sz) ++;
+		} else if (MODRM_MOD(new_modrm) == 2) {
+			/* have disp32 */
+			*(uint32_t*)(pos) = *((uint32_t*)(pmodrm));
+			pos += 4;
+			(*info_sz) += 4;
+		}
+
+		/* copy "set target" */
+		memcpy(pos, __set_target_restore_eax_start,
+				template_sz(__set_target_restore_eax));
+		pos += template_sz(__set_target_restore_eax);
+	}
+	/* copy 'log phase' */
+	*log_phase_retaddr_fix = copy_log_phase(pos);
+	pos += template_sz(__log_phase_template);
+	return pos;
 }
 
 static int
@@ -219,6 +319,43 @@ compile_branch(uint8_t * patch_code, uint8_t * branch,
 			return patch_sz;
 		}
 
+		case 0xff: {
+			/* this is group 5, may be: calln, callf, jmpn, jmpf
+			 * according to modrm. we needn't to support callf and jmpf */
+			uint8_t modrm = inst2;
+			*pexit_type = EXIT_UNCOND_INDIRECT;
+
+			int info_sz = 0;
+			/* first, we move the target address into fs:OFFSET_TARGET */
+			uint8_t * ptr = compile_modrm_target(patch_code, branch + 1,
+					log_phase_retaddr_fix, &info_sz);
+			/* this is 'take effect' section */
+			switch (MODRM_REG(modrm)) {
+				case (2) : {
+					/* this is calln */
+					/* we need to push return address */
+					*(ptr++) = 0xff;
+					*(ptr++) = 0x35;
+					*((uint32_t*)(ptr)) = (uint32_t)(branch + info_sz);
+					ptr += 4;
+					break;
+				}
+				case (4) : {
+					/* this is jmpn */
+					/* do nothing */
+					break;
+				}
+				default: {
+					FATAL(COMPILER, "doesn't support 0xff 0x%x\n", modrm);
+				}
+			}
+			/* after that, is 'real branch' */
+			memcpy(ptr, __real_branch_phase_template_start,
+					real_branch_template_sz);
+			return (uintptr_t)(ptr) - (uintptr_t)(patch_code)
+				+ real_branch_template_sz;
+		}
+
 
 		case 0x0f: {
 			switch (inst2) {
@@ -245,6 +382,7 @@ compile_branch(uint8_t * patch_code, uint8_t * branch,
 
 #undef CASE_Jxx_32b
 #undef COMP_Jxx_32b
+#undef COMP_Jxx
 				case 0x31: {
 					/* this is rdtsc */
 					template_sym(__rdtsc_template_start);
@@ -271,7 +409,6 @@ compile_branch(uint8_t * patch_code, uint8_t * branch,
 							inst1, inst2, inst3);
 			}
 		}
-#undef COMP_Jxx
 
 		case 0xcd: {
 			if (inst2 == 0x80) {
