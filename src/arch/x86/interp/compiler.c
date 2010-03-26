@@ -105,14 +105,12 @@ copy_log_phase(uint8_t * target)
  * */
 static uint8_t *
 compile_modrm_target(uint8_t * patch_code, uint8_t * pmodrm,
-		uint32_t ** log_phase_retaddr_fix, int * info_sz)
+		uint32_t ** log_phase_retaddr_fix, int * pinst_sz)
 {
 	uint8_t * pos = patch_code;
-#warning Need test!!
-	/* FIXME */
-	*(pos++) = 0xcc;
 	uint8_t modrm = *pmodrm;
-	(*info_sz) = 1;
+	/* modrm */
+	(*pinst_sz) += 1;
 	if (MODRM_MOD(modrm) == 3) {
 		/* target is from reg */
 		switch (MODRM_RM(modrm)) {
@@ -159,17 +157,18 @@ compile_modrm_target(uint8_t * patch_code, uint8_t * pmodrm,
 			/* has following SIB */
 			*(pos++) = pmodrm[0];
 			pmodrm ++;
-			(*info_sz) ++;
+			/* sib */
+			(*pinst_sz) ++;
 		}
 		if (MODRM_MOD(new_modrm) == 1) {
 			/* have disp8 */
 			*(pos++) = *pmodrm;
-			(*info_sz) ++;
+			(*pinst_sz) ++;
 		} else if (MODRM_MOD(new_modrm) == 2) {
 			/* have disp32 */
 			*(uint32_t*)(pos) = *((uint32_t*)(pmodrm));
 			pos += 4;
-			(*info_sz) += 4;
+			(*pinst_sz) += 4;
 		}
 
 		/* copy "set target" */
@@ -325,18 +324,18 @@ compile_branch(uint8_t * patch_code, uint8_t * branch,
 			uint8_t modrm = inst2;
 			*pexit_type = EXIT_UNCOND_INDIRECT;
 
-			int info_sz = 0;
+			/* the instruction (0xff) */
+			int inst_sz = 1;
 			/* first, we move the target address into fs:OFFSET_TARGET */
 			uint8_t * ptr = compile_modrm_target(patch_code, branch + 1,
-					log_phase_retaddr_fix, &info_sz);
+					log_phase_retaddr_fix, &inst_sz);
 			/* this is 'take effect' section */
 			switch (MODRM_REG(modrm)) {
 				case (2) : {
 					/* this is calln */
 					/* we need to push return address */
-					*(ptr++) = 0xff;
-					*(ptr++) = 0x35;
-					*((uint32_t*)(ptr)) = (uint32_t)(branch + info_sz);
+					*(ptr++) = 0x68;
+					*((uint32_t*)(ptr)) = (uint32_t)(branch + inst_sz);
 					ptr += 4;
 					break;
 				}
