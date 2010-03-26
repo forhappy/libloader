@@ -18,7 +18,8 @@
 
 #include <sys/mman.h>
 
-#define INTERP_FILE		"/lib/ld-linux.so.2"
+/* 'INTERP_FILE' has already defined in config.h */
+/* #define INTERP_FILE		"/lib/ld-linux.so.2" */
 
 static void
 usage(const char ** argv)

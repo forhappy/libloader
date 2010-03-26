@@ -171,6 +171,8 @@ ENDIF ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
 SET(RELAX_SIGNAL OFF
 	CACHE BOOL "don't block signals")
 
+SET(INTERP_FILE "/lib/ld-linux.so.2"
+	CACHE STRING "interpreter so file")
 
 # check environment
 

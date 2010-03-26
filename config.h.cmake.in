@@ -12,5 +12,5 @@
 #cmakedefine HAVE_CLOCK_GETTIME	1
 #cmakedefine HAVE_SIGSETJMP	1
 #cmakedefine RELAX_SIGNAL	1
-
+#cmakedefine INTERP_FILE	"@INTERP_FILE@"
 
