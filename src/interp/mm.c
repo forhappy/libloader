@@ -70,7 +70,7 @@ alloc_obj(struct obj_page_head ** phead, int sz)
 		}
 	}
 	/* we need alloc new page */
-	TRACE(MEM, "unable to find enough free space\n");
+	DEBUG(MEM, "unable to find enough free space for %d bytes\n", sz);
 	struct obj_page_head * new_head = alloc_obj_pages(sz + sizeof(struct obj_page_head),
 			*phead);
 	assert(new_head != NULL);

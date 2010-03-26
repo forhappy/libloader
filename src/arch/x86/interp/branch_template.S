@@ -136,6 +136,16 @@ __ret_template_start:
 __ret_template_end:
 	nop
 
+.globl __retn_template_start
+.globl __retn_template_end
+__retn_template_start:
+	movl %eax, %fs:OFFSET_REG_SAVER1
+	movl (%esp), %eax
+	movl %eax, %fs:OFFSET_TARGET
+	movl %fs:OFFSET_REG_SAVER1, %eax
+__retn_template_end:
+	nop
+
 .globl __rdtsc_template_start
 .globl __rdtsc_template_end
 .globl __rdtsc_template_save_return_addr

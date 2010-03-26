@@ -318,6 +318,29 @@ compile_branch(uint8_t * patch_code, uint8_t * branch,
 			return patch_sz;
 		}
 
+		case 0xc2: {
+			/* this is 'ret imm16' */
+			template_sym(__retn_template_start);
+			template_sym(__retn_template_end);
+			*pexit_type = EXIT_UNCOND_INDIRECT;
+			int tmpsz = template_sz(__retn_template);
+			memcpy(patch_code, (void*)__retn_template_start,
+					tmpsz);
+			/* then is log phase */
+			*log_phase_retaddr_fix = copy_log_phase(patch_code +
+					tmpsz);
+			/* then is the effect phase */
+			uint8_t * eff_ptr = patch_code + tmpsz + log_phase_template_sz;
+			/* this is 'addl imm32, %esp', 6 bytes */
+			eff_ptr[0] = 0x81;
+			eff_ptr[1] = 0xc4;
+			*((int32_t*)(eff_ptr + 2)) = -*((int16_t*)(branch + 1)) - 4;
+			memcpy(patch_code + tmpsz + log_phase_template_sz + 6,
+					__real_branch_phase_template_start,
+					real_branch_template_sz);
+			return tmpsz + log_phase_template_sz + 6 + real_branch_template_sz;
+		}
+
 		case 0xff: {
 			/* this is group 5, may be: calln, callf, jmpn, jmpf
 			 * according to modrm. we needn't to support callf and jmpf */
