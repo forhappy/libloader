@@ -1,4 +1,4 @@
-TARGETS=simple.exe simple2.exe simple3.exe
+TARGETS=simple.exe simple2.exe simple3.exe simple4.exe
 
 all: $(TARGETS)
 

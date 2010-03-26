@@ -110,7 +110,7 @@ compile_modrm_target(uint8_t * patch_code, uint8_t * pmodrm,
 	uint8_t * pos = patch_code;
 #warning Need test!!
 	/* FIXME */
-//	*(pos++) = 0xcc;
+	*(pos++) = 0xcc;
 	uint8_t modrm = *pmodrm;
 	(*info_sz) = 1;
 	if (MODRM_MOD(modrm) == 3) {
@@ -150,7 +150,7 @@ compile_modrm_target(uint8_t * patch_code, uint8_t * pmodrm,
 		*(pos++) = 0x8b;
 		uint8_t new_modrm = BUILD_MODRM(
 				MODRM_MOD(modrm),
-				1,
+				0,
 				MODRM_RM(modrm));
 
 		*(pos++) = new_modrm;
