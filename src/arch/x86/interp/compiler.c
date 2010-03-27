@@ -432,6 +432,17 @@ compile_branch(uint8_t * patch_code, uint8_t * branch,
 			}
 		}
 
+		case 0xcc: {
+			/* this is int3! we must restore eip and move the control back! */
+			/* generate code: pushl $xxxxxxx; ret */
+			/* this is push */
+			patch_code[0] = 0x68;
+			*(uint32_t*)(patch_code + 1) = (uint32_t)(branch);
+			/* this is ret */
+			patch_code[5] = 0xc3;
+			return 6;
+		}
+
 		case 0xcd: {
 			if (inst2 == 0x80) {
 				template_sym(__int80_syscall_template_start);

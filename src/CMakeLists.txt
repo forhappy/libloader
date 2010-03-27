@@ -15,13 +15,14 @@ IF (BUILD_TESTS)
 ENDIF(BUILD_TESTS)
 ENDMACRO(build_tests testlist libs)
 
+SET(INTERP_COMPILE_FLAGS "-fvisibility=hidden -fPIC -fno-builtin-printf -fno-builtin-vsnprintf")
+SET(INTERP_LINK_FLAGS "-nostartfiles -nodefaultlibs -nostdlib")
+
 MACRO(set_interp_properties target)
 SET_PROPERTY(TARGET ${target}
-	APPEND
-	PROPERTY COMPILE_FLAGS "-fvisibility=hidden -fPIC -fno-builtin-printf -fno-builtin-vsnprintf")
+	PROPERTY COMPILE_FLAGS "${INTERP_COMPILE_FLAGS}")
 SET_PROPERTY(TARGET ${target}
-	APPEND
-	PROPERTY LINK_FLAGS "-nostartfiles -nodefaultlibs -nostdlib")
+	PROPERTY LINK_FLAGS "${INTERP_LINK_FLAGS}")
 ENDMACRO(set_interp_properties target)
 
 ADD_SUBDIRECTORY(arch)

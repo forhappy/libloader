@@ -172,7 +172,7 @@ SET(RELAX_SIGNAL OFF
 	CACHE BOOL "don't block signals")
 
 SET(INTERP_FILE "/lib/ld-linux.so.2"
-	CACHE STRING "interpreter so file")
+	CACHE FILEPATH "interpreter so file")
 
 # check environment
 

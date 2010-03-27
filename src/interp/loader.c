@@ -46,10 +46,13 @@ load_real_exec(void * esp)
 	return 1;
 }
 
+#ifndef _START_SYMBOL
+# define _START_SYMBOL _start
+#endif
 
 /* hidden symbol will be retrived using ebx directly,
  * avoid to generate R_386_GLOB_DAT relocation */
-extern int _start[] ATTR_HIDDEN;
+extern int _START_SYMBOL[] ATTR_HIDDEN;
 void * loader(void * oldesp, int * pesp_add)
 {
 	assert(auxv_info.ppuser_phdrs != NULL);
@@ -58,7 +61,7 @@ void * loader(void * oldesp, int * pesp_add)
 
 	/* shell we load the target executable first? */
 	int esp_add = 0;
-	if (_start == *(auxv_info.p_user_entry)) {
+	if (_START_SYMBOL == *(auxv_info.p_user_entry)) {
 		VERBOSE(LOADER, "loader is called directly\n");
 		esp_add = load_real_exec(oldesp);
 	}
