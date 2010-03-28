@@ -153,10 +153,15 @@ compile_modrm_target(uint8_t * patch_code, uint8_t * pmodrm,
 
 		*(pos++) = new_modrm;
 		pmodrm ++;
+		bool_t have_sib = FALSE;
+		uint8_t sib = 0;
 		if (MODRM_RM(new_modrm) == 4) {
 			/* has following SIB */
-			*(pos++) = pmodrm[0];
+			have_sib = TRUE;
+			sib = pmodrm[0];
 			pmodrm ++;
+
+			*(pos++) = sib;
 			/* sib */
 			(*pinst_sz) ++;
 		}
@@ -169,6 +174,18 @@ compile_modrm_target(uint8_t * patch_code, uint8_t * pmodrm,
 			*(uint32_t*)(pos) = *((uint32_t*)(pmodrm));
 			pos += 4;
 			(*pinst_sz) += 4;
+		}
+
+		if (have_sib) {
+			uint8_t base = sib & 0x7;
+			if (base == 5) {
+				if (MODRM_MOD(new_modrm) == 0) {
+					/* disp 32 with no base */
+					*(uint32_t*)(pos) = *((uint32_t*)(pmodrm));
+					pos += 4;
+					(*pinst_sz) += 4;
+				}
+			}
 		}
 
 		/* copy "set target" */

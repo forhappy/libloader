@@ -43,8 +43,16 @@ scan_modrm(uint8_t * stream, uint8_t modrm, int address_size)
 			disp = 1;
 		else if (MOD(modrm) == 0x02)
 			disp = 4;
-		if (have_sib)
+		if (have_sib) {
+			uint8_t sib = stream[0];
+			uint8_t base = sib & 0x7;
+			if (base == 5) {
+				if (MOD(modrm) == 0) {
+					disp = 4;
+				}
+			}
 			stream += 1;
+		}
 		stream += disp;
 	}
 	return stream;
