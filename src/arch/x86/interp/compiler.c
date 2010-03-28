@@ -536,7 +536,7 @@ recompile_ud(struct code_block_t * block, void * target)
 	branch[0] = 0xe9;
 	*((int32_t*)(branch + 1)) = (uint32_t)(target) -
 		((uint32_t)(branch) + 5);
-	TRACE(COMPILER, "ud block %p recompiled\n", block);
+	TRACE(COMPILER, "ud block %p (entry: %p) recompiled\n", block, block->entry);
 	return;
 }
 
