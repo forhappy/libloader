@@ -479,9 +479,27 @@ compile_code_block(void * target, struct obj_page_head ** phead)
 
 	uint32_t * log_phase_retaddr_fix = NULL;
 	int recompile_offset = 0;
+
+#if 0
+	int patch_sz;
+	if (((uintptr_t)target != 0xb7fab716) &&
+		((uintptr_t)target != 0xb7fab70a)) {
+		patch_sz = compile_branch(patch_code,
+			(uint8_t*)(branch_start), &exit_type,
+			&log_phase_retaddr_fix, &recompile_offset);
+	} else {
+		patch_code[0] = 0xcc;
+		patch_sz = compile_branch(patch_code+1,
+			(uint8_t*)(branch_start), &exit_type,
+			&log_phase_retaddr_fix, &recompile_offset);
+		patch_sz += 1;
+	}
+#endif
+
 	int patch_sz = compile_branch(patch_code,
 			(uint8_t*)(branch_start), &exit_type,
 			&log_phase_retaddr_fix, &recompile_offset);
+
 	int ori_sz = ptr_length(branch_start, target);
 	int head_sz = template_sz(__set_current_block_template);
 	int block_sz = sizeof(struct code_block_t) +

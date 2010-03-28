@@ -34,10 +34,13 @@ __log_phase_template_save_ebx:
 	movl %fs:OFFSET_LOGGER_LOG_BUFFER_CURRENT, %ebx
 	movl %fs:OFFSET_TARGET, %eax
 	movl %eax, (%ebx)
-	movl %fs:OFFSET_REG_SAVER1, %eax
 	movl %fs:OFFSET_REG_SAVER2, %ebx
+	lahf
 __log_phase_template_commit:
+	/* addl distrub eflags!!! */
 	addl $4, %fs:OFFSET_LOGGER_LOG_BUFFER_CURRENT
+	sahf
+	movl %fs:OFFSET_REG_SAVER1, %eax
 __log_phase_template_save_return_addr:
 	movl $0xffffffff, %fs:OFFSET_LOGGER_CHECK_BUFFER_RETURN
 	jmpl *%fs:OFFSET_LOGGER_CHECK_LOGGER_BUFFER
@@ -156,8 +159,12 @@ __rdtsc_template_start:
 	movl %fs:OFFSET_LOGGER_LOG_BUFFER_CURRENT, %ebx
 	movl %eax, (%ebx)
 	movl %edx, 4(%ebx)
-	movl %fs:OFFSET_REG_SAVER1, %ebx
+	/* this addl disturbs eflags!!! */
+	lahf
 	addl $8, %fs:OFFSET_LOGGER_LOG_BUFFER_CURRENT
+	sahf
+	movl (%ebx), %eax
+	movl %fs:OFFSET_REG_SAVER1, %ebx
 __rdtsc_template_save_return_addr:
 	movl $0xffffffff, %fs:OFFSET_LOGGER_CHECK_BUFFER_RETURN
 	jmpl *%fs:OFFSET_LOGGER_CHECK_LOGGER_BUFFER
