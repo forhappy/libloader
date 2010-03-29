@@ -13,6 +13,8 @@ check_logger_buffer:
 	movl %fs:OFFSET_STACK_TOP, %esp
 	pusha
 	pushf
+	pushl $0
+	popf
 	/* defined in interp/logger.c */
 	call do_check_logger_buffer
 	popf

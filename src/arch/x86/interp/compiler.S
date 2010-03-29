@@ -12,6 +12,8 @@ real_branch:
 	movl %fs:OFFSET_STACK_TOP, %esp
 	pusha
 	pushf
+	pushl $0
+	popf
 	call do_real_branch
 	popf
 	popa

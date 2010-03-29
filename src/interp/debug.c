@@ -7,6 +7,7 @@
 #include <common/debug.h>
 #include <common/assert.h>
 #include <xasm/utils.h>
+#include <xasm/debug.h>
 #include <stdarg.h>
 #include <unistd.h>
 
@@ -51,12 +52,14 @@ __assert_fail (const char *__assertion, const char *__file,
 	fdprintf(STDERR_FILENO, 
 			"** %s:%d: %s: assertion `%s' failed **\n",
 			__file, __line, __function, __assertion);
+	breakpoint();
 	__exit(-1);
 }
 
 void ATTR(noreturn)
 dbg_fatal(void)
 {
+	breakpoint();
 	__exit(-1);
 }
 

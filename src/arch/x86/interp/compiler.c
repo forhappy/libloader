@@ -22,6 +22,8 @@
 static __AI uint32_t *
 reset_movl_imm(uint8_t * inst, uint32_t data)
 {
+	TRACE(COMPILER, "resetting movl at %p, data is 0x%x\n",
+			inst, data);
 	uint32_t * val_addr;
 	if ((inst[0] == 0x64) && (inst[1] == 0xc7) && (inst[2] == 0x05)) {
 		/* this is movl $0xffffffff, %fs:0x12345678 */
@@ -30,7 +32,8 @@ reset_movl_imm(uint8_t * inst, uint32_t data)
 		/* this is movl $0xffffffff, 0x12345678 */
 		val_addr = ((uint32_t*)(inst + 6));
 	} else {
-		assert(0);
+		FATAL(COMPILER, "invalid movl instruction: 0x%x 0x%x 0x%x\n",
+				inst[0], inst[1], inst[2]);
 	}
 	*val_addr = data;
 	return val_addr;
@@ -223,21 +226,24 @@ compile_branch(uint8_t * patch_code, uint8_t * branch,
 	const int log_phase_template_sz =
 		template_sz(__log_phase_template);
 	switch (inst1) {
-#define COMP_Jxx(jxx, untaken_exit, taken_exit) do {	\
+#define COMP_Jxx(jxx, __untaken_exit, __taken_exit) do {	\
 	extern uint8_t __##jxx##_template_start[] ATTR_HIDDEN; 		\
 	extern uint8_t __##jxx##_template_end[] ATTR_HIDDEN; 		\
 	extern uint8_t __##jxx##_template_taken_movl[] ATTR_HIDDEN; \
 	extern uint8_t __##jxx##_template_untaken_movl[] ATTR_HIDDEN; \
+	TRACE(COMPILER, "compiling %p " #jxx " \n", branch);					\
 	*pexit_type = EXIT_COND_DIRECT;								\
-	void * ___untaken_exit = untaken_exit;							\
-	void * ___taken_exit = taken_exit;								\
+	void * ___untaken_exit = (__untaken_exit);						\
+	void * ___taken_exit = (__taken_exit);							\
 	int ___patch_sz = template_sz(__##jxx##_template) + 				\
 					log_phase_template_sz +			\
 					real_branch_template_sz;	\
 	assert(___patch_sz <= MAX_PATCH_SIZE);							\
 	memcpy(patch_code, (void*)__##jxx##_template_start, template_sz(__##jxx##_template));\
+	TRACE(COMPILER, "resetting taken movl, patch_code=0x%p\n", patch_code);		\
 	reset_movl_imm(inst_in_template(patch_code, __##jxx##_template, taken_movl), \
 			(uint32_t)(___taken_exit)); \
+	TRACE(COMPILER, "resetting untaken movl, patch_code=0x%p\n", patch_code);	\
 	reset_movl_imm(inst_in_template(patch_code, __##jxx##_template, untaken_movl), \
 			(uint32_t)(___untaken_exit)); \
 	*log_phase_retaddr_fix = copy_log_phase(patch_code + template_sz(__##jxx##_template));\
