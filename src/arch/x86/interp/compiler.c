@@ -231,7 +231,6 @@ compile_branch(uint8_t * patch_code, uint8_t * branch,
 	extern uint8_t __##jxx##_template_end[] ATTR_HIDDEN; 		\
 	extern uint8_t __##jxx##_template_taken_movl[] ATTR_HIDDEN; \
 	extern uint8_t __##jxx##_template_untaken_movl[] ATTR_HIDDEN; \
-	TRACE(COMPILER, "compiling %p " #jxx " \n", branch);					\
 	*pexit_type = EXIT_COND_DIRECT;								\
 	void * ___untaken_exit = (__untaken_exit);						\
 	void * ___taken_exit = (__taken_exit);							\
@@ -240,10 +239,8 @@ compile_branch(uint8_t * patch_code, uint8_t * branch,
 					real_branch_template_sz;	\
 	assert(___patch_sz <= MAX_PATCH_SIZE);							\
 	memcpy(patch_code, (void*)__##jxx##_template_start, template_sz(__##jxx##_template));\
-	TRACE(COMPILER, "resetting taken movl, patch_code=0x%p\n", patch_code);		\
 	reset_movl_imm(inst_in_template(patch_code, __##jxx##_template, taken_movl), \
 			(uint32_t)(___taken_exit)); \
-	TRACE(COMPILER, "resetting untaken movl, patch_code=0x%p\n", patch_code);	\
 	reset_movl_imm(inst_in_template(patch_code, __##jxx##_template, untaken_movl), \
 			(uint32_t)(___untaken_exit)); \
 	*log_phase_retaddr_fix = copy_log_phase(patch_code + template_sz(__##jxx##_template));\
@@ -459,8 +456,8 @@ compile_branch(uint8_t * patch_code, uint8_t * branch,
 					return patch_sz;
 				}
 				default:
-					FATAL(COMPILER, "unknown branch instruction: 0x%x 0x%x 0x%x\n",
-							inst1, inst2, inst3);
+					FATAL(COMPILER, "unknown branch instruction with 0x0f perfix at %p: 0x%x 0x%x 0x%x\n",
+							branch, inst1, inst2, inst3);
 			}
 		}
 
@@ -493,8 +490,8 @@ compile_branch(uint8_t * patch_code, uint8_t * branch,
 		}
 
 		default:
-			FATAL(COMPILER, "unknown branch instruction: 0x%x 0x%x 0x%x\n",
-					inst1, inst2, inst3);
+			FATAL(COMPILER, "unknown branch instruction at %p: 0x%x 0x%x 0x%x\n",
+					branch, inst1, inst2, inst3);
 	}
 
 	return 0;

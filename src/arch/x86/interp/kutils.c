@@ -23,8 +23,10 @@ static int block_level = 0;
 void
 block_signals(void * save_sigmask, int * block_level)
 {
-	INTERNAL_SYSCALL_int80(rt_sigprocmask, 4,
-			SIG_SETMASK, &all_mask, save_sigmask, sizeof(all_mask));
+	if (*block_level == 0) {
+		INTERNAL_SYSCALL_int80(rt_sigprocmask, 4,
+				SIG_SETMASK, &all_mask, save_sigmask, sizeof(all_mask));
+	}
 	*block_level ++;
 }
 
