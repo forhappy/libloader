@@ -349,11 +349,12 @@ compile_branch(uint8_t * patch_code, uint8_t * branch,
 			*log_phase_retaddr_fix = copy_log_phase(patch_code +
 					tmpsz);
 			/* then is the effect phase */
+#warning This may incorrect
 			uint8_t * eff_ptr = patch_code + tmpsz + log_phase_template_sz;
 			/* this is 'addl imm32, %esp', 6 bytes */
 			eff_ptr[0] = 0x81;
 			eff_ptr[1] = 0xc4;
-			*((int32_t*)(eff_ptr + 2)) = -*((int16_t*)(branch + 1)) - 4;
+			*((int32_t*)(eff_ptr + 2)) = *((int16_t*)(branch + 1)) + 4;
 			memcpy(patch_code + tmpsz + log_phase_template_sz + 6,
 					__real_branch_phase_template_start,
 					real_branch_template_sz);
@@ -613,10 +614,10 @@ do_real_branch(void)
 	struct thread_private_data * tpd = get_tpd();
 	struct tls_code_cache_t * cache = &tpd->code_cache;
 
-	if ((uintptr_t)tpd->target == 0xb7fab92f)
-		breakpoint();
+#if 0
 	if ((uintptr_t)tpd->target == 0x8048560)
 		breakpoint();
+#endif
 
 	if (cache->current_block->entry ==
 			 tpd->target)
