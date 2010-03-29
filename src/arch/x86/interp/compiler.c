@@ -155,7 +155,7 @@ compile_modrm_target(uint8_t * patch_code, uint8_t * pmodrm,
 		pmodrm ++;
 		bool_t have_sib = FALSE;
 		uint8_t sib = 0;
-		if (MODRM_RM(new_modrm) == 4) {
+		if ((MODRM_RM(new_modrm) == 4) && (MODRM_MOD(new_modrm) != 0x03)) {
 			/* has following SIB */
 			have_sib = TRUE;
 			sib = pmodrm[0];
@@ -165,12 +165,19 @@ compile_modrm_target(uint8_t * patch_code, uint8_t * pmodrm,
 			/* sib */
 			(*pinst_sz) ++;
 		}
+
 		if (MODRM_MOD(new_modrm) == 1) {
 			/* have disp8 */
 			*(pos++) = *pmodrm;
 			(*pinst_sz) ++;
 		} else if (MODRM_MOD(new_modrm) == 2) {
 			/* have disp32 */
+			*(uint32_t*)(pos) = *((uint32_t*)(pmodrm));
+			pos += 4;
+			(*pinst_sz) += 4;
+		} else if ((MODRM_MOD(new_modrm) == 0) &&
+				(MODRM_RM(new_modrm) == 5)) {
+			/* also have disp32 */
 			*(uint32_t*)(pos) = *((uint32_t*)(pmodrm));
 			pos += 4;
 			(*pinst_sz) += 4;
@@ -349,7 +356,6 @@ compile_branch(uint8_t * patch_code, uint8_t * branch,
 			*log_phase_retaddr_fix = copy_log_phase(patch_code +
 					tmpsz);
 			/* then is the effect phase */
-#warning This may incorrect
 			uint8_t * eff_ptr = patch_code + tmpsz + log_phase_template_sz;
 			/* this is 'addl imm32, %esp', 6 bytes */
 			eff_ptr[0] = 0x81;
