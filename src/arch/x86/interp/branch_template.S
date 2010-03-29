@@ -91,6 +91,8 @@ DEF_Jxx_TEMPLATE(jge)
 DEF_Jxx_TEMPLATE(jle)
 DEF_Jxx_TEMPLATE(jg)
 
+DEF_Jxx_TEMPLATE(jecxz)
+
 	/* we needn't save anything: according
 	 * to CURRENT_BLOCK we can decide where to return. However,
 	 * saves its target address can make things simpler.

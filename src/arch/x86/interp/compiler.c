@@ -263,6 +263,8 @@ compile_branch(uint8_t * patch_code, uint8_t * branch,
 		CASE_Jxx_8b(0x7e, jle)
 		CASE_Jxx_8b(0x7f, jg)
 
+		CASE_Jxx_8b(0xe3, jecxz)
+
 #undef COMP_Jxx_8b
 #undef CASE_Jxx_8b
 
@@ -550,8 +552,8 @@ compile_code_block(void * target, struct obj_page_head ** phead)
 	} else {
 		block->recompile_start = NULL;
 	}
-	TRACE(COMPILER, "new block %p compiled, __code=%p, ori_code_end=%p\n",
-			block, block->__code, block->ori_code_end);
+	TRACE(COMPILER, "new block %p for %p compiled, __code=%p, ori_code_end=%p\n",
+			block, block->entry, block->__code, block->ori_code_end);
 	return block;
 }
 
@@ -579,7 +581,8 @@ static struct code_block_t *
 do_compile(struct thread_private_data * tpd)
 {
 	/* this is the entry of compiler */
-	TRACE(COMPILER, "finding %p in do_compile\n", tpd->target);
+	TRACE(COMPILER, "finding %p in do_compile, esp=%p\n", tpd->target,
+			tpd->old_stack_top);
 	void * target = tpd->target;
 	struct tls_code_cache_t * cache = &(tpd->code_cache);
 	struct code_block_t * block = get_block(cache, target);
@@ -600,6 +603,7 @@ do_compile(struct thread_private_data * tpd)
 		recompile_ud(cache->current_block, block->__code);
 	}
 
+	TRACE(COMPILER, "compile over, restart from %p\n", block->__code);
 	return block;
 }
 
@@ -608,6 +612,11 @@ do_real_branch(void)
 {
 	struct thread_private_data * tpd = get_tpd();
 	struct tls_code_cache_t * cache = &tpd->code_cache;
+
+	if ((uintptr_t)tpd->target == 0xb7fab92f)
+		breakpoint();
+	if ((uintptr_t)tpd->target == 0x8048560)
+		breakpoint();
 
 	if (cache->current_block->entry ==
 			 tpd->target)
@@ -649,6 +658,7 @@ do_real_branch(void)
 	cache->fast_block3 = cache->fast_block2;
 	cache->fast_block2 = cache->fast_block1;
 	cache->fast_block1 = block;
+	return;
 }
 
 // vim:ts=4:sw=4
