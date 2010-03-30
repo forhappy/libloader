@@ -217,6 +217,10 @@ compile_branch(uint8_t * patch_code, uint8_t * branch,
 {
 #warning unfinished
 	TRACE(COMPILER, "compiling branch %p\n", branch);
+	/* eat up some prefix */
+	if ((*branch == 0xf2) || (*branch == 0xf3))
+		branch ++;
+
 	*log_phase_retaddr_fix = NULL;
 	*recompile_branch_offset = 0;
 	uint8_t inst1 = branch[0];
