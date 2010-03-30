@@ -41,7 +41,7 @@ flush_logger_buffer(struct tls_logger * logger)
 		return;
 	int sz = (uintptr_t)(logger->log_buffer_end) -
 		(uintptr_t)(logger->log_buffer_start) + LOGGER_ADDITIONAL_BYTES;
-	DEBUG(COMPILER, "----------- flush logger buffer ------------\n");
+	VERBOSE(COMPILER, "----------- flush logger buffer ------------\n");
 	memset(logger->log_buffer_start, '\0', sz);
 	logger->log_buffer_current = logger->log_buffer_start;
 }
