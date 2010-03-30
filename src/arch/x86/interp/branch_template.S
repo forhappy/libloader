@@ -110,6 +110,8 @@ __int80_syscall_template_start:
 __int80_syscall_template_end:
 	nop
 
+
+
 .globl __direct_jmp_template_start
 .globl __direct_jmp_template_end
 __direct_jmp_template_start:

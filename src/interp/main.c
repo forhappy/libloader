@@ -77,9 +77,11 @@ xmain(volatile struct pusha_regs regs)
 
 	/* build first thread local area */
 	init_tls();
-
 	DEBUG(LOADER, "pid from tpd: %d; tid from tpd: %d\n",
 			get_tpd()->pid, get_tpd()->tid);
+
+	/* for debug use */
+	print_auxv();
 
 	*pretaddr = retaddr;
 	return esp_add;

@@ -17,7 +17,21 @@ struct auxv_info auxv_info = {
 	.p_nr_user_phdrs = NULL,
 	.p_base = NULL,
 	.p_execfn = NULL,
+	.p_sysinfo = NULL,
+	.p_sysinfo_ehdr = NULL,
 };
+
+void
+print_auxv(void)
+{
+	DEBUG(LOADER, "AT_ENTRY=%p\n", *auxv_info.p_user_entry);
+	DEBUG(LOADER, "AT_BASE=%p\n", *auxv_info.p_base);
+	DEBUG(LOADER, "AT_PHDR=%p\n", *auxv_info.ppuser_phdrs);
+	DEBUG(LOADER, "AT_PHNUM=%d\n", *auxv_info.p_nr_user_phdrs);
+	DEBUG(LOADER, "AT_EXECFN=%s\n", *auxv_info.p_execfn);
+	DEBUG(LOADER, "AT_SYSINFO=%p\n", *auxv_info.p_sysinfo);
+	DEBUG(LOADER, "AT_SYSINFO_EHDR=%p\n", *auxv_info.p_sysinfo_ehdr);
+}
 
 void
 find_auxv(void * oldesp)
@@ -33,22 +47,19 @@ find_auxv(void * oldesp)
 	p ++;
 
 	/* now p is pointed to aux vector */
-	TRACE(LOADER, "auxv start from %p\n", p);
+	VERBOSE(LOADER, "auxv start from %p\n", p);
 	while (*p != AT_NULL) {
 		switch (p[0]) {
 			case AT_ENTRY: {
 				auxv_info.p_user_entry = (void*)(&p[1]);
-				SILENT(LOADER, "user entry = %p\n", *p_user_entry);
 				break;
 			}
 			case AT_BASE: {
 				auxv_info.p_base = (void*)&p[1];
-				SILENT(LOADER, "interp base = %p\n", *p_base);
 				break;
 			}
 			case AT_PHDR: {
 				auxv_info.ppuser_phdrs = (void*)(&p[1]);
-				SILENT(LOADER, "user phdr = %p\n", *ppuser_phdrs);
 				break;
 			}
 			case AT_PHENT: {
@@ -57,13 +68,17 @@ find_auxv(void * oldesp)
 			}
 			case AT_PHNUM: {
 				auxv_info.p_nr_user_phdrs = (void*)(&p[1]);
-				SILENT(LOADER, "phnum = %d\n", *p_nr_user_phdrs);
 				break;
 			}
 			case AT_EXECFN: {
 				auxv_info.p_execfn = (const char **)(&p[1]);
-				SILENT(LOADER, "AT_EXECFN=%s\n", *p_execfn);
 				break;
+			}
+			case AT_SYSINFO: {
+				auxv_info.p_sysinfo = (void*)(&p[1]);
+			}
+			case AT_SYSINFO_EHDR: {
+				auxv_info.p_sysinfo_ehdr = (struct elf32_phdr **)(&p[1]);
 			}
 			default:
 				break;

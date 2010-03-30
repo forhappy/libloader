@@ -10,6 +10,7 @@
 #include <common/linux/auxvec.h>
 
 void find_auxv(void * oldesp);
+void print_auxv();
 
 struct auxv_info {
 	/* entries in aux vector */
@@ -18,6 +19,8 @@ struct auxv_info {
 	int * p_nr_user_phdrs;
 	void ** p_base;
 	const char ** p_execfn;
+	void ** p_sysinfo;
+	struct elf32_phdr ** p_sysinfo_ehdr;
 };
 
 extern struct auxv_info auxv_info;
