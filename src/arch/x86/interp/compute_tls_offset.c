@@ -21,7 +21,9 @@ compute(void)
 	PRINT(reg_saver1, REG_SAVER1);
 	PRINT(reg_saver2, REG_SAVER2);
 	PRINT(real_branch, REAL_BRANCH);
-	PRINT(syscall_entry, SYSCALL_ENTRY);
+	PRINT(int80_syscall_entry, INT80_SYSCALL_ENTRY);
+	PRINT(vdso_syscall_entry, VDSO_SYSCALL_ENTRY);
+	PRINT(real_vdso_syscall_entry, REAL_VDSO_SYSCALL_ENTRY);
 	PRINT(logger.check_logger_buffer, LOGGER_CHECK_LOGGER_BUFFER);
 	PRINT(logger, LOGGER);
 	PRINT(logger.check_buffer_return, LOGGER_CHECK_BUFFER_RETURN);

@@ -12,10 +12,10 @@ real_branch:
 	movl %fs:OFFSET_STACK_TOP, %esp
 	pusha
 	pushf
-	pushl $0
-	popf
+	pushl $0x0202
+	popfl
 	call do_real_branch
-	popf
+	popfl
 	popa
 	movl %fs:OFFSET_OLD_STACK_TOP, %esp
 	jmpl *%fs:OFFSET_TARGET

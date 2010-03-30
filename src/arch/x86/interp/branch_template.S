@@ -106,8 +106,16 @@ DEF_Jxx_TEMPLATE(jecxz)
 .globl __int80_syscall_template_end
 __int80_syscall_template_start:
 	movl $0xffffffff, %fs:OFFSET_TARGET
-	jmpl *%fs:OFFSET_SYSCALL_ENTRY
+	jmpl *%fs:OFFSET_INT80_SYSCALL_ENTRY
 __int80_syscall_template_end:
+	nop
+
+.globl __vdso_syscall_template_start
+.globl __vdso_syscall_template_end
+__vdso_syscall_template_start:
+	movl $0xffffffff, %fs:OFFSET_TARGET
+	jmpl *%fs:OFFSET_VDSO_SYSCALL_ENTRY
+__vdso_syscall_template_end:
 	nop
 
 
@@ -188,6 +196,13 @@ __set_target_restore_eax_start:
 	movl %eax, %fs:OFFSET_TARGET
 	movl %fs:OFFSET_REG_SAVER1, %eax
 __set_target_restore_eax_end:
+	nop
+
+.globl __vdso_syscall_inst_start
+.globl __vdso_syscall_inst_end
+__vdso_syscall_inst_start:
+	call   *%gs:0x10
+__vdso_syscall_inst_end:
 	nop
 
 	/* if signal arise: before the real processing, we MUST determine the

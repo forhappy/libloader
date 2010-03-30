@@ -13,8 +13,8 @@ check_logger_buffer:
 	movl %fs:OFFSET_STACK_TOP, %esp
 	pusha
 	pushf
-	pushl $0
-	popf
+	pushl $0x0202
+	popfl
 	/* defined in interp/logger.c */
 	call do_check_logger_buffer
 	popf
@@ -22,9 +22,15 @@ check_logger_buffer:
 	movl %fs:OFFSET_OLD_STACK_TOP, %esp
 	jmpl *%fs:OFFSET_LOGGER_CHECK_BUFFER_RETURN
 
-.globl syscall_entry
-syscall_entry:
+.globl int80_syscall_entry
+int80_syscall_entry:
 	int $0x80
+	jmpl *%fs:OFFSET_REAL_BRANCH
+	nop
+
+.globl vdso_syscall_entry
+vdso_syscall_entry:
+	call *%fs:OFFSET_REAL_VDSO_SYSCALL_ENTRY
 	jmpl *%fs:OFFSET_REAL_BRANCH
 	nop
 

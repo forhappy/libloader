@@ -10,6 +10,7 @@
 #include <interp/mm.h>
 #include <interp/dict.h>
 #include <interp/code_cache.h>
+#include <interp/auxv.h>
 #include <xasm/compiler.h>
 #include <xasm/tls.h>
 #include <xasm/debug.h>
@@ -282,7 +283,7 @@ compile_branch(uint8_t * patch_code, uint8_t * branch,
 		case 0xeb: {
 			template_sym(__direct_jmp_template_start);
 			template_sym(__direct_jmp_template_end);
-			/* 0xeb is short jmp, 0xe9 is long jmp */
+			/* 0xeb is short (8bits) jmp, 0xe9 is long (32bits) jmp */
 			*pexit_type = EXIT_UNCOND_DIRECT;
 			int patch_sz = template_sz(__direct_jmp_template) +
 				real_branch_template_sz;
@@ -473,22 +474,42 @@ compile_branch(uint8_t * patch_code, uint8_t * branch,
 		}
 
 		case 0xcd: {
-			if (inst2 == 0x80) {
-				template_sym(__int80_syscall_template_start);
-				template_sym(__int80_syscall_template_end);
-				/* this is int80 system call */
-				*pexit_type = EXIT_SYSCALL;
-				int patch_sz = template_sz(__int80_syscall_template);
-				memcpy(patch_code, (void*)__int80_syscall_template_start,
-						patch_sz);
-				reset_movl_imm(patch_code, (uint32_t)(branch + 2));
-				assert(patch_sz <= MAX_PATCH_SIZE);
-				return patch_sz;
-			} else {
+			if (inst2 != 0x80)
 				FATAL(COMPILER, "doesn't support int 0x%x\n", inst2);
-			}
+			template_sym(__int80_syscall_template_start);
+			template_sym(__int80_syscall_template_end);
+			/* this is int80 system call */
+			*pexit_type = EXIT_SYSCALL;
+			int patch_sz = template_sz(__int80_syscall_template);
+			memcpy(patch_code, (void*)__int80_syscall_template_start,
+					patch_sz);
+			reset_movl_imm(patch_code, (uint32_t)(branch + 2));
+			assert(patch_sz <= MAX_PATCH_SIZE);
+			return patch_sz;
 		}
+		case 0x65: {
+			/* this is gs prefix, we hope it is a system call instruction */
+			template_sym(__vdso_syscall_inst_start);
+			template_sym(__vdso_syscall_inst_end);
+			if (memcmp(branch, __vdso_syscall_inst_start,
+						template_sz(__vdso_syscall_inst)) != 0)
+			{
+				/* different, we don't know what's that */
+				FATAL(COMPILER, "unknown gs branch instruction at %p: 0x%x 0x%x 0x%x\n",
+						branch, inst1, inst2, inst3);
+			}
 
+			template_sym(__vdso_syscall_template_start);
+			template_sym(__vdso_syscall_template_end);
+			*pexit_type = EXIT_SYSCALL;
+			int patch_sz = template_sz(__vdso_syscall_template);
+			memcpy(patch_code, (void*)__vdso_syscall_template_start,
+					patch_sz);
+			reset_movl_imm(patch_code, (uint32_t)(branch +
+						template_sz(__vdso_syscall_inst)));
+			assert(patch_sz <= MAX_PATCH_SIZE);
+			return patch_sz;
+		}
 		default:
 			FATAL(COMPILER, "unknown branch instruction at %p: 0x%x 0x%x 0x%x\n",
 					branch, inst1, inst2, inst3);

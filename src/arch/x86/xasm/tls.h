@@ -41,7 +41,9 @@ struct thread_private_data {
 
 	/* func pointers */
 	void * real_branch;
-	void * syscall_entry;
+	void * int80_syscall_entry;
+	void * vdso_syscall_entry;
+	void * real_vdso_syscall_entry;
 
 	struct tls_logger logger;
 	struct tls_code_cache_t code_cache;

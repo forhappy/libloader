@@ -10,6 +10,7 @@
 #include <common/bithacks.h>
 #include <interp/code_cache.h>
 #include <interp/logger.h>
+#include <interp/auxv.h>
 #include <xasm/logger.h>
 #include <xasm/compiler.h>
 #include <xasm/tls.h>
@@ -152,13 +153,15 @@ static void
 build_tpd(struct thread_private_data * tpd)
 {
 	tpd->real_branch = real_branch;
-	tpd->syscall_entry = syscall_entry;
+
+	tpd->real_vdso_syscall_entry = *auxv_info.p_sysinfo;
+	tpd->int80_syscall_entry = int80_syscall_entry;
+	tpd->vdso_syscall_entry = vdso_syscall_entry;
 
 	/* init code cache */
 	init_code_cache();
 	/* init logger */
 	init_logger();
-
 }
 
 void
