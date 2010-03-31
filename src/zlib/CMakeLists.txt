@@ -12,7 +12,7 @@ SET(SRC
 
 ADD_LIBRARY(zlib STATIC ${SRC})
 
-set_interp_properties(interp_common)
+set_interp_properties(zlib)
 
 # vim:ts=4:sw=4
 
