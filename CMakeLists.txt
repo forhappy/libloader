@@ -174,6 +174,9 @@ SET(RELAX_SIGNAL OFF
 SET(INTERP_FILE "/lib/ld-linux.so.2"
 	CACHE FILEPATH "interpreter so file")
 
+SET(LOG_DIR "/tmp/snitchaser"
+	CACHE PATH "log file dir")
+
 # check environment
 
 CONFIGURE_FILE(config.h.cmake.in config.h)

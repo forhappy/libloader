@@ -16,6 +16,8 @@
 #include <xasm/kutils.h>
 #include <xasm/string.h>
 
+#include <zlib/zlib.h>
+
 void
 init_logger(void)
 {
@@ -33,6 +35,12 @@ init_logger(void)
 }
 
 static void
+do_flush_logger_buffer(void * start, int sz)
+{
+	
+}
+
+static void
 flush_logger_buffer(struct tls_logger * logger)
 {
 	/* we need check buffer again because signal may raise after
@@ -42,6 +50,10 @@ flush_logger_buffer(struct tls_logger * logger)
 	int sz = (uintptr_t)(logger->log_buffer_end) -
 		(uintptr_t)(logger->log_buffer_start) + LOGGER_ADDITIONAL_BYTES;
 	VERBOSE(COMPILER, "----------- flush logger buffer ------------\n");
+
+	do_flush_logger_buffer(logger->log_buffer_start, sz);
+
+
 	memset(logger->log_buffer_start, '\0', sz);
 	logger->log_buffer_current = logger->log_buffer_start;
 }
