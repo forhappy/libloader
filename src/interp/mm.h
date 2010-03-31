@@ -44,6 +44,15 @@ alloc_cont_space(int size);
 extern void
 free_cont_space(void * ptr);
 
+/* anothor version of alloc_cont_space, the alloced
+ * space is page aligned, it is up to caller to
+ * tell the free routine the size of space. */
+void *
+alloc_cont_space2(int sz);
+
+void
+free_cont_space2(void * ptr, int sz);
+
 struct obj_page_head {
 	uint32_t space_sz;
 	void * next_free_byte;

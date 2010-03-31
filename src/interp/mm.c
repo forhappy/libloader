@@ -37,6 +37,28 @@ free_cont_space(void * ptr)
 			head, sz);
 }
 
+void *
+alloc_cont_space2(int sz)
+{
+	sz = ALIGN_UP(sz, PAGE_SIZE);
+	int nr = sz >> PAGE_SHIFT;
+	void * start = alloc_pages(nr, FALSE);
+	assert(start != NULL);
+	return start;
+}
+
+void
+free_cont_space2(void * ptr, int sz)
+{
+	if ((ptr == NULL) && (sz == 0))
+		return;
+	assert(ptr != NULL);
+
+	sz = ALIGN_UP(sz, PAGE_SIZE);
+	int nr = sz >> PAGE_SHIFT;
+	free_pages(ptr, nr);
+}
+
 static struct obj_page_head *
 alloc_obj_pages(int sz, struct obj_page_head * next)
 {

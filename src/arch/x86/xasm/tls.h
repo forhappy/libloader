@@ -14,6 +14,7 @@
 #include <interp/dict.h>
 #include <interp/logger.h>
 #include <interp/code_cache.h>
+#include <interp/compress.h>
 
 /* thread thread stack: from 0x3000, each for 3 pages(8k + 4k)
  * the upper 1 page is protected to prevent stack overflow
@@ -45,6 +46,7 @@ struct thread_private_data {
 	void * vdso_syscall_entry;
 	void * real_vdso_syscall_entry;
 
+	struct tls_compress compress;
 	struct tls_logger logger;
 	struct tls_code_cache_t code_cache;
 	/* still need: head address of dict; head address of code cache */

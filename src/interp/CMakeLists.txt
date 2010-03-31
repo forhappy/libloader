@@ -14,6 +14,8 @@ SET(SRC
 	code_cache.c
 	logger.h
 	logger.c
+	compress.h
+	compress.c
 	)
 ADD_LIBRARY(interp SHARED
 	${SRC})
@@ -33,8 +35,8 @@ SET_PROPERTY(TARGET xinterp
 ADD_LIBRARY(interp_common STATIC
 	debug.c)
 
-TARGET_LINK_LIBRARIES(interp interp_common platform)
-TARGET_LINK_LIBRARIES(xinterp interp_common platform)
+TARGET_LINK_LIBRARIES(interp interp_common platform zlib lzo)
+TARGET_LINK_LIBRARIES(xinterp interp_common platform zlib lzo)
 
 
 
