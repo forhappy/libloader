@@ -29,12 +29,16 @@ void
 destroy_tls_compress(void);
 
 void
-compress(uint8_t * in_buf, int in_sz,
-		const uint8_t ** out_buf, int * out_sz);
+compress(const uint8_t * in_buf, int in_sz,
+		const uint8_t ** pout_buf, int * out_sz);
 
+
+/* decompress is different from compress:
+ * it shouldn't occupy memory permanently. all workspace it
+ * used during decompression should be alloced and freed dynamically. */
 void
-dempress(uint8_t * in_buf, int in_sz,
-		const uint8_t ** out_buf, int * out_sz);
+decompress(const uint8_t * in_buf, int in_sz,
+		uint8_t * out_buf, int * out_sz);
 
 #endif
 

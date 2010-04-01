@@ -9,6 +9,7 @@
 #include <interp/code_cache.h>
 #include <interp/mm.h>
 #include <interp/dict.h>
+#include <interp/compress.h>
 #include <xasm/utils.h>
 #include <xasm/tls.h>
 #include <xasm/logger.h>
@@ -32,6 +33,16 @@ init_logger(void)
 	tpd->logger.log_buffer_end = tpd->logger.log_buffer_start +
 		LOG_PAGES_NR * PAGE_SIZE - LOGGER_ADDITIONAL_BYTES;
 
+	prepare_tls_compress(LOG_PAGES_NR * PAGE_SIZE);
+
+}
+
+void
+close_logger(void)
+{
+	struct thread_private_data * tpd = get_tpd();
+	free_pages(tpd->logger.log_buffer_start, LOG_PAGES_NR);
+	destroy_tls_compress();
 }
 
 static void

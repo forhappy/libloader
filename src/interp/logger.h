@@ -6,7 +6,7 @@
 #ifndef __LOGGER_H
 #define __LOGGER_H
 
-#define LOG_PAGES_NR	(1024*100)
+#define LOG_PAGES_NR	(1024)
 
 /* 
  * TLS support for logger:
@@ -34,6 +34,10 @@ struct tls_logger {
  * open logger file */
 extern void
 init_logger(void);
+
+/* close current log: when one thread exit, close its log */
+extern void
+close_logger(void);
 
 #endif
 

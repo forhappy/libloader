@@ -154,7 +154,14 @@ build_tpd(struct thread_private_data * tpd)
 {
 	tpd->real_branch = real_branch;
 
-	tpd->real_vdso_syscall_entry = *auxv_info.p_sysinfo;
+	if (auxv_info.p_sysinfo != NULL) {
+		tpd->real_vdso_syscall_entry = *auxv_info.p_sysinfo;
+	} else {
+		/* we are loaded as a normal shared object */	
+		asm volatile("movl %%gs:0x10, %0" :
+				"=r" (tpd->real_vdso_syscall_entry));
+	}
+
 	tpd->int80_syscall_entry = int80_syscall_entry;
 	tpd->vdso_syscall_entry = vdso_syscall_entry;
 
@@ -196,6 +203,8 @@ clear_tls(void)
 	assert((uint32_t)stack_base == (uint32_t)TNR_TO_STACK(tnr));
 
 	clear_code_cache(&tpd->code_cache);
+	close_logger();
+
 	clear_tls_slot(tnr);
 	/* unmap 2 pages from stack_base to stack_base = TLS_STACK_SIZE */
 	int err;

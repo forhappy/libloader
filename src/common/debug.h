@@ -31,6 +31,7 @@ enum __debug_component {
 	DICT,
 	COMPILER,
 	LOGGER,
+	COMPRESS,
 	NR_DEBUG_COMPONENTS,
 };
 
@@ -57,6 +58,7 @@ __debug_component_names[NR_DEBUG_COMPONENTS] = {
 	[DICT]		= "DIC",
 	[COMPILER]	= "CPL",
 	[LOGGER]	= "LOG",
+	[COMPRESS]	= "ZIP"
 };
 #endif
 
@@ -71,6 +73,7 @@ __debug_component_levels[NR_DEBUG_COMPONENTS] = {
 	[DICT]		= DBG_LV_TRACE,
 	[COMPILER]	= DBG_LV_TRACE,
 	[LOGGER]	= DBG_LV_TRACE,
+	[COMPRESS]	= DBG_LV_TRACE,
 };
 #else
 static const enum __debug_level
@@ -83,6 +86,7 @@ __debug_component_levels[NR_DEBUG_COMPONENTS] = {
 	[DICT]		= DBG_LV_VERBOSE,
 	[COMPILER]	= DBG_LV_VERBOSE,
 	[LOGGER]	= DBG_LV_VERBOSE,
+	[COMPRESS]	= DBG_LV_VERBOSE,
 };
 #endif
 

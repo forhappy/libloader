@@ -12,6 +12,7 @@
 
 #include <interp/mm.h>
 #include <interp/dict.h>
+#include <interp/compress.h>
 
 void ATTR_EXPORT
 test_debug(void)
@@ -59,6 +60,30 @@ test_dict(void)
 		dict_insert(&dict, 0x80048000 + i * 123, i);
 	}
 	destroy_dict(&dict);
+}
+
+void ATTR_EXPORT
+test_compression(void)
+{
+	VERBOSE(SYSTEM, "--- testing compression\n");
+	init_tls();
+
+	static const unsigned char buffer[] = "qwerqwerqwerqwerqwerqwerqwerqwerqwerqwer";
+	static unsigned char buffer2[sizeof(buffer)];
+	static unsigned char buffer3[sizeof(buffer)];
+	const uint8_t * out_buf = NULL;
+	int compressed_sz = 0;
+	compress(buffer, sizeof(buffer), &out_buf, &compressed_sz);
+
+	memcpy(buffer2, out_buf, compressed_sz);
+
+	clear_tls();
+
+	int uncompressed_sz = sizeof(buffer);
+	decompress(buffer2, compressed_sz, buffer3,
+			&uncompressed_sz);
+	VERBOSE(SYSTEM, "uncompressed data: %s||sz=%d\n", buffer3, uncompressed_sz);
+	assert(uncompressed_sz == sizeof(buffer));
 }
 
 // vim:ts=4:sw=4

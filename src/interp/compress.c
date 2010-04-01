@@ -8,6 +8,7 @@
 #include <interp/mm.h>
 #include <interp/compress.h>
 #include <xasm/tls.h>
+#include <xasm/string.h>
 
 #ifdef USE_ZLIB
 
@@ -19,6 +20,8 @@ __zlib_prepare_tls_base(struct tls_compress * pcomp, int buffer_sz,
 {
 	/* according to the docs of zlib, the helper buffer
 	 * should be at least 100.01 * (buffer_sz + 12bytes) */
+	TRACE(COMPRESS, "prepare zlib tls base: buffer_sz=0x%x, workspace_sz=0x%x\n",
+			buffer_sz, workspace_sz);
 	int helper_sz = (buffer_sz + 12) +
 					(buffer_sz + 12) / 100 + 1;
 	
@@ -35,20 +38,20 @@ __zlib_prepare_tls_base(struct tls_compress * pcomp, int buffer_sz,
 	assert(pcomp->work_buffer2 != NULL);
 }
 
+#define get_tls_compress() ({struct thread_private_data * tpd = get_tpd();\
+		&(tpd->compress);})
+
 static void
-__zlib_prepare_tls_inflate(int buffer_sz)
+__zlib_prepare_tls_inflate(int buffer_sz ATTR(unused))
 {
-	struct thread_private_data * tpd = get_tpd();
-	struct tls_compress * pcomp = &tpd->compress;
-	__zlib_prepare_tls_base(pcomp, buffer_sz,
-			zlib_inflate_workspacesize());
+	TRACE(COMPRESS, "prepare zlib inflate tls\n");
+	TRACE(COMPRESS, "nothing to do\n");
 }
 
 static void
 __zlib_prepare_tls_deflate(int buffer_sz)
 {
-	struct thread_private_data * tpd = get_tpd();
-	struct tls_compress * pcomp = &tpd->compress;
+	struct tls_compress * pcomp = get_tls_compress();
 	__zlib_prepare_tls_base(pcomp, buffer_sz,
 			zlib_deflate_workspacesize());
 }
@@ -56,33 +59,95 @@ __zlib_prepare_tls_deflate(int buffer_sz)
 static void
 __zlib_destroy_tls(void)
 {
-	struct thread_private_data * tpd = get_tpd();
-	struct tls_compress * pcomp = &(tpd->compress);
+	struct tls_compress * pcomp = get_tls_compress();
 	
-	assert(pcomp->work_buffer1 != NULL);
-	free_cont_space2(pcomp->work_buffer1, pcomp->sz1);
+	if (pcomp->work_buffer1 != NULL)
+		free_cont_space2(pcomp->work_buffer1, pcomp->sz1);
 	pcomp->work_buffer1 = NULL;
 	pcomp->sz1 = 0;
 	pcomp->uncompress_buffer_sz = 0;
 
-	free_cont_space(pcomp->work_buffer2);
+	if (pcomp->work_buffer2 != NULL)
+		free_cont_space(pcomp->work_buffer2);
+	pcomp->work_buffer2 = NULL;
 	pcomp->sz2 = 0;
 }
 
+
+#define DEFLATE_DEF_LEVEL		Z_DEFAULT_COMPRESSION
+#define DEFLATE_DEF_WINBITS		11
+#define DEFLATE_DEF_MEMLEVEL		MAX_MEM_LEVEL
+
 static void
-__zlib_compress(uint8_t * in_buf, int in_sz,
-		const uint8_t ** out_buf, int * out_sz)
+__zlib_compress(const uint8_t * in_buf, int in_sz,
+		const uint8_t ** pout_buf, int * out_sz)
 {
-	
+	struct tls_compress * pcomp = get_tls_compress();
+	assert(pcomp->work_buffer1);
+	assert(pcomp->work_buffer2);
+	assert(pcomp->sz2 == zlib_deflate_workspacesize());
+
+	TRACE(COMPRESS, "zlib compress: in_sz=0x%x\n", in_sz);
+
+	struct z_stream_s stream;
+	stream.workspace = pcomp->work_buffer2;
+	memset(stream.workspace, '\0', pcomp->sz2);
+
+	/* -DEFLATE_DEF_WINBITS is undocumented feature: suppress zlib header */
+	int err = zlib_deflateInit2(&stream, DEFLATE_DEF_LEVEL,
+			Z_DEFLATED, -DEFLATE_DEF_WINBITS, DEFLATE_DEF_MEMLEVEL,
+			Z_DEFAULT_STRATEGY);
+	assert(err == Z_OK);
+
+	err = zlib_deflateReset(&stream);
+	assert(err == Z_OK);
+	stream.next_in = (uint8_t*)(in_buf);
+	stream.avail_in = in_sz;
+	stream.next_out = (uint8_t*)(pcomp->work_buffer1);
+	stream.avail_out = pcomp->sz2;
+
+	err = zlib_deflate(&stream, Z_FINISH);
+	assert(err == Z_STREAM_END);
+	*pout_buf = pcomp->work_buffer1;
+	*out_sz = stream.total_out;
+
+	zlib_deflateEnd(&stream);
+
+	TRACE(COMPRESS, "zlib compress complete, output buffer size=%d\n", *out_sz);
 }
 
 static void
-__zlib_decompress(uint8_t * in_buf, int in_sz,
-		const uint8_t ** out_buf, int * out_sz)
+__zlib_decompress(const uint8_t * in_buf, int in_sz,
+		uint8_t * out_buf, int * out_sz)
 {
-	
-}
+	/* alloc workspace */
+	assert(out_sz != NULL);
+	assert(*out_sz != 0);
 
+	int workspace_sz = zlib_inflate_workspacesize();
+	void * workspace = alloc_cont_space(workspace_sz);
+	assert(workspace != NULL);
+	memset(workspace, '\0', workspace_sz);
+
+	struct z_stream_s stream;
+	stream.workspace = workspace;
+
+	int err = zlib_inflateInit2(&stream, -DEFLATE_DEF_WINBITS);
+	assert(err == Z_OK);
+	err = zlib_inflateReset(&stream);
+	assert(err == Z_OK);
+
+	stream.next_in = (uint8_t*)(in_buf);
+	stream.avail_in = in_sz;
+	stream.next_out = (uint8_t*)(out_buf);
+	stream.avail_out = *out_sz;
+
+	err = zlib_inflate(&stream, Z_SYNC_FLUSH);
+
+	assert(err == Z_STREAM_END);
+	*out_sz = stream.total_out;
+	free_cont_space(workspace);
+}
 
 #endif
 
@@ -143,25 +208,25 @@ destroy_tls_decompress(void)
 }
 
 void
-compress(uint8_t * in_buf, int in_sz,
-	        const uint8_t ** out_buf, int * out_sz)
+compress(const uint8_t * in_buf, int in_sz,
+	        const uint8_t ** pout_buf, int * out_sz)
 {
 	assert(in_buf != NULL);
 	assert(in_sz >= 0);
-	assert(out_buf != NULL);
+	assert(pout_buf != NULL);
 	assert(out_sz != NULL);
 #ifdef USE_ZLIB
-	__zlib_compress(in_buf, in_sz, out_buf, out_sz);
+	__zlib_compress(in_buf, in_sz, pout_buf, out_sz);
 #elif USE_LZO
-	__lzo_compress(in_buf, in_sz, out_buf, out_sz);
+	__lzo_compress(in_buf, in_sz, pout_buf, out_sz);
 #else
 # error no compression algorithm is selected
 #endif
 }
 
 void
-decompress(uint8_t * in_buf, int in_sz,
-		const uint8_t ** out_buf, int * out_sz)
+decompress(const uint8_t * in_buf, int in_sz,
+		uint8_t * out_buf, int * out_sz)
 {
 	assert(in_buf != NULL);
 	assert(in_sz >= 0);
