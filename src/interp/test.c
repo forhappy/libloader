@@ -74,6 +74,7 @@ test_compression(void)
 	const uint8_t * out_buf = NULL;
 	int compressed_sz = 0;
 	compress(buffer, sizeof(buffer), &out_buf, &compressed_sz);
+	VERBOSE(SYSTEM, "compressed data size: %d\n", compressed_sz);
 
 	memcpy(buffer2, out_buf, compressed_sz);
 
