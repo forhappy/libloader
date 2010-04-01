@@ -181,14 +181,16 @@ SET(LOG_DIR "/tmp/snitchaser"
 SET(USE_ZLIB FALSE
 	CACHE BOOL "use zlib to compress log")
 
-SET(USE_LZO FALSE
+# according to test results, lzo is MUCH BETTER (both faster and smaller) than zlib
+
+SET(USE_LZO TRUE
 	CACHE BOOL "use lzo to compress log")
 
-IF(USE_ZLIB)
-	SET(USE_LZO FALSE CACHE BOOL "use lzo to compress log" FORCE)
-ELSE(USE_ZLIB)
-	SET(USE_LZO TRUE CACHE BOOL "use lzo to compress log" FORCE)
-ENDIF(USE_ZLIB)
+IF(USE_LZO)
+	SET(USE_ZLIB FALSE CACHE BOOL "use zlib to compress log" FORCE)
+ELSE(USE_LZO)
+	SET(USE_ZLIB TRUE CACHE BOOL "use zlib to compress log" FORCE)
+ENDIF(USE_LZO)
 
 # check environment
 

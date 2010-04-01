@@ -6,7 +6,7 @@
 #ifndef __LOGGER_H
 #define __LOGGER_H
 
-#define LOG_PAGES_NR	(1024)
+#define LOG_PAGES_NR	(1024*10)
 
 /* 
  * TLS support for logger:

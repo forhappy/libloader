@@ -15,6 +15,9 @@
 
 #ifdef USE_ZLIB
 
+# warning you choose to use zlib to compress log, it is not recommended.
+# warning results show that LZO is both faster and smaller.
+
 #include <zlib/zlib.h>
 
 static void
@@ -105,10 +108,16 @@ __zlib_compress(const uint8_t * in_buf, int in_sz,
 	stream.next_in = (uint8_t*)(in_buf);
 	stream.avail_in = in_sz;
 	stream.next_out = (uint8_t*)(pcomp->work_buffer1);
-	stream.avail_out = pcomp->sz2;
+	stream.avail_out = pcomp->sz1;
 
 	err = zlib_deflate(&stream, Z_FINISH);
-	assert(err == Z_STREAM_END);
+
+	if (err != Z_STREAM_END) {
+		ERROR(COMPRESS, "error: stream.avail_in=%d, stream.avail_out=%d\n",
+				stream.avail_in, stream.avail_out);
+		FATAL(COMPRESS, "err=%d!=Z_STREAM_END\n", err);
+	}
+
 	*pout_buf = pcomp->work_buffer1;
 	*out_sz = stream.total_out;
 

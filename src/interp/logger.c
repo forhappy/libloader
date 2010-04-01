@@ -34,7 +34,6 @@ init_logger(void)
 		LOG_PAGES_NR * PAGE_SIZE - LOGGER_ADDITIONAL_BYTES;
 
 	prepare_tls_compress(LOG_PAGES_NR * PAGE_SIZE);
-
 }
 
 void
@@ -46,9 +45,16 @@ close_logger(void)
 }
 
 static void
-do_flush_logger_buffer(void * start, int sz)
+do_flush_logger_buffer(uint8_t * start, int sz)
 {
-	
+	/* compress log data and print compressed size */
+	const uint8_t * out_buf = NULL;
+	int out_sz = 0;
+	compress(start, sz, &out_buf, &out_sz);
+	assert(out_buf != NULL);
+	assert(out_sz != 0);
+	VERBOSE(LOGGER, "flush logger buffer: ori sz=%d, compress sz=%d\n",
+			sz, out_sz);
 }
 
 static void
@@ -62,8 +68,9 @@ flush_logger_buffer(struct tls_logger * logger)
 		(uintptr_t)(logger->log_buffer_start) + LOGGER_ADDITIONAL_BYTES;
 	VERBOSE(COMPILER, "----------- flush logger buffer ------------\n");
 
-	do_flush_logger_buffer(logger->log_buffer_start, sz);
-
+	do_flush_logger_buffer(logger->log_buffer_start,
+			logger->log_buffer_current -
+			logger->log_buffer_start);
 
 	memset(logger->log_buffer_start, '\0', sz);
 	logger->log_buffer_current = logger->log_buffer_start;
