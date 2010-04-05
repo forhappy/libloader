@@ -10,37 +10,72 @@
 #include <interp/mm.h>
 #include <interp/dict.h>
 #include <interp/compress.h>
+#include <xasm/vsprintf.h>
 #include <xasm/utils.h>
 #include <xasm/tls.h>
 #include <xasm/logger.h>
 #include <xasm/compiler.h>
 #include <xasm/kutils.h>
 #include <xasm/string.h>
+#include <xasm/syscall.h>
+#include <xasm/syscall_helper.h>
 
 #include <zlib/zlib.h>
+
+static void
+reset_fns(struct thread_private_data * tpd)
+{
+	struct tls_logger * logger = &tpd->logger;
+	struct timeval tv;
+	int err = INTERNAL_SYSCALL_int80(gettimeofday, 2, &tv, NULL);
+	assert(err == 0);
+	/* compute the length of filenames */
+	/* tv_sec and tv_usec are 32bits int, at most
+	 * 10 decimal digit */
+	/* filename: path/<pid>-<tid>-<timestamp> */
+	/* path is LOG_DIR in config.h */
+	int fn_len = snprintf(logger->log_fn, MAX_LOGGER_FN,
+			"%s/%d-%d-%010u-%010u.log",
+			LOG_DIR, tpd->pid, tpd->tid,
+			(uint32_t)tv.tv_sec, (uint32_t)tv.tv_usec);
+	assert(fn_len < MAX_LOGGER_FN);
+
+	fn_len = snprintf(logger->ckpt_fn, MAX_CKPT_FN,
+			"%s/%d-%d-%010u-%010u.ckpt",
+			LOG_DIR, tpd->pid, tpd->tid,
+			(uint32_t)tv.tv_sec, (uint32_t)tv.tv_usec);
+	assert(fn_len < MAX_CKPT_FN);
+	TRACE(LOGGER, "logger file name: %s\n", logger->log_fn);
+	TRACE(LOGGER, "checkpoint file name: %s\n", logger->ckpt_fn);
+}
 
 void
 init_logger(void)
 {
 	struct thread_private_data * tpd = get_tpd();
-	tpd->logger.check_logger_buffer = check_logger_buffer;
+	struct tls_logger * logger = &tpd->logger;
+	logger->check_logger_buffer = check_logger_buffer;
 
-	tpd->logger.log_buffer_start = alloc_pages(LOG_PAGES_NR, FALSE);
-	assert(tpd->logger.log_buffer_start != NULL);
+	logger->log_buffer_start = alloc_pages(LOG_PAGES_NR, FALSE);
+	assert(logger->log_buffer_start != NULL);
 
-	tpd->logger.log_buffer_current = tpd->logger.log_buffer_start;
+	logger->log_buffer_current = logger->log_buffer_start;
 	/* additional bytes! see branch_template.S */
-	tpd->logger.log_buffer_end = tpd->logger.log_buffer_start +
+	logger->log_buffer_end = logger->log_buffer_start +
 		LOG_PAGES_NR * PAGE_SIZE - LOGGER_ADDITIONAL_BYTES;
 
 	prepare_tls_compress(LOG_PAGES_NR * PAGE_SIZE);
+
+	/* generate log and checkpoint file name */
+	reset_fns(tpd);
 }
 
 void
 close_logger(void)
 {
 	struct thread_private_data * tpd = get_tpd();
-	free_pages(tpd->logger.log_buffer_start, LOG_PAGES_NR);
+	struct tls_logger * logger = &tpd->logger;
+	free_pages(logger->log_buffer_start, LOG_PAGES_NR);
 	destroy_tls_compress();
 }
 
