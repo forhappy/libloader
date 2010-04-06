@@ -8,6 +8,8 @@
 #include <common/debug.h>
 #include <interp/code_cache.h>
 #include <interp/mm.h>
+#include <interp/logger.h>
+#include <interp/checkpoint.h>
 #include <interp/dict.h>
 #include <interp/compress.h>
 #include <xasm/vsprintf.h>
@@ -18,7 +20,7 @@
 #include <xasm/kutils.h>
 #include <xasm/string.h>
 #include <xasm/syscall.h>
-#include <xasm/syscall_helper.h>
+#include <xasm/types_helper.h>
 
 #include <zlib/zlib.h>
 

@@ -18,6 +18,8 @@ SET(SRC
 	compress.c
 	checkpoint.h
 	checkpoint.c
+	signal.h
+	signal.c
 	)
 ADD_LIBRARY(interp SHARED
 	${SRC})

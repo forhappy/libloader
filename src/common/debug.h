@@ -31,7 +31,9 @@ enum __debug_component {
 	DICT,
 	COMPILER,
 	LOGGER,
+	CKPT,
 	COMPRESS,
+	SIGNAL,
 	NR_DEBUG_COMPONENTS,
 };
 
@@ -58,7 +60,9 @@ __debug_component_names[NR_DEBUG_COMPONENTS] = {
 	[DICT]		= "DIC",
 	[COMPILER]	= "CPL",
 	[LOGGER]	= "LOG",
-	[COMPRESS]	= "ZIP"
+	[CKPT]		= "CKP",
+	[COMPRESS]	= "ZIP",
+	[SIGNAL]	= "SIG",
 };
 #endif
 
@@ -72,7 +76,9 @@ __debug_component_levels[NR_DEBUG_COMPONENTS] = {
 	[DICT]		= DBG_LV_VERBOSE,
 	[COMPILER]	= DBG_LV_VERBOSE,
 	[LOGGER]	= DBG_LV_TRACE,
+	[CKPT]		= DBG_LV_TRACE,
 	[COMPRESS]	= DBG_LV_VERBOSE,
+	[SIGNAL]	= DBG_LV_TRACE,
 };
 
 #endif

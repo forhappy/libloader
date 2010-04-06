@@ -10,7 +10,10 @@
 #include <common/bithacks.h>
 #include <interp/code_cache.h>
 #include <interp/logger.h>
+#include <interp/signal.h>
 #include <interp/auxv.h>
+/* struct user_desc */
+#include <xasm/types_helper.h>
 #include <xasm/logger.h>
 #include <xasm/compiler.h>
 #include <xasm/tls.h>
@@ -46,18 +49,6 @@ find_set_free_slot(void)
 	FATAL(TLS, "TLS slot is full\n");
 }
 
-struct user_desc {
-	unsigned int entry_number;
-	unsigned long int base_addr;
-	unsigned int limit;
-	unsigned int seg_32bit:1;
-	unsigned int contents:2;
-	unsigned int read_exec_only:1;
-	unsigned int limit_in_pages:1;
-	unsigned int seg_not_present:1;
-	unsigned int useable:1;
-	unsigned int empty:25;
-};
 #define READ_LDT		(0)
 #define WRITE_LDT_OLD		(1)
 #define READ_DEFAULT_LDT	(2)
@@ -169,6 +160,8 @@ build_tpd(struct thread_private_data * tpd)
 	init_code_cache();
 	/* init logger */
 	init_logger();
+	/* init signal section */
+	init_tls_signal(&tpd->signal);
 }
 
 void
@@ -204,6 +197,7 @@ clear_tls(void)
 
 	clear_code_cache(&tpd->code_cache);
 	close_logger();
+	clear_tls_signal(&tpd->signal);
 
 	clear_tls_slot(tnr);
 	/* unmap 2 pages from stack_base to stack_base = TLS_STACK_SIZE */

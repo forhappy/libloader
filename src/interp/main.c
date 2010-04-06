@@ -21,6 +21,7 @@
 #include <interp/mm.h>
 #include <interp/code_cache.h>
 #include <interp/logger.h>
+#include <interp/checkpoint.h>
 
 /* reexec reset the personality bit ADDR_NO_RANDOMIZE to make sure
  * the process' memory layout is idential */
@@ -61,7 +62,7 @@ reexec(void * old_esp)
 
 extern void * loader(void * oldesp, int * pesp_add);
 __attribute__((used, unused, visibility("hidden"))) int
-xmain(volatile struct pusha_regs regs)
+xmain(struct pusha_regs regs)
 {
 	relocate_interp();
 	void * oldesp = (void*)stack_top(&regs) + sizeof(uintptr_t);
@@ -84,6 +85,7 @@ xmain(volatile struct pusha_regs regs)
 	print_auxv();
 
 	/* first checkpoint */
+	make_checkpoint(&regs);
 
 	*pretaddr = retaddr;
 	return esp_add;

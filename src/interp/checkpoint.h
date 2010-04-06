@@ -10,6 +10,7 @@
 #include <stdint.h>
 #include <interp/logger.h>
 #include <xasm/types_helper.h>
+#include <xasm/processor.h>
 
 #define CKPT_MAGIC	"SNITCHASER CKPT"
 #define CKPT_MAGIC_SZ	(16)
@@ -17,18 +18,20 @@
 struct checkpoint_head {
 	char magic[CKPT_MAGIC_SZ];
 	uint32_t brk;
-	pid_t pid;
-	uint32_t clear_child_tid;
-	uint32_t robust_list;
+	uint32_t pid;
+	uint32_t tid;
+	int tnr;
 	struct user_desc thread_area[GDT_ENTRY_TLS_ENTRIES];
 	/* signal 0 is no use */
 	struct k_sigaction sigactions[K_NSIG+1];
 	k_sigset_t sigmask;
-	/* add user regs into state_vector, this is for only
-	 * checkpoints use */
 	struct user_regs_struct regs;
 	struct i387_fxsave_struct fpustate;
 };
+
+/* the basic checkpointing, no fork */
+void
+make_checkpoint(struct pusha_regs * regs);
 
 #endif
 

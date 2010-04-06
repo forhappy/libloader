@@ -11,6 +11,7 @@
 #include <xasm/signal_helper.h>
 /* struct user_regs_struct */
 #include <sys/user.h>
+#include <fcntl.h>
 #endif
 
 // vim:ts=4:sw=4

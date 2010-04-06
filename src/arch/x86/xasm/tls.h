@@ -14,6 +14,7 @@
 #include <interp/dict.h>
 #include <interp/logger.h>
 #include <interp/code_cache.h>
+#include <interp/signal.h>
 #include <interp/compress.h>
 
 /* thread thread stack: from 0x3000, each for 3 pages(8k + 4k)
@@ -49,9 +50,10 @@ struct thread_private_data {
 	struct tls_compress compress;
 	struct tls_logger logger;
 	struct tls_code_cache_t code_cache;
+	struct tls_signal signal;
 	/* still need: head address of dict; head address of code cache */
 	/* tnr is thread identifier using in snitchaser */
-	int tid, pid;
+	uint32_t tid, pid;
 	unsigned int tnr;
 	/* we also need some code cache stuff */
 	/* when enter snitchaser's code, stack should be set to it */

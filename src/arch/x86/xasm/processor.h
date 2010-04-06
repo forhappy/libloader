@@ -1,5 +1,6 @@
 #ifndef __X86_PROCESSOR_H
 #define __X86_PROCESSOR_H
+#include <stdint.h>
 
 /* xmain return stack adjustment value, in dwords */
 struct pusha_regs {
