@@ -16,6 +16,8 @@ SET(SRC
 	logger.c
 	compress.h
 	compress.c
+	checkpoint.h
+	checkpoint.c
 	)
 ADD_LIBRARY(interp SHARED
 	${SRC})

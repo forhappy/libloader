@@ -83,6 +83,8 @@ xmain(volatile struct pusha_regs regs)
 	/* for debug use */
 	print_auxv();
 
+	/* first checkpoint */
+
 	*pretaddr = retaddr;
 	return esp_add;
 }
