@@ -27,6 +27,8 @@ static struct code_block_t first_fake_code_block = {
 	.entry = NULL,
 	.exit_inst_addr = NULL,
 	.ori_code_end = NULL,
+	.last_target_entry = NULL,
+	.last_target_code = first_fake_code_block.__code,
 	.exit_type = EXIT_SYSCALL,
 };
 
@@ -38,9 +40,6 @@ init_code_cache(void)
 	/* nothing todo */
 	struct thread_private_data * tpd = get_tpd();
 	tpd->code_cache.current_block = &first_fake_code_block;
-	tpd->code_cache.fast_block1 = &first_fake_code_block;
-	tpd->code_cache.fast_block2 = &first_fake_code_block;
-	tpd->code_cache.fast_block3 = &first_fake_code_block;
 }
 
 // vim:ts=4:sw=4

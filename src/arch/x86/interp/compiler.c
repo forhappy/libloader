@@ -569,6 +569,8 @@ compile_code_block(void * target, struct obj_page_head ** phead)
 	block->exit_inst_addr = branch_start;
 	block->ori_code_end = &block->__code[head_sz + ori_sz];
 	block->exit_type = exit_type;
+	block->last_target_entry = block->entry;
+	block->last_target_code = block->__code;
 	memcpy(block->__code,
 			__set_current_block_template_start, head_sz);
 	/* __set_current_block_template is a signle 'movl' instruction */
@@ -653,46 +655,33 @@ do_real_branch(void)
 		breakpoint();
 #endif
 
-	if (cache->current_block->entry ==
-			 tpd->target)
+	TRACE(COMPILER, "do_real_branch, dt=%p, ce=%p, lte=%p\n", tpd->target,
+			cache->current_block->entry,
+			cache->current_block->last_target_entry);
+	if (cache->current_block->last_target_entry ==
+			tpd->target)
 	{
+		TRACE(COMPILER, "hit the last_target_entry\n");
+		tpd->target = cache->current_block->last_target_code;
+		return;
+	}
+
+
+	if (cache->current_block->entry ==
+			tpd->target)
+	{
+		cache->current_block->last_target_entry =
+			cache->current_block->entry;
+		cache->current_block->last_target_code = 
+			cache->current_block->__code;
 		tpd->target = cache->current_block->__code;
 		return;
 	}
 
-	if (cache->fast_block1->entry ==
-			 tpd->target)
-	{
-		tpd->target = cache->fast_block1->__code;
-		return;
-	}
-	if (cache->fast_block2->entry ==
-			 tpd->target)
-	{
-		tpd->target = cache->fast_block2->__code;
-		struct code_block_t * tmp;
-		tmp = cache->fast_block1;
-		cache->fast_block1 = cache->fast_block2;
-		cache->fast_block2 = tmp;
-		return;
-	}
-
-	if (cache->fast_block3->entry ==
-			 tpd->target)
-	{
-		tpd->target = cache->fast_block3->__code;
-		struct code_block_t * tmp = cache->fast_block3;
-		cache->fast_block3 = cache->fast_block2;
-		cache->fast_block2 = cache->fast_block1;
-		cache->fast_block1 = tmp;
-		return;
-	}
-
 	struct code_block_t * block = do_compile(tpd);
+	cache->current_block->last_target_entry = block->entry;
+	cache->current_block->last_target_code = block->__code;
 	tpd->target = block->__code;
-	cache->fast_block3 = cache->fast_block2;
-	cache->fast_block2 = cache->fast_block1;
-	cache->fast_block1 = block;
 	return;
 }
 
