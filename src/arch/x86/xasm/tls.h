@@ -10,6 +10,7 @@
 #include <common/defs.h>
 #include <common/debug.h>
 #include <common/assert.h>
+#include <common/list.h>
 #include <xasm/syscall.h>
 #include <interp/dict.h>
 #include <interp/logger.h>
@@ -47,7 +48,6 @@ struct thread_private_data {
 	void * vdso_syscall_entry;
 	void * real_vdso_syscall_entry;
 
-	struct tls_compress compress;
 	struct tls_logger logger;
 	struct tls_code_cache_t code_cache;
 	struct tls_signal signal;
@@ -60,10 +60,13 @@ struct thread_private_data {
 	struct thread_private_data * stack_top;
 	uint32_t sigmask[4];
 	int sig_block_level;
+	struct list_head list;
 	/* access: *fs:(0x3000 - 4); stores: the base (lowest)
 	 * address of the TLS section */
 	void * tls_base;	
 };
+
+extern struct list_head tpd_list_head;
 
 #define TLS_STACK_SIZE		(0x3000)
 #define MAX_TLS_ADDR_FS		(TLS_STACK_SIZE)
@@ -79,6 +82,9 @@ struct thread_private_data {
  * TLS stack! */
 extern void init_tls(void);
 extern void clear_tls(void);
+
+extern void lock_tls(void);
+extern void unlock_tls(void);
 
 static __AI void *
 get_tls_base(void)

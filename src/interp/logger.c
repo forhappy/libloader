@@ -25,9 +25,8 @@
 #include <zlib/zlib.h>
 
 static void
-reset_fns(struct thread_private_data * tpd)
+reset_fns(struct tls_logger * logger, int pid, int tid)
 {
-	struct tls_logger * logger = &tpd->logger;
 	struct timeval tv;
 	int err = INTERNAL_SYSCALL_int80(gettimeofday, 2, &tv, NULL);
 	assert(err == 0);
@@ -38,13 +37,13 @@ reset_fns(struct thread_private_data * tpd)
 	/* path is LOG_DIR in config.h */
 	int fn_len = snprintf(logger->log_fn, MAX_LOGGER_FN,
 			"%s/%d-%d-%010u-%010u.log",
-			LOG_DIR, tpd->pid, tpd->tid,
+			LOG_DIR, pid, tid,
 			(uint32_t)tv.tv_sec, (uint32_t)tv.tv_usec);
 	assert(fn_len < MAX_LOGGER_FN);
 
 	fn_len = snprintf(logger->ckpt_fn, MAX_CKPT_FN,
 			"%s/%d-%d-%010u-%010u.ckpt",
-			LOG_DIR, tpd->pid, tpd->tid,
+			LOG_DIR, pid, tid,
 			(uint32_t)tv.tv_sec, (uint32_t)tv.tv_usec);
 	assert(fn_len < MAX_CKPT_FN);
 	TRACE(LOGGER, "logger file name: %s\n", logger->log_fn);
@@ -52,10 +51,8 @@ reset_fns(struct thread_private_data * tpd)
 }
 
 void
-init_logger(void)
+init_logger(struct tls_logger * logger, int pid, int tid)
 {
-	struct thread_private_data * tpd = get_tpd();
-	struct tls_logger * logger = &tpd->logger;
 	logger->check_logger_buffer = check_logger_buffer;
 
 	logger->log_buffer_start = alloc_pages(LOG_PAGES_NR, FALSE);
@@ -66,28 +63,31 @@ init_logger(void)
 	logger->log_buffer_end = logger->log_buffer_start +
 		LOG_PAGES_NR * PAGE_SIZE - LOGGER_ADDITIONAL_BYTES;
 
-	prepare_tls_compress(LOG_PAGES_NR * PAGE_SIZE);
+	prepare_tls_compress(&logger->compress,
+			LOG_PAGES_NR * PAGE_SIZE);
 
 	/* generate log and checkpoint file name */
-	reset_fns(tpd);
+	reset_fns(logger, pid, tid);
 }
 
 void
-close_logger(void)
+close_logger(struct tls_logger * logger)
 {
-	struct thread_private_data * tpd = get_tpd();
-	struct tls_logger * logger = &tpd->logger;
+	if (logger->log_buffer_start == NULL)
+		return;
 	free_pages(logger->log_buffer_start, LOG_PAGES_NR);
-	destroy_tls_compress();
+	destroy_tls_compress(&logger->compress);
+	memset(logger, '\0', sizeof(*logger));
 }
 
 static void
-do_flush_logger_buffer(uint8_t * start, int sz)
+do_flush_logger_buffer(uint8_t * start, int sz,
+		struct tls_compress * pcomp)
 {
 	/* compress log data and print compressed size */
 	const uint8_t * out_buf = NULL;
 	int out_sz = 0;
-	compress(start, sz, &out_buf, &out_sz);
+	compress(pcomp, start, sz, &out_buf, &out_sz);
 	assert(out_buf != NULL);
 	assert(out_sz != 0);
 	DEBUG(LOGGER, "flush logger buffer: ori sz=%d, compress sz=%d\n",
@@ -98,16 +98,17 @@ static void
 flush_logger_buffer(struct tls_logger * logger)
 {
 	/* we need check buffer again because signal may raise after
-	 * the previous check and before we close signal */
+	 * the previous check and before we block signal */
 	if (logger->log_buffer_current < logger->log_buffer_end)
 		return;
 	int sz = (uintptr_t)(logger->log_buffer_end) -
 		(uintptr_t)(logger->log_buffer_start) + LOGGER_ADDITIONAL_BYTES;
 	DEBUG(COMPILER, "----------- flush logger buffer ------------\n");
 
-	do_flush_logger_buffer(logger->log_buffer_start,
-			logger->log_buffer_current -
-			logger->log_buffer_start);
+	do_flush_logger_buffer(
+			logger->log_buffer_start,
+			logger->log_buffer_current - logger->log_buffer_start,
+			&logger->compress);
 
 	memset(logger->log_buffer_start, '\0', sz);
 	logger->log_buffer_current = logger->log_buffer_start;

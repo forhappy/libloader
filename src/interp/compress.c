@@ -10,8 +10,6 @@
 #include <xasm/tls.h>
 #include <xasm/string.h>
 
-#define get_tls_compress() ({struct thread_private_data * tpd = get_tpd();\
-		&(tpd->compress);})
 
 #ifdef USE_ZLIB
 
@@ -45,25 +43,25 @@ __zlib_prepare_tls_base(struct tls_compress * pcomp, int buffer_sz,
 }
 
 static void
-__zlib_prepare_tls_inflate(int buffer_sz ATTR(unused))
+__zlib_prepare_tls_inflate(struct tls_compress * pcomp ATTR(unused),
+		int buffer_sz ATTR(unused))
 {
 	TRACE(COMPRESS, "prepare zlib inflate tls\n");
 	TRACE(COMPRESS, "nothing to do\n");
 }
 
 static void
-__zlib_prepare_tls_deflate(int buffer_sz)
+__zlib_prepare_tls_deflate(struct tls_compress * pcomp,
+		int buffer_sz)
 {
-	struct tls_compress * pcomp = get_tls_compress();
 	__zlib_prepare_tls_base(pcomp, buffer_sz,
 			zlib_deflate_workspacesize());
 }
 
+
 static void
-__zlib_destroy_tls(void)
+__zlib_destroy_tls(struct tls_compress * pcomp)
 {
-	struct tls_compress * pcomp = get_tls_compress();
-	
 	if (pcomp->work_buffer1 != NULL)
 		free_cont_space2(pcomp->work_buffer1, pcomp->sz1);
 	pcomp->work_buffer1 = NULL;
@@ -76,16 +74,15 @@ __zlib_destroy_tls(void)
 	pcomp->sz2 = 0;
 }
 
-
 #define DEFLATE_DEF_LEVEL		Z_DEFAULT_COMPRESSION
 #define DEFLATE_DEF_WINBITS		11
 #define DEFLATE_DEF_MEMLEVEL		MAX_MEM_LEVEL
 
 static void
-__zlib_compress(const uint8_t * in_buf, int in_sz,
+__zlib_compress(struct tls_compress * pcomp,
+		const uint8_t * in_buf, int in_sz,
 		const uint8_t ** pout_buf, int * out_sz)
 {
-	struct tls_compress * pcomp = get_tls_compress();
 	assert(pcomp->work_buffer1);
 	assert(pcomp->work_buffer2);
 	assert(pcomp->sz2 == zlib_deflate_workspacesize());
@@ -170,11 +167,10 @@ __zlib_decompress(const uint8_t * in_buf, int in_sz,
 #define lzo1x_worst_compress(x) ((x) + ((x) / 16) + 64 + 3)
 
 static void
-__lzo_prepare_tls_deflate(int buffer_sz)
+__lzo_prepare_tls_deflate(struct tls_compress * pcomp, int buffer_sz)
 {
 	TRACE(COMPRESS, "prepare lzo tls buffer_sz=0x%x\n", buffer_sz);
 	int helper_sz = lzo1x_worst_compress(buffer_sz);
-	struct tls_compress * pcomp = get_tls_compress();
 
 	/* alloc compress data space */
 	assert(pcomp->work_buffer1 == NULL);
@@ -193,17 +189,16 @@ __lzo_prepare_tls_deflate(int buffer_sz)
 }
 
 static void
-__lzo_prepare_tls_inflate(int buffer_sz ATTR(unused))
+__lzo_prepare_tls_inflate(struct tls_compress * pcomp ATTR(unused),
+		int buffer_sz ATTR(unused))
 {
 	TRACE(COMPRESS, "prepare lzo tls inflate\n");
 	TRACE(COMPRESS, "nothing to do\n");
 }
 
 static void
-__lzo_destroy_tls(void)
+__lzo_destroy_tls(struct tls_compress * pcomp)
 {
-	struct tls_compress * pcomp = get_tls_compress();
-	
 	if (pcomp->work_buffer1 != NULL)
 		free_cont_space2(pcomp->work_buffer1, pcomp->sz1);
 	pcomp->work_buffer1 = NULL;
@@ -219,11 +214,10 @@ __lzo_destroy_tls(void)
 
 
 static void
-__lzo_compress(const uint8_t * in_buf, int in_sz,
+__lzo_compress(struct tls_compress * pcomp,
+		const uint8_t * in_buf, int in_sz,
 		const uint8_t ** p_out_buf, int * p_out_sz)
 {
-	struct tls_compress * pcomp = get_tls_compress();
-
 	assert(pcomp->work_buffer1);
 	assert(pcomp->work_buffer2);
 	assert(in_sz <= pcomp->sz1);
@@ -257,25 +251,27 @@ __lzo_decompress(const uint8_t * in_buf, int in_sz,
 
 
 void
-prepare_tls_compress(int buffer_sz)
+prepare_tls_compress(struct tls_compress * pcomp, int buffer_sz)
 {
 	assert(buffer_sz > 0);
+	assert(pcomp != NULL);
 #ifdef USE_ZLIB
-	__zlib_prepare_tls_deflate(buffer_sz);
+	__zlib_prepare_tls_deflate(pcomp, buffer_sz);
 #elif USE_LZO
-	__lzo_prepare_tls_deflate(buffer_sz);
+	__lzo_prepare_tls_deflate(pcomp, buffer_sz);
 #else
 # error no compression algorithm is selected
 #endif
 }
 
 void
-destroy_tls_compress(void)
+destroy_tls_compress(struct tls_compress * pcomp)
 {
+	assert(pcomp != NULL);
 #ifdef USE_ZLIB
-	__zlib_destroy_tls();
+	__zlib_destroy_tls(pcomp);
 #elif USE_LZO
-	__lzo_destroy_tls();
+	__lzo_destroy_tls(pcomp);
 #else
 # error no compression algorithm is selected
 #endif
@@ -283,32 +279,33 @@ destroy_tls_compress(void)
 }
 
 void
-prepare_tls_decompress(int buffer_sz)
+prepare_tls_decompress(struct tls_compress * pcomp, int buffer_sz)
 {
 	assert(buffer_sz > 0);
 #ifdef USE_ZLIB
-	__zlib_prepare_tls_inflate(buffer_sz);
+	__zlib_prepare_tls_inflate(pcomp, buffer_sz);
 #elif USE_LZO
-	__lzo_prepare_tls_inflate(buffer_sz);
+	__lzo_prepare_tls_inflate(pcomp, buffer_sz);
 #else
 # error no compression algorithm is selected
 #endif
 }
 
 void
-destroy_tls_decompress(void)
+destroy_tls_decompress(struct tls_compress * pcomp)
 {
 #ifdef USE_ZLIB
-	__zlib_destroy_tls();
+	__zlib_destroy_tls(pcomp);
 #elif USE_LZO
-	__lzo_destroy_tls();
+	__lzo_destroy_tls(pcomp);
 #else
 # error no compression algorithm is selected
 #endif
 }
 
 void
-compress(const uint8_t * in_buf, int in_sz,
+compress(struct tls_compress * pcomp,
+		const uint8_t * in_buf, int in_sz,
 	        const uint8_t ** pout_buf, int * out_sz)
 {
 	assert(in_buf != NULL);
@@ -316,9 +313,9 @@ compress(const uint8_t * in_buf, int in_sz,
 	assert(pout_buf != NULL);
 	assert(out_sz != NULL);
 #ifdef USE_ZLIB
-	__zlib_compress(in_buf, in_sz, pout_buf, out_sz);
+	__zlib_compress(pcomp, in_buf, in_sz, pout_buf, out_sz);
 #elif USE_LZO
-	__lzo_compress(in_buf, in_sz, pout_buf, out_sz);
+	__lzo_compress(pcomp, in_buf, in_sz, pout_buf, out_sz);
 #else
 # error no compression algorithm is selected
 #endif

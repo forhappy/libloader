@@ -8,6 +8,7 @@
 #include <common/debug.h>
 #include <common/spinlock.h>
 #include <common/bithacks.h>
+#include <common/list.h>
 #include <interp/code_cache.h>
 #include <interp/logger.h>
 #include <interp/signal.h>
@@ -31,6 +32,9 @@
 
 #define MAX_THREADS	(1 << 13)
 static DEF_SPINLOCK_UNLOCKED(__tls_ctl_lock);
+
+/* all tls struct is linked on this list. */
+LIST_HEAD(tpd_list_head);
 
 /* all static array should have been inited to 0 */
 #define SZ_MAP	(MAX_THREADS / sizeof(uint32_t))
@@ -90,6 +94,10 @@ clear_tls_slot(int tnr)
 	write_ldt(&desc);
 }
 
+/* 
+ * setup_tls_area will alloc a new thread_private_data and link it
+ * into tpd_list_head
+ */
 static struct thread_private_data *
 setup_tls_area(int tnr)
 {
@@ -137,6 +145,9 @@ setup_tls_area(int tnr)
 	tpd->tnr = tnr;
 	tpd->stack_top = tpd;
 	tpd->tls_base = stack_base_addr;
+
+	/* link tpd into tpd_list_head */
+	list_add(&tpd->list, &tpd_list_head);
 	return tpd;
 }
 
@@ -157,11 +168,23 @@ build_tpd(struct thread_private_data * tpd)
 	tpd->vdso_syscall_entry = vdso_syscall_entry;
 
 	/* init code cache */
-	init_code_cache();
+	init_code_cache(&tpd->code_cache);
 	/* init logger */
-	init_logger();
+	init_logger(&tpd->logger, tpd->pid, tpd->tid);
 	/* init signal section */
 	init_tls_signal(&tpd->signal);
+}
+
+void
+lock_tls(void)
+{
+	spin_lock(&__tls_ctl_lock);
+}
+
+void
+unlock_tls(void)
+{
+	spin_unlock(&__tls_ctl_lock);
 }
 
 void
@@ -196,11 +219,18 @@ clear_tls(void)
 	assert((uint32_t)stack_base == (uint32_t)TNR_TO_STACK(tnr));
 
 	clear_code_cache(&tpd->code_cache);
-	close_logger();
+	close_logger(&tpd->logger);
 	clear_tls_signal(&tpd->signal);
 
 	clear_tls_slot(tnr);
-	/* unmap 2 pages from stack_base to stack_base = TLS_STACK_SIZE */
+	/* unmap this tls */
+	list_del(&tpd->list);
+
+	/* unmap pages from stack_base to stack_base + TLS_STACK_SIZE */
+	/* 
+	 * FIXME: after tpd structure unmapped, the stack is invalidated.
+	 */
+
 	int err;
 	err = INTERNAL_SYSCALL_int80(munmap, 2,
 			stack_base, TLS_STACK_SIZE);

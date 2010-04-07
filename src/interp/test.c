@@ -73,7 +73,8 @@ test_compression(void)
 	static unsigned char buffer3[sizeof(buffer)];
 	const uint8_t * out_buf = NULL;
 	int compressed_sz = 0;
-	compress(buffer, sizeof(buffer), &out_buf, &compressed_sz);
+	struct tls_compress * pcomp = &(get_tpd()->logger.compress);
+	compress(pcomp, buffer, sizeof(buffer), &out_buf, &compressed_sz);
 	VERBOSE(SYSTEM, "compressed data size: %d\n", compressed_sz);
 
 	memcpy(buffer2, out_buf, compressed_sz);

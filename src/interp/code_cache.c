@@ -35,11 +35,9 @@ static struct code_block_t first_fake_code_block = {
 /* the dict and obj pages are reset to NULL when
  * init tls */
 void
-init_code_cache(void)
+init_code_cache(struct tls_code_cache_t * cc)
 {
-	/* nothing todo */
-	struct thread_private_data * tpd = get_tpd();
-	tpd->code_cache.current_block = &first_fake_code_block;
+	cc->current_block = &first_fake_code_block;
 }
 
 // vim:ts=4:sw=4

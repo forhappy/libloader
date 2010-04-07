@@ -17,19 +17,20 @@ struct tls_compress {
 };
 
 void
-prepare_tls_compress(int buffer_sz);
+prepare_tls_compress(struct tls_compress * pcomp, int buffer_sz);
 
 void
-destroy_tls_compress(void);
+destroy_tls_compress(struct tls_compress * pcomp);
 
 void
-prepare_tls_decompress(int buffer_sz);
+prepare_tls_decompress(struct tls_compress * pcomp, int buffer_sz);
 
 void
-destroy_tls_compress(void);
+destroy_tls_decompress(struct tls_compress * pcomp);
 
 void
-compress(const uint8_t * in_buf, int in_sz,
+compress(struct tls_compress * pcomp,
+		const uint8_t * in_buf, int in_sz,
 		const uint8_t ** pout_buf, int * out_sz);
 
 

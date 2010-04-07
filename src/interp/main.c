@@ -85,7 +85,7 @@ xmain(struct pusha_regs regs)
 	print_auxv();
 
 	/* first checkpoint */
-	make_checkpoint(&regs);
+	make_checkpoint(&regs, retaddr);
 
 	*pretaddr = retaddr;
 	return esp_add;

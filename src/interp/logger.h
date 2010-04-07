@@ -7,6 +7,7 @@
 #define __LOGGER_H
 
 #include <interp/mm.h>
+#include <interp/compress.h>
 
 #define LOG_PAGES_NR	(1024*10)
 
@@ -31,6 +32,8 @@ struct tls_logger {
 	void * log_buffer_current;
 	void * log_buffer_end;
 
+	struct tls_compress compress;
+
 	/* the logger and checkpoint file */
 	char log_fn[MAX_LOGGER_FN];
 	char ckpt_fn[MAX_CKPT_FN];
@@ -40,11 +43,12 @@ struct tls_logger {
 /* create logger's buffer and buffer size;
  * open logger file */
 extern void
-init_logger(void);
+init_logger(struct tls_logger * tl, int pid, int tid);
 
 /* close current log: when one thread exit, close its log */
+/* close logger can be called multiple times */
 extern void
-close_logger(void);
+close_logger(struct tls_logger * tl);
 
 #endif
 

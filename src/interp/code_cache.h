@@ -63,7 +63,7 @@ extern void
 clear_code_cache(struct tls_code_cache_t * cc);
 
 extern void
-init_code_cache(void);
+init_code_cache(struct tls_code_cache_t * cc);
 #endif
 
 // vim:ts=4:sw=4

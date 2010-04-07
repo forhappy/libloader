@@ -12,6 +12,7 @@
 /* struct user_regs_struct */
 #include <sys/user.h>
 #include <fcntl.h>
+#include <sys/mman.h>
 #endif
 
 // vim:ts=4:sw=4
