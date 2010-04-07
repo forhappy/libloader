@@ -8,6 +8,26 @@ INCLUDE(CheckSymbolExists)
 
 
 PROJECT(SNITCHASER)
+# default build type
+IF(NOT CMAKE_BUILD_TYPE)
+  SET(CMAKE_BUILD_TYPE Debug CACHE STRING
+      "Choose the type of build, options are: Debug Release"
+      FORCE)
+ENDIF(NOT CMAKE_BUILD_TYPE)
+
+# CMAKE_BUILD_TYPE can only be one of Debug or Release
+
+SET(build_type_ok FALSE)
+FOREACH(a "Debug" "Release")
+	IF (${CMAKE_BUILD_TYPE} STREQUAL ${a})
+		SET(build_type_ok TRUE)
+	ENDIF (${CMAKE_BUILD_TYPE} STREQUAL ${a})
+ENDFOREACH(a)
+
+IF (NOT build_type_ok)
+	MESSAGE(FATAL_ERROR "CMAKE_BUILD_TYPE can only be one of \"Debug\" or \"Release\"")
+ENDIF (NOT build_type_ok)
+
 
 IF (${SNITCHASER_BINARY_DIR} STREQUAL ${SNITCHASER_SOURCE_DIR})
 	MESSAGE(FATAL_ERROR "In-tree-compile is not prefered.")
