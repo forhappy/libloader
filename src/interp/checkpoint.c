@@ -210,8 +210,13 @@ flush_mem_regions(int fd)
 	free_cont_space2(proc_map, MAX_PROC_MAPS_FILE_SZ);
 }
 
-void
-make_checkpoint(struct pusha_regs * regs, void * eip)
+
+/* the basic checkpointing, no fork */
+/* the fork based checkpoint should unmap all logger pages
+ * and codecache pages, if not, 
+ * size of checkpoint will become very large */
+static void
+do_make_checkpoint(struct pusha_regs * regs, void * eip)
 {
 	assert(sizeof(struct checkpoint_head) < 0x2000);
 	struct thread_private_data * tpd = get_tpd();
@@ -249,6 +254,24 @@ make_checkpoint(struct pusha_regs * regs, void * eip)
 
 	err = INTERNAL_SYSCALL_int80(close, 1, fd);
 	assert(err == 0);
+}
+
+void
+fork_make_checkpoint(struct pusha_regs * regs, void * eip)
+{
+	/* fork, then cleanup all thread's tls pages, finally
+	 * call do_make_checkpoint */
+	int pid;
+	pid = INTERNAL_SYSCALL_int80(fork, 0);
+	assert(pid >= 0);
+
+	/* parent */
+	if (pid != 0)
+		return;
+
+	/* child */
+	unmap_tpds_pages();
+	do_make_checkpoint(regs, eip);
 }
 
 // vim:ts=4:sw=4

@@ -121,6 +121,13 @@ get_esp(void)
 	return r;
 }
 
+/* for fork-based checkpoint used */
+/* for each tpd structure, unmap all related pages,
+ * including logger's page and code cache's pages */
+/* it also unmap the tpd stack of other threads. */
+void
+unmap_tpds_pages(void);
+
 #endif
 
 // vim:ts=4:sw=4

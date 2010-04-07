@@ -209,6 +209,25 @@ init_tls(void)
 	spin_unlock(&__tls_ctl_lock);
 }
 
+static void
+unmap_tpd_pages(struct thread_private_data * tpd)
+{
+	clear_code_cache(&tpd->code_cache);
+	close_logger(&tpd->logger);
+	clear_tls_signal(&tpd->signal);
+}
+
+static void
+unmap_tpd(struct thread_private_data * tpd)
+{
+	int tnr = tpd->tnr;
+	int err;
+	err = INTERNAL_SYSCALL_int80(munmap, 2,
+			tpd->tls_base, TLS_STACK_SIZE);
+	assert(err == 0);
+	DEBUG(TLS, "tls for tnr=%d is cleared\n", tnr);
+}
+
 void
 clear_tls(void)
 {
@@ -218,9 +237,7 @@ clear_tls(void)
 	void * stack_base = get_tls_base();
 	assert((uint32_t)stack_base == (uint32_t)TNR_TO_STACK(tnr));
 
-	clear_code_cache(&tpd->code_cache);
-	close_logger(&tpd->logger);
-	clear_tls_signal(&tpd->signal);
+	unmap_tpd_pages(tpd);
 
 	clear_tls_slot(tnr);
 	/* unmap this tls */
@@ -228,15 +245,10 @@ clear_tls(void)
 
 	/* unmap pages from stack_base to stack_base + TLS_STACK_SIZE */
 	/* 
-	 * FIXME: after tpd structure unmapped, the stack is invalidated.
+	 * FIXME: after tpd structure unmapped, the stack becomes invalidated.
 	 */
-
-	int err;
-	err = INTERNAL_SYSCALL_int80(munmap, 2,
-			stack_base, TLS_STACK_SIZE);
-	DEBUG(TLS, "tls for tnr=%d is cleared\n", tnr);
+	unmap_tpd(tpd);
 	spin_unlock(&__tls_ctl_lock);
-	assert(err == 0);
 	return;
 }
 
@@ -248,5 +260,25 @@ __thread_exit(int n)
 	INTERNAL_SYSCALL_int80(exit, 1, n);
 	while(1);
 }
+
+void
+unmap_tpds_pages(void)
+{
+	struct thread_private_data * pos = NULL, *n;
+	struct thread_private_data * my_tpd = get_tpd();
+	lock_tls();
+
+	list_for_each_entry_safe(pos, n, &tpd_list_head, list) {
+		/* remove tls pages */
+		unmap_tpd_pages(pos);
+		if (pos != my_tpd) {
+			list_del(&pos->list);
+			unmap_tpd(pos);
+		}
+	}
+
+	unlock_tls();
+}
+
 // vim:ts=4:sw=4
 

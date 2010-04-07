@@ -77,7 +77,16 @@ close_logger(struct tls_logger * logger)
 		return;
 	free_pages(logger->log_buffer_start, LOG_PAGES_NR);
 	destroy_tls_compress(&logger->compress);
+#if 0
+	/* don't do the memset: the file name of logger and ckpt
+	 * reside in the logger structure */
 	memset(logger, '\0', sizeof(*logger));
+#endif
+	logger->check_buffer_return = NULL;
+	logger->check_logger_buffer = NULL;
+	logger->log_buffer_start = NULL;
+	logger->log_buffer_current = NULL;
+	logger->log_buffer_end = NULL;
 }
 
 static void

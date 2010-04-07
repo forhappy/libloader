@@ -41,13 +41,6 @@ struct mem_region {
 };
 #define MEM_REGIONS_END_MARK	(0xfefefefe)
 
-/* the basic checkpointing, no fork */
-/* the fork based checkpoint should unmap all logger pages
- * and codecache pages, if not, 
- * size of checkpoint will become very large */
-void
-make_checkpoint(struct pusha_regs * regs, void * eip);
-
 void
 fork_make_checkpoint(struct pusha_regs * regs, void * eip);
 
