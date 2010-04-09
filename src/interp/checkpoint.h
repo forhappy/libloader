@@ -39,10 +39,24 @@ struct mem_region {
 	int fn_sz;
 	char fn[];
 };
+
+/* MEM_REGIONS_END_MARK should be a number larger than 0xc0000000 and
+ * not aligned to PAGE_SIZE */
 #define MEM_REGIONS_END_MARK	(0xfefefefe)
 
+/* in some situation, such as log flushing, we already be in a child process
+ * so needn't fork again. set real_fork to FALSE here. */
 void
 fork_make_checkpoint(struct pusha_regs * regs, void * eip);
+
+/* make checkpoint whitout fork */
+/* make_checkpoint still unmap all unneeded pages, so the caller
+ * should guarantee that when calling make_checkpoint, it has already
+ * forked and will exit immediately.
+ * */
+void
+make_checkpoint(struct pusha_regs * regs, void * eip);
+
 
 #endif
 

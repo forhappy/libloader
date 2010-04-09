@@ -220,8 +220,9 @@ unmap_tpd_pages(struct thread_private_data * tpd)
 static void
 unmap_tpd(struct thread_private_data * tpd)
 {
-	int tnr = tpd->tnr;
 	int err;
+	/* release build don't use tnr */
+	int tnr ATTR(unused) = tpd->tnr;
 	err = INTERNAL_SYSCALL_int80(munmap, 2,
 			tpd->tls_base, TLS_STACK_SIZE);
 	assert(err == 0);

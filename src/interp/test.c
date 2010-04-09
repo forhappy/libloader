@@ -69,10 +69,10 @@ test_compression(void)
 	init_tls();
 
 	static const unsigned char buffer[] = "qwerqwerqwerqwerqwerqwerqwerqwerqwerqwer";
-	static unsigned char buffer2[sizeof(buffer)];
-	static unsigned char buffer3[sizeof(buffer)];
-	const uint8_t * out_buf = NULL;
-	int compressed_sz = 0;
+	static unsigned char buffer2[sizeof(buffer) + 10];
+	static unsigned char buffer3[sizeof(buffer) + 10];
+	uint8_t * out_buf = NULL;
+	unsigned int compressed_sz = 0;
 	struct tls_compress * pcomp = &(get_tpd()->logger.compress);
 	compress(pcomp, buffer, sizeof(buffer), &out_buf, &compressed_sz);
 	VERBOSE(SYSTEM, "compressed data size: %d\n", compressed_sz);
@@ -84,7 +84,25 @@ test_compression(void)
 	int uncompressed_sz = sizeof(buffer);
 	decompress(buffer2, compressed_sz, buffer3,
 			&uncompressed_sz);
-	VERBOSE(SYSTEM, "uncompressed data: %s||sz=%d\n", buffer3, uncompressed_sz);
+	VERBOSE(SYSTEM, "uncompressed data: %s || sz=%d\n", buffer3,
+			uncompressed_sz);
+	assert(uncompressed_sz == sizeof(buffer));
+
+	VERBOSE(SYSTEM, "--- testing compression2\n");
+
+	init_tls();
+	pcomp = &(get_tpd()->logger.compress);
+	compressed_sz = sizeof(buffer) + 10;
+	compress2(pcomp, buffer, sizeof(buffer), buffer2,
+			&compressed_sz);
+	clear_tls();
+
+	VERBOSE(SYSTEM, "compressed data size: %u\n", compressed_sz);
+
+	uncompressed_sz = sizeof(buffer);
+	decompress(buffer2, compressed_sz, buffer3, &uncompressed_sz);
+	VERBOSE(SYSTEM, "uncompressed data: %s || sz=%d\n", buffer3,
+			uncompressed_sz);
 	assert(uncompressed_sz == sizeof(buffer));
 }
 

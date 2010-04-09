@@ -39,6 +39,11 @@ struct tls_logger {
 	char ckpt_fn[MAX_CKPT_FN];
 };
 
+/* this tag is flushed into logger file before the real data */
+struct log_block_tag {
+	uint32_t real_sz;
+	uint32_t compressed_sz;
+};
 
 /* create logger's buffer and buffer size;
  * open logger file */

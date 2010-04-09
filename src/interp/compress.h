@@ -28,16 +28,23 @@ prepare_tls_decompress(struct tls_compress * pcomp, int buffer_sz);
 void
 destroy_tls_decompress(struct tls_compress * pcomp);
 
+
+/* 
+ * in compress, the caller needn't set *p_out_sz.
+ * p_out_sz is a pure output parameter.
+ */
 void
 compress(struct tls_compress * pcomp,
 		const uint8_t * in_buf, int in_sz,
-		uint8_t ** pout_buf, unsigned int * out_sz);
+		uint8_t ** pout_buf, unsigned int * p_out_sz);
 
 /* compress2 doesn't use the pre-alloced buffer. The caller must prepare and
  * free output buffer itself */
+/* different from compress(), compress2 require caller to set *p_out_sz to
+ * the size of out buffer. */
 void
 compress2(struct tls_compress * pcomp, const uint8_t * in_buf, int in_sz,
-		uint8_t * out_buf, unsigned int * out_sz);
+		uint8_t * out_buf, unsigned int * p_out_sz);
 
 /* decompress is different from compress:
  * it shouldn't occupy memory permanently. all workspace it

@@ -77,11 +77,8 @@ close_logger(struct tls_logger * logger)
 		return;
 	free_pages(logger->log_buffer_start, LOG_PAGES_NR);
 	destroy_tls_compress(&logger->compress);
-#if 0
-	/* don't do the memset: the file name of logger and ckpt
+	/* don't use memset: the file name of logger and ckpt
 	 * reside in the logger structure */
-	memset(logger, '\0', sizeof(*logger));
-#endif
 	logger->check_buffer_return = NULL;
 	logger->check_logger_buffer = NULL;
 	logger->log_buffer_start = NULL;
@@ -89,20 +86,94 @@ close_logger(struct tls_logger * logger)
 	logger->log_buffer_end = NULL;
 }
 
-static void
-do_flush_logger_buffer(uint8_t * start, int sz,
+static void *
+compress_logger_buffer(uint8_t * start, int in_sz, unsigned int * p_out_sz,
 		struct tls_compress * pcomp)
 {
 	/* compress log data and print compressed size */
-	const uint8_t * out_buf = NULL;
-	int out_sz = 0;
-	compress(pcomp, start, sz, &out_buf, &out_sz);
+	uint8_t * out_buf = NULL;
+	unsigned int out_sz = 0;
+	compress(pcomp, start, in_sz, &out_buf, &out_sz);
 	assert(out_buf != NULL);
 	assert(out_sz != 0);
+	*p_out_sz = out_sz;
 	DEBUG(LOGGER, "flush logger buffer: ori sz=%d, compress sz=%d\n",
-			sz, out_sz);
+			in_sz, out_sz);
+	return out_buf;
 }
 
+static void
+do_flush_logger_buffer(struct tls_logger * logger)
+{
+	DEBUG(COMPILER, "----------- flush logger buffer ------------\n");
+	void * compressed_data;
+	unsigned int out_sz;
+	unsigned int log_sz = logger->log_buffer_current -
+		logger->log_buffer_start;
+
+	compressed_data = compress_logger_buffer(logger->log_buffer_start,
+			logger->log_buffer_current - logger->log_buffer_start,
+			&out_sz, &logger->compress);
+	assert(compressed_data != NULL);
+	assert(out_sz != 0);
+
+	int fd = INTERNAL_SYSCALL_int80(open, 3, logger->log_fn,
+			O_WRONLY|O_APPEND|O_CREAT, 0664);
+	if (fd <= 0)
+		FATAL(LOGGER, "open logger file %s failed: %d\n",
+				logger->log_fn, fd);
+
+	struct log_block_tag tag = {
+		.real_sz = log_sz,
+		.compressed_sz = out_sz,
+	};
+
+	/* write the tag */
+	int err = INTERNAL_SYSCALL_int80(write, 3, fd, &tag, sizeof(tag));
+	assert(err == sizeof(tag));
+	
+	/* write data */
+	err = INTERNAL_SYSCALL_int80(write, 3, fd, compressed_data,
+			out_sz);
+	assert(err == (int)(out_sz));
+
+	/* check whether to checkpoint */
+	struct stat st;
+	err = INTERNAL_SYSCALL_int80(fstat, 2, fd, &st);
+	assert(err == 0);
+
+	err = INTERNAL_SYSCALL_int80(close, 1, fd);
+	assert(err == 0);
+	
+	VERBOSE(LOGGER, "log file size: %ld\n", st.st_size);
+}
+
+/* A straightforward idea is to fork a new process and put
+ * the flushing and checkpointing works there. for checkpoint,
+ * it is okay. However, for log flushing, it has problems.
+ * 
+ * Think about when a process flush twice and we fork 2 new process
+ * to do the flushing. Because of the scheduling problem, the 2nd
+ * process may start before the first one. Without any synchronization,
+ * the newer log will be written first, disturbs the log.
+ *
+ * Checkpoint and checkpoint switching take more problems for forking
+ * flushing.
+ *
+ * Therefore, although forking flushing is attractive,
+ * we decide not to adopt it. 
+ *
+ * However, I know many methods can solve this problem. One is ticket
+ * mechanism. The principle is: 1. target process puts a mark into
+ * file system; 2. child process does the flushing work and removes the
+ * mark before exit.
+ *
+ *  1. the parent process check whether to do checkpointing, if not:
+ *  2. check file system, find the newest mark of current checkpoint;
+ *  3. put a newer mark into file system, and fork the child process
+ *  4. child process wait the previous mark disappear, do the flushing
+ *     work and remove the newer mark.
+ * */
 static void
 flush_logger_buffer(struct tls_logger * logger)
 {
@@ -110,20 +181,19 @@ flush_logger_buffer(struct tls_logger * logger)
 	 * the previous check and before we block signal */
 	if (logger->log_buffer_current < logger->log_buffer_end)
 		return;
+
+	do_flush_logger_buffer(logger);
+
+	/* clear logger status and return */
 	int sz = (uintptr_t)(logger->log_buffer_end) -
 		(uintptr_t)(logger->log_buffer_start) + LOGGER_ADDITIONAL_BYTES;
-	DEBUG(COMPILER, "----------- flush logger buffer ------------\n");
-
-	do_flush_logger_buffer(
-			logger->log_buffer_start,
-			logger->log_buffer_current - logger->log_buffer_start,
-			&logger->compress);
-
 	memset(logger->log_buffer_start, '\0', sz);
 	logger->log_buffer_current = logger->log_buffer_start;
+	return;
+
 }
 
-void
+	void
 do_check_logger_buffer(void)
 {
 	struct thread_private_data * tpd = get_tpd();

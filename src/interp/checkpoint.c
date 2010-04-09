@@ -259,8 +259,6 @@ do_make_checkpoint(struct pusha_regs * regs, void * eip)
 void
 fork_make_checkpoint(struct pusha_regs * regs, void * eip)
 {
-	/* fork, then cleanup all thread's tls pages, finally
-	 * call do_make_checkpoint */
 	int pid;
 	pid = INTERNAL_SYSCALL_int80(fork, 0);
 	assert(pid >= 0);
@@ -268,8 +266,17 @@ fork_make_checkpoint(struct pusha_regs * regs, void * eip)
 	/* parent */
 	if (pid != 0)
 		return;
-
 	/* child */
+	unmap_tpds_pages();
+	do_make_checkpoint(regs, eip);
+	__exit(0);
+}
+
+void
+make_checkpoint(struct pusha_regs * regs, void * eip)
+{
+	/* cleanup all thread's tls pages, then
+	 * call do_make_checkpoint */
 	unmap_tpds_pages();
 	do_make_checkpoint(regs, eip);
 }
