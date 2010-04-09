@@ -31,8 +31,13 @@ destroy_tls_decompress(struct tls_compress * pcomp);
 void
 compress(struct tls_compress * pcomp,
 		const uint8_t * in_buf, int in_sz,
-		const uint8_t ** pout_buf, int * out_sz);
+		uint8_t ** pout_buf, unsigned int * out_sz);
 
+/* compress2 doesn't use the pre-alloced buffer. The caller must prepare and
+ * free output buffer itself */
+void
+compress2(struct tls_compress * pcomp, const uint8_t * in_buf, int in_sz,
+		uint8_t * out_buf, unsigned int * out_sz);
 
 /* decompress is different from compress:
  * it shouldn't occupy memory permanently. all workspace it

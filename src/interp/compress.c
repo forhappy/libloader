@@ -24,7 +24,8 @@ __zlib_prepare_tls_base(struct tls_compress * pcomp, int buffer_sz,
 {
 	/* according to the docs of zlib, the helper buffer
 	 * should be at least 100.01 * (buffer_sz + 12bytes) */
-	TRACE(COMPRESS, "prepare zlib tls base: buffer_sz=0x%x, workspace_sz=0x%x\n",
+	TRACE(COMPRESS, "prepare zlib tls base: buffer_sz=0x%x, "
+			"workspace_sz=0x%x\n",
 			buffer_sz, workspace_sz);
 	int helper_sz = (buffer_sz + 12) +
 					(buffer_sz + 12) / 100 + 1;
@@ -79,17 +80,9 @@ __zlib_destroy_tls(struct tls_compress * pcomp)
 #define DEFLATE_DEF_MEMLEVEL		MAX_MEM_LEVEL
 
 static void
-__zlib_compress(struct tls_compress * pcomp,
-		const uint8_t * in_buf, int in_sz,
-		const uint8_t ** pout_buf, int * out_sz)
+__do_zlib_compress(struct tls_compress * pcomp, const uint8_t * in_buf,
+		int in_sz, const uint8_t * out_buf, unsigned int * out_sz)
 {
-	assert(pcomp->work_buffer1);
-	assert(pcomp->work_buffer2);
-	assert(pcomp->sz2 == zlib_deflate_workspacesize());
-	assert(in_sz <= pcomp->sz1);
-
-	TRACE(COMPRESS, "zlib compress: in_sz=0x%x\n", in_sz);
-
 	struct z_stream_s stream;
 	stream.workspace = pcomp->work_buffer2;
 	memset(stream.workspace, '\0', pcomp->sz2);
@@ -104,8 +97,8 @@ __zlib_compress(struct tls_compress * pcomp,
 	assert(err == Z_OK);
 	stream.next_in = (uint8_t*)(in_buf);
 	stream.avail_in = in_sz;
-	stream.next_out = (uint8_t*)(pcomp->work_buffer1);
-	stream.avail_out = pcomp->sz1;
+	stream.next_out = (uint8_t*)(out_buf);
+	stream.avail_out = *out_sz;
 
 	err = zlib_deflate(&stream, Z_FINISH);
 
@@ -115,12 +108,29 @@ __zlib_compress(struct tls_compress * pcomp,
 		FATAL(COMPRESS, "err=%d!=Z_STREAM_END\n", err);
 	}
 
-	*pout_buf = pcomp->work_buffer1;
 	*out_sz = stream.total_out;
-
 	zlib_deflateEnd(&stream);
+}
 
-	TRACE(COMPRESS, "zlib compress complete, output buffer size=%d\n", *out_sz);
+static void
+__zlib_compress(struct tls_compress * pcomp,
+		const uint8_t * in_buf, int in_sz,
+		uint8_t ** pout_buf, unsigned int * p_out_sz)
+{
+	assert(pcomp->work_buffer1);
+	assert(pcomp->work_buffer2);
+	assert(pcomp->sz2 == zlib_deflate_workspacesize());
+	assert(in_sz <= pcomp->sz1);
+
+	TRACE(COMPRESS, "zlib compress: in_sz=0x%x\n", in_sz);
+
+	unsigned int out_sz = pcomp->sz1;
+	__do_zlib_compress(pcomp, in_buf, in_sz, pcomp->work_buffer1, &out_sz);
+
+	*pout_buf = pcomp->work_buffer1;
+	*p_out_sz = out_sz;
+
+	TRACE(COMPRESS, "zlib compress complete, output buffer size=%d\n", out_sz);
 }
 
 static void
@@ -161,6 +171,7 @@ __zlib_decompress(const uint8_t * in_buf, int in_sz,
 #define __destroy_tls_compress	__zlib_destroy_tls
 #define __destroy_tls_decompress	__zlib_destroy_tls
 #define __compress	__zlib_compress
+#define __compress2	__do_zlib_compress
 #define __decompress __zlib_decompress
 
 #endif
@@ -220,11 +231,21 @@ __lzo_destroy_tls(struct tls_compress * pcomp)
 	pcomp->sz2 = 0;
 }
 
+static void
+__do_lzo_compress(struct tls_compress * pcomp, const uint8_t * in_buf,
+		int in_sz, uint8_t * out_buf, unsigned int * p_out_sz)
+{
+	int err;
+	err = lzo1x_1_compress(in_buf, in_sz, out_buf, p_out_sz,
+			pcomp->work_buffer2);
+	assert(err == LZO_E_OK);
+}
+
 
 static void
 __lzo_compress(struct tls_compress * pcomp,
 		const uint8_t * in_buf, int in_sz,
-		const uint8_t ** p_out_buf, int * p_out_sz)
+		uint8_t ** p_out_buf, unsigned int * p_out_sz)
 {
 	assert(pcomp->work_buffer1);
 	assert(pcomp->work_buffer2);
@@ -233,9 +254,7 @@ __lzo_compress(struct tls_compress * pcomp,
 	TRACE(COMPRESS, "lzo compress: in_sz=0x%x\n", in_sz);
 
 	unsigned int out_sz = pcomp->sz1;
-	int err = lzo1x_1_compress(in_buf, in_sz, pcomp->work_buffer1,
-			&out_sz, pcomp->work_buffer2);
-	assert(err == LZO_E_OK);
+	__do_lzo_compress(pcomp, in_buf, in_sz, pcomp->work_buffer1, &out_sz);
 	*p_out_sz = out_sz;
 	*p_out_buf = pcomp->work_buffer1;
 }
@@ -259,6 +278,7 @@ __lzo_decompress(const uint8_t * in_buf, int in_sz,
 #define __destroy_tls_compress __lzo_destroy_tls
 #define __destroy_tls_decompress __lzo_destroy_tls
 #define __compress __lzo_compress
+#define __compress2 __do_lzo_compress
 #define __decompress __lzo_decompress
 
 #endif
@@ -295,13 +315,26 @@ destroy_tls_decompress(struct tls_compress * pcomp)
 void
 compress(struct tls_compress * pcomp,
 		const uint8_t * in_buf, int in_sz,
-	        const uint8_t ** pout_buf, int * out_sz)
+        uint8_t ** p_out_buf, unsigned int * p_out_sz)
 {
+	assert(pcomp != NULL);
 	assert(in_buf != NULL);
 	assert(in_sz >= 0);
-	assert(pout_buf != NULL);
-	assert(out_sz != NULL);
-	__compress(pcomp, in_buf, in_sz, pout_buf, out_sz);
+	assert(p_out_buf != NULL);
+	assert(p_out_sz != NULL);
+	__compress(pcomp, in_buf, in_sz, p_out_buf, p_out_sz);
+}
+
+void
+compress2(struct tls_compress * pcomp,
+		const uint8_t * in_buf, int in_sz,
+		uint8_t * out_buf, unsigned int * p_out_sz)
+{
+	assert(pcomp != NULL);
+	assert(in_buf != NULL);
+	assert(in_sz >= 0);
+	assert(out_buf != NULL);
+	__compress2(pcomp, in_buf, in_sz, out_buf, p_out_sz);
 }
 
 void
