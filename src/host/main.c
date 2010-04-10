@@ -1,4 +1,10 @@
+/* 
+ * main.c
+ * by WN @ Apr. 10, 2010
+ */
+
 #include <common/debug.h>
+
 int main()
 {
 	return 0;

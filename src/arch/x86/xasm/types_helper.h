@@ -13,8 +13,7 @@
 #include <sys/user.h>
 #include <fcntl.h>
 #include <sys/mman.h>
-/* struct stat */
-#include <sys/stat.h>
+
 #endif
 
 // vim:ts=4:sw=4

@@ -1,4 +1,6 @@
-TARGETS=simple.exe simple2.exe simple3.exe simple4.exe
+TARGETS=simple.exe simple2.exe simple3 simple4.exe
+CFLAGS=-g -O0
+
 
 all: $(TARGETS)
 

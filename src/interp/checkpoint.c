@@ -231,7 +231,7 @@ do_make_checkpoint(struct pusha_regs * regs, void * eip)
 				logger->ckpt_fn, fd);
 
 	struct checkpoint_head head;
-	build_head(tpd, &head);
+	build_head(tpd, &head, regs, eip);
 
 	/* flush head */
 	err = INTERNAL_SYSCALL_int80(write, 3,
@@ -240,7 +240,7 @@ do_make_checkpoint(struct pusha_regs * regs, void * eip)
 
 	/* flush mem region */
 	flush_mem_regions(fd);
-
+#if 0
 	/* append the reg state */
 	err = INTERNAL_SYSCALL_int80(write, 3,
 			fd, regs, sizeof(*regs));
@@ -251,7 +251,8 @@ do_make_checkpoint(struct pusha_regs * regs, void * eip)
 	err = INTERNAL_SYSCALL_int80(write, 3,
 			fd, &eip, sizeof(eip));
 	assert(err == sizeof(eip));
-
+#endif
+	
 	err = INTERNAL_SYSCALL_int80(close, 1, fd);
 	assert(err == 0);
 }

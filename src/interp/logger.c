@@ -91,13 +91,14 @@ compress_logger_buffer(uint8_t * start, int in_sz, unsigned int * p_out_sz,
 		struct tls_compress * pcomp)
 {
 	/* compress log data and print compressed size */
+
 	uint8_t * out_buf = NULL;
 	unsigned int out_sz = 0;
 	compress(pcomp, start, in_sz, &out_buf, &out_sz);
 	assert(out_buf != NULL);
 	assert(out_sz != 0);
 	*p_out_sz = out_sz;
-	DEBUG(LOGGER, "flush logger buffer: ori sz=%d, compress sz=%d\n",
+	DEBUG(LOGGER, "flush logger buffer: ori sz=%d, compressed sz=%d\n",
 			in_sz, out_sz);
 	return out_buf;
 }
@@ -105,7 +106,7 @@ compress_logger_buffer(uint8_t * start, int in_sz, unsigned int * p_out_sz,
 static void
 do_flush_logger_buffer(struct tls_logger * logger)
 {
-	DEBUG(COMPILER, "----------- flush logger buffer ------------\n");
+	DEBUG(LOGGER, "----------- flush logger buffer ------------\n");
 	void * compressed_data;
 	unsigned int out_sz;
 	unsigned int log_sz = logger->log_buffer_current -
@@ -123,6 +124,7 @@ do_flush_logger_buffer(struct tls_logger * logger)
 		FATAL(LOGGER, "open logger file %s failed: %d\n",
 				logger->log_fn, fd);
 
+	TRACE(LOGGER, "log file %s opened, fd=%d\n", logger->log_fn, fd);
 	struct log_block_tag tag = {
 		.real_sz = log_sz,
 		.compressed_sz = out_sz,
@@ -138,14 +140,13 @@ do_flush_logger_buffer(struct tls_logger * logger)
 	assert(err == (int)(out_sz));
 
 	/* check whether to checkpoint */
-	struct stat st;
-	err = INTERNAL_SYSCALL_int80(fstat, 2, fd, &st);
+	struct stat64 st;
+	err = INTERNAL_SYSCALL_int80(fstat64, 2, fd, &st);
 	assert(err == 0);
 
 	err = INTERNAL_SYSCALL_int80(close, 1, fd);
+	TRACE(LOGGER, "close %d: %d\n", fd, err);
 	assert(err == 0);
-	
-	VERBOSE(LOGGER, "log file size: %ld\n", st.st_size);
 }
 
 /* A straightforward idea is to fork a new process and put
@@ -193,7 +194,7 @@ flush_logger_buffer(struct tls_logger * logger)
 
 }
 
-	void
+void
 do_check_logger_buffer(void)
 {
 	struct thread_private_data * tpd = get_tpd();
