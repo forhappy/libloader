@@ -24,11 +24,7 @@ struct checkpoint_head {
 	uint32_t tid;
 	int tnr;
 	struct user_desc thread_area[GDT_ENTRY_TLS_ENTRIES];
-	/* signal 0 is no use */
-	struct k_sigaction sigactions[K_NSIG+1];
-	k_sigset_t sigmask;
-	struct user_regs_struct regs;
-	struct i387_fxsave_struct fpustate;
+	struct reg_state reg_state;
 };
 
 struct mem_region {
@@ -56,7 +52,6 @@ fork_make_checkpoint(struct pusha_regs * regs, void * eip);
  * */
 void
 make_checkpoint(struct pusha_regs * regs, void * eip);
-
 
 #endif
 

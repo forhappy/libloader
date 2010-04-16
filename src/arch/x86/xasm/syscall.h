@@ -75,7 +75,7 @@ asm (".L__X'%ebx = 1\n\t"
 #define ASMFMT_4(arg1, arg2, arg3, arg4) \
        , "D" (arg1), "c" (arg2), "d" (arg3), "S" (arg4)
 #define ASMFMT_5(arg1, arg2, arg3, arg4, arg5) \
-	, "0" (arg1), "m" (_xv), "c" (arg2), "d" (arg3), "S" (arg4), "D" (arg5)
+	, "0" (arg1), "m" (___xv), "c" (arg2), "d" (arg3), "S" (arg4), "D" (arg5)
 
 
 #define INTERNAL_SYSCALL_0_5(name, enter_kernel, nr, args...) \

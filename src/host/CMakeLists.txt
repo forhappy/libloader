@@ -1,6 +1,7 @@
 SET(SRC
 	main.c
 	debug.c
+	opts.c
 	)
 
 ADD_EXECUTABLE(snitchaser ${SRC})

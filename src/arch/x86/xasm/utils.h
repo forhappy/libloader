@@ -38,8 +38,13 @@ __exit(int n)
 	while(1);
 }
 
-#define PAGE_SHIFT	(12)
-#define PAGE_SIZE	(1 << (PAGE_SHIFT))
+#ifndef PAGE_SHIFT
+# define PAGE_SHIFT	(12)
+#endif
+
+#ifndef PAGE_SIZE
+# define PAGE_SIZE	(1 << (PAGE_SHIFT))
+#endif
 
 extern void *
 alloc_pages(int nr, bool_t exec);

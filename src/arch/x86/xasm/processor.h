@@ -1,6 +1,8 @@
 #ifndef __X86_PROCESSOR_H
 #define __X86_PROCESSOR_H
 #include <stdint.h>
+/*  struct user_regs_struct */
+#include <sys/user.h>
 
 /* xmain return stack adjustment value, in dwords */
 struct pusha_regs {
@@ -57,6 +59,62 @@ struct i387_fxsave_struct {
 	uint32_t	padding[24];
 };
 
+struct reg_state {
+	struct user_regs_struct user_regs;
+	struct i387_fxsave_struct fx_state;
+};
+
+
+/* caller must ensure fx is aligned by 16 bytes */
+inline static void
+__save_i387(struct i387_fxsave_struct * fx)
+{
+	asm volatile (
+		"fxsave	(%[fx])\n\t"
+		: "=m" (*fx)
+		: [fx] "cdaSDb" (fx)
+	);
+}
+
+inline static void
+build_reg_state(struct reg_state * p, struct pusha_regs * r,
+		void * eip)
+{
+	struct user_regs_struct * u = &(p->user_regs);
+	struct pad_fx {
+		struct i387_fxsave_struct fx;
+		uint8_t __padding[16];
+	} pad_fx;
+	struct i387_fxsave_struct * fx = ALIGN_UP(&(pad_fx.fx), 16);
+
+	/* fill u */
+
+	u->ebx = r->ebx;
+	u->ecx = r->ecx;
+	u->edx = r->edx;
+	u->esi = r->esi;
+	u->edi = r->edi;
+	u->ebp = r->ebp;
+	u->eax = r->eax;
+	u->orig_eax = r->eax;
+	u->eip = (uint32_t)(eip);
+	u->eflags = r->flags;
+	u->esp = r->esp;
+
+#define loadsr(d, r) asm volatile("movl %%" #r ", %%eax" : "=a" (d))
+	loadsr(u->xcs, cs);
+	loadsr(u->xds, ds);
+	loadsr(u->xes, es);
+	loadsr(u->xfs, fs);
+	loadsr(u->xgs, gs);
+	loadsr(u->xss, ss);
+#undef loadsr
+
+	/* i387 fx */
+	__save_i387(fx);
+
+	p->fx_state = *fx;
+}
 #endif
 
 // vim:ts=4:sw=4

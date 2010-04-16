@@ -18,7 +18,7 @@
 
 static void
 build_head(struct thread_private_data * tpd,
-		struct checkpoint_head * head)
+		struct checkpoint_head * head, struct pusha_regs * regs, void * eip)
 {
 	/* fill magic */
 	memset(head->magic, '\0', CKPT_MAGIC_SZ);
@@ -42,14 +42,8 @@ build_head(struct thread_private_data * tpd,
 		assert(err == 0);
 	}
 
-	/* sigactions */
-	struct tls_signal * ts = &tpd->signal;
-	memcpy(&(head->sigactions), &(ts->sigactions),
-			sizeof(head->sigactions));
-
-	/* sigmask */
-	memcpy(&head->sigmask, &(ts->sigmask),
-			sizeof(ts->sigmask));
+	/* reg state */
+	build_reg_state(&head->reg_state, regs, eip);
 }
 
 /* 
@@ -215,12 +209,15 @@ flush_mem_regions(int fd)
 /* the fork based checkpoint should unmap all logger pages
  * and codecache pages, if not, 
  * size of checkpoint will become very large */
+/* do_make_checkpoint unmap all unneeded pages */
 static void
 do_make_checkpoint(struct pusha_regs * regs, void * eip)
 {
 	assert(sizeof(struct checkpoint_head) < 0x2000);
 	struct thread_private_data * tpd = get_tpd();
 	struct tls_logger * logger = &tpd->logger;
+
+	unmap_tpds_pages();
 
 	/* first, create the checkpoint file */
 	int err;
@@ -240,18 +237,6 @@ do_make_checkpoint(struct pusha_regs * regs, void * eip)
 
 	/* flush mem region */
 	flush_mem_regions(fd);
-#if 0
-	/* append the reg state */
-	err = INTERNAL_SYSCALL_int80(write, 3,
-			fd, regs, sizeof(*regs));
-	assert(err == sizeof(*regs));
-
-	/* the eip */
-	/* eip itself is a pointer */
-	err = INTERNAL_SYSCALL_int80(write, 3,
-			fd, &eip, sizeof(eip));
-	assert(err == sizeof(eip));
-#endif
 	
 	err = INTERNAL_SYSCALL_int80(close, 1, fd);
 	assert(err == 0);
@@ -260,17 +245,18 @@ do_make_checkpoint(struct pusha_regs * regs, void * eip)
 void
 fork_make_checkpoint(struct pusha_regs * regs, void * eip)
 {
+
+	/* don't use normal fork: child become defunct process after exit */
 	int pid;
-	pid = INTERNAL_SYSCALL_int80(fork, 0);
+#define CLONE_PARENT 0x00008000
+	pid = INTERNAL_SYSCALL_int80(clone, 5,
+			CLONE_PARENT, 0, NULL, NULL, NULL);
 	assert(pid >= 0);
 
-	/* parent */
-	if (pid != 0)
-		return;
-	/* child */
-	unmap_tpds_pages();
-	do_make_checkpoint(regs, eip);
-	__exit(0);
+	if (pid == 0) {
+		do_make_checkpoint(regs, eip);
+		__exit(0);
+	}
 }
 
 void
@@ -278,7 +264,6 @@ make_checkpoint(struct pusha_regs * regs, void * eip)
 {
 	/* cleanup all thread's tls pages, then
 	 * call do_make_checkpoint */
-	unmap_tpds_pages();
 	do_make_checkpoint(regs, eip);
 }
 
