@@ -9,7 +9,6 @@
 struct opts {
 	char * pthread_so_fn;	/* libpthread.so, for gdbloader only */
 	char * ckpt_fn;
-	char * target_fn;
 	int fix_pthread_tid;	/* whether to fix libpthread's tid, for gdbloader only */
 	int cmd_idx;
 };

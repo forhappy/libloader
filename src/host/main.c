@@ -5,21 +5,87 @@
  * gdb loader's main program
  */
 
-
 #include <common/defs.h>
 #include <common/debug.h>
+#include <common/assert.h>
 #include <interp/checkpoint.h>
 #include <host/snitchaser_args.h>
 #include <sys/stat.h>
 #include <sys/ptrace.h>
+#include <sys/mman.h>
+
+#include <fcntl.h>
+#include <unistd.h>
+#include <string.h>
+
+static void *
+map_ckpt(const char * filename)
+{
+	assert(filename != NULL);
+	int fd = open(filename, O_RDONLY);
+	assert(fd > 0);
+
+	/* the length of ckpt */
+	struct stat st;
+	int err = fstat(fd, &st);
+	assert(err == 0);
+
+	size_t sz = st.st_size;
+	void * ptr = mmap(NULL, sz, PROT_READ, MAP_PRIVATE, fd, 0);
+	assert((int)(ptr) != -1);
+	assert(ptr != NULL);
+	close(fd);
+	return ptr;
+}
+
+static struct checkpoint_head *
+check_header(void * ptr)
+{
+	struct checkpoint_head * phead = ptr;
+
+	/* check magic */
+	assert(memcmp(phead->magic, CKPT_MAGIC, CKPT_MAGIC_SZ) == 0);
+
+	VERBOSE(REPLAYER, "ckpt magic ok\n");
+	VERBOSE(REPLAYER, "brk=0x%x\n", phead->brk);
+	VERBOSE(REPLAYER, "pid=%d\n", phead->pid);
+	VERBOSE(REPLAYER, "tid=%d\n", phead->tid);
+
+	return phead;
+}
+
+static struct mem_region *
+find_region(void * ptr, const char * fn)
+{
+	while (*((uint32_t*)(ptr)) != MEM_REGIONS_END_MARK) {
+		struct mem_region * r = ptr;
+		TRACE(REPLAYER, "region: %s\n", r->fn);
+		ptr = &r[1];
+		ptr += r->fn_sz + (r->end - r->start);
+	}
+	return NULL;
+}
 
 static void
 do_recover(struct opts * opts)
 {
-	/* execve target */
-	/* check the position of stack */
-	/* how about vdso? */
+	/* load checkpoint file, extract command line and env */
+	void * ckpt_img = map_ckpt(opts->ckpt_fn);
+
+	struct checkpoint_head * phead = check_header(ckpt_img);
+	assert(phead != NULL);
+
+	/* iterate over memory regions */
+	struct mem_region * stack_region = find_region(&phead[1], "[stack]");
+	struct mem_region * vdso_region = find_region(&phead[1], "[vdso]");
+
+
+	/* execve target and ptrace */
+	/* check the position of stack, vdso and libinterp.so */
 	/* map the tls stack */
+	/* find debug entry in libinterp.so */
+	/* adjust stack */
+	/* detach and continue. */
 }
 
 static bool_t
@@ -41,15 +107,12 @@ main(int argc, char * argv[])
 {
 	struct opts * opts = parse_args(argc, argv);
 	/* check opts */
-	TRACE(LOADER, "target exec: %s\n", opts->target_fn);
-	TRACE(LOADER, "target checkpoint: %s\n", opts->ckpt_fn);
-	TRACE(LOADER, "pthread_so_fn: %s\n", opts->pthread_so_fn);
-	TRACE(LOADER, "fix_pthread_tid: %d\n", opts->fix_pthread_tid);
+	TRACE(REPLAYER, "target checkpoint: %s\n", opts->ckpt_fn);
+	TRACE(REPLAYER, "pthread_so_fn: %s\n", opts->pthread_so_fn);
+	TRACE(REPLAYER, "fix_pthread_tid: %d\n", opts->fix_pthread_tid);
 
-	if (!file_exist(opts->target_fn))
-		FATAL(LOADER, "target file %s doesn't exist\n", opts->target_fn);
 	if (!file_exist(opts->ckpt_fn))
-		FATAL(LOADER, "checkpoint file %s doesn't exist\n", opts->ckpt_fn);
+		FATAL(REPLAYER, "checkpoint file (-c) %s doesn't exist\n", opts->ckpt_fn);
 
 	do_recover(opts);
 

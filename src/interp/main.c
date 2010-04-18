@@ -67,7 +67,9 @@ xmain(struct pusha_regs regs)
 	relocate_interp();
 	void * oldesp = (void*)stack_top(&regs) + sizeof(uintptr_t);
 	VERBOSE(LOADER, "oldesp=%p\n", oldesp);
+	
 	reexec(oldesp);
+
 	find_auxv(oldesp);
 
 	int esp_add = 0;

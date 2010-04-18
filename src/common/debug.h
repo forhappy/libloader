@@ -34,6 +34,7 @@ enum __debug_component {
 	CKPT,
 	COMPRESS,
 	SIGNAL,
+	REPLAYER,
 	NR_DEBUG_COMPONENTS,
 };
 
@@ -63,13 +64,14 @@ __debug_component_names[NR_DEBUG_COMPONENTS] = {
 	[CKPT]		= "CKP",
 	[COMPRESS]	= "ZIP",
 	[SIGNAL]	= "SIG",
+	[REPLAYER]	= "REP",
 };
 #endif
 
 static const enum __debug_level
 __debug_component_levels[NR_DEBUG_COMPONENTS] = {
 	[SYSTEM]	= DBG_LV_VERBOSE,
-	[LOADER]	= DBG_LV_TRACE,
+	[LOADER]	= DBG_LV_VERBOSE,
 	[TLS]		= DBG_LV_VERBOSE,
 	[DECODER]	= DBG_LV_VERBOSE,
 	[MEM]		= DBG_LV_VERBOSE,
@@ -79,6 +81,7 @@ __debug_component_levels[NR_DEBUG_COMPONENTS] = {
 	[CKPT]		= DBG_LV_TRACE,
 	[COMPRESS]	= DBG_LV_VERBOSE,
 	[SIGNAL]	= DBG_LV_TRACE,
+	[REPLAYER]	= DBG_LV_TRACE,
 };
 
 #endif
