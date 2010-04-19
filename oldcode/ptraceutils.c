@@ -11,7 +11,7 @@
 #include <sys/ptrace.h>
 #include <sys/wait.h>
 #include <sys/personality.h>
-/* some very systems' include file doesn't contain this symbol */
+/* some very old systems' include file doesn't contain this symbol */
 #define ADDR_NO_RANDOMIZE (0x0040000)
 #include <linux/ptrace.h>
 #include <stdarg.h>

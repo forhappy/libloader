@@ -1,0 +1,44 @@
+/* 
+ * ptrace.h
+ * by WN @ Apr. 19, 2010
+ */
+
+#ifndef __SNITCHASER_PTRACE_H
+#define __SNITCHASER_PTRACE_H
+
+#include <sys/cdefs.h>
+#include <sys/user.h>
+#include <stdint.h>
+#include <unistd.h>
+#include <asm/unistd.h>
+#include <common/defs.h>
+
+extern pid_t
+ptrace_execve(char ** argv, char ** environ, char * exec_fn);
+
+extern void
+ptrace_dupmem(pid_t target, void * dst, uintptr_t addr, int len);
+
+extern void
+ptrace_updmem(pid_t target, const void * src, uintptr_t addr, int len);
+
+extern void
+ptrace_kill(pid_t target);
+
+extern void
+ptrace_detach(pid_t target);
+
+extern struct user_regs_struct
+ptrace_peekuser(pid_t target);
+
+extern void
+ptrace_pokeuser(pid_t target, struct user_regs_struct s);
+
+/* return the esp */
+extern uint32_t
+ptrace_push(pid_t target, const void * data, int len, bool_t save_esp);
+
+#endif
+
+// vim:ts=4:sw=4
+

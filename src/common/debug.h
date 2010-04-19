@@ -35,6 +35,7 @@ enum __debug_component {
 	COMPRESS,
 	SIGNAL,
 	REPLAYER,
+	PTRACE,
 	NR_DEBUG_COMPONENTS,
 };
 
@@ -65,6 +66,7 @@ __debug_component_names[NR_DEBUG_COMPONENTS] = {
 	[COMPRESS]	= "ZIP",
 	[SIGNAL]	= "SIG",
 	[REPLAYER]	= "REP",
+	[PTRACE]	= "TRC",
 };
 #endif
 
@@ -82,6 +84,7 @@ __debug_component_levels[NR_DEBUG_COMPONENTS] = {
 	[COMPRESS]	= DBG_LV_VERBOSE,
 	[SIGNAL]	= DBG_LV_TRACE,
 	[REPLAYER]	= DBG_LV_TRACE,
+	[PTRACE]	= DBG_LV_TRACE,
 };
 
 #endif
@@ -139,6 +142,17 @@ dbg_fatal(void) ATTR(noreturn);
 #define FORCE(...)	dbg_output(DBG_LV_FORCE, __VA_ARGS__)
 
 #endif
+
+#define CASSERT(__comp, __cond, fmt...)		do {	\
+	if (!(__cond)) 				\
+		FATAL(__comp, fmt);		\
+} while(0)
+
+#define EASSERT(__comp, fmt...)	do {		\
+	if (errno != 0)				\
+		FATAL(__comp, fmt);		\
+} while(0)
+
 
 
 __END_DECLS

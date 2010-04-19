@@ -19,6 +19,22 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include <host/ptrace.h>
+
+static bool_t
+file_exist(const char * fn)
+{
+	if (fn == NULL)
+		return FALSE;
+	struct stat st;
+	int err = stat(fn, &st);
+	if (err != 0)
+		return FALSE;
+	if (!S_ISREG(st.st_mode))
+		return FALSE;
+	return TRUE;
+}
+
 static void *
 map_ckpt(const char * filename)
 {
@@ -70,18 +86,18 @@ find_region(void * ptr, const char * fn)
 
 static void
 build_argp(void * vargp_start, void * vargp_last,
-		char *** pargs, char *** penvs)
+		char *** pargs, char *** penvs, char ** exec_fn)
 {
 	char ** args = NULL;
 	char ** envs = NULL;
 	int nr_args = 0;
 	int nr_envs = 0;
-	
+
+	/* see do_execve in fs/exec.c */
+
 	/* args */
 	char * ptr = vargp_start;
 	while ((void*)ptr <= vargp_last) {
-		TRACE(REPLAYER, "args: %s\n", ptr);
-
 		nr_args ++;
 		args = realloc(args, sizeof(char *) * nr_args);
 		args[nr_args - 1] = ptr;
@@ -89,16 +105,22 @@ build_argp(void * vargp_start, void * vargp_last,
 		ptr += strlen(ptr) + 1;
 	}
 
+	/* expand args */
+	args = realloc(args, sizeof(char *) * (nr_args + 1));
+	args[nr_args] = NULL;
+
 	/* envs */
 	while (*ptr != '\0') {
-		TRACE(REPLAYER, "envs: %s\n", ptr);
-
 		nr_envs ++;
 		envs = realloc(envs, sizeof(char *) * nr_envs);
 		envs[nr_envs - 1] = ptr;
 
 		ptr += strlen(ptr) + 1;
 	}
+
+	/* the last slot of 'envs' is actually 'exec_fn' */
+	*exec_fn = envs[nr_envs - 1];
+	envs[nr_envs - 1] = NULL;
 
 	*pargs = args;
 	*penvs = envs;
@@ -131,28 +153,28 @@ do_recover(struct opts * opts)
 
 	char ** args = NULL;
 	char ** envs = NULL;
-	build_argp(vargp_first, vargp_last, &args, &envs);
+	char * exec_fn = NULL;
+	build_argp(vargp_first, vargp_last, &args, &envs, &exec_fn);
+	assert(args != NULL);
+	assert(envs != NULL);
+	assert(exec_fn != NULL);
 
 	/* execve target and ptrace */
+	CASSERT(REPLAYER, file_exist(exec_fn),
+			"file %s doesn't exist, check your cwd and try again\n", exec_fn);
+	pid_t target_pid = ptrace_execve(args, envs, exec_fn);
+
 	/* check the position of stack, vdso and libinterp.so */
 	/* map the tls stack */
 	/* find debug entry in libinterp.so */
 	/* adjust stack */
 	/* detach and continue. */
-}
 
-static bool_t
-file_exist(const char * fn)
-{
-	if (fn == NULL)
-		return FALSE;
-	struct stat st;
-	int err = stat(fn, &st);
-	if (err != 0)
-		return FALSE;
-	if (!S_ISREG(st.st_mode))
-		return FALSE;
-	return TRUE;
+out:
+
+errout:
+	ptrace_kill(target_pid);
+
 }
 
 int
@@ -164,8 +186,8 @@ main(int argc, char * argv[])
 	TRACE(REPLAYER, "pthread_so_fn: %s\n", opts->pthread_so_fn);
 	TRACE(REPLAYER, "fix_pthread_tid: %d\n", opts->fix_pthread_tid);
 
-	if (!file_exist(opts->ckpt_fn))
-		FATAL(REPLAYER, "checkpoint file (-c) %s doesn't exist\n", opts->ckpt_fn);
+	CASSERT(REPLAYER, file_exist(opts->ckpt_fn),
+			"checkpoint file (-c) %s doesn't exist\n", opts->ckpt_fn);
 
 	do_recover(opts);
 
