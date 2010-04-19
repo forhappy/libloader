@@ -62,7 +62,8 @@ reexec(void * old_esp)
 
 extern void * loader(void * oldesp, int * pesp_add);
 __attribute__((used, unused, visibility("hidden"))) int
-xmain(struct pusha_regs regs)
+xmain(struct pusha_regs regs, uintptr_t unused ATTR(unused),
+		int argc, char * argv0)
 {
 	relocate_interp();
 	void * oldesp = (void*)stack_top(&regs) + sizeof(uintptr_t);
@@ -70,7 +71,9 @@ xmain(struct pusha_regs regs)
 	
 	reexec(oldesp);
 
-	find_auxv(oldesp);
+	char ** argv = &argv0;
+
+	load_auxv(oldesp);
 
 	int esp_add = 0;
 	void * retaddr = loader(oldesp, &esp_add);
@@ -80,8 +83,14 @@ xmain(struct pusha_regs regs)
 
 	/* build first thread local area */
 	init_tls();
+	struct thread_private_data * tpd = get_tpd();
 	DEBUG(LOADER, "pid from tpd: %d; tid from tpd: %d\n",
-			get_tpd()->pid, get_tpd()->tid);
+			tpd->pid, tpd->tid);
+
+	/* set argp_start */
+	tpd->argp_first = (uintptr_t)(argv[0]);
+	tpd->argp_last = (uintptr_t)(argv[argc - 1]);
+	assert(argv[argc] == NULL);
 
 	/* for debug use */
 	print_auxv();

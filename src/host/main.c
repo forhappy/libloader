@@ -17,6 +17,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdlib.h>
 
 static void *
 map_ckpt(const char * filename)
@@ -59,11 +60,48 @@ find_region(void * ptr, const char * fn)
 {
 	while (*((uint32_t*)(ptr)) != MEM_REGIONS_END_MARK) {
 		struct mem_region * r = ptr;
-		TRACE(REPLAYER, "region: %s\n", r->fn);
-		ptr = &r[1];
-		ptr += r->fn_sz + (r->end - r->start);
+		assert(r->end > r->start);
+		if (strcmp(r->fn, fn) == 0)
+			return r;
+		ptr = next_region(r);
 	}
 	return NULL;
+}
+
+static void
+build_argp(void * vargp_start, void * vargp_last,
+		char *** pargs, char *** penvs)
+{
+	char ** args = NULL;
+	char ** envs = NULL;
+	int nr_args = 0;
+	int nr_envs = 0;
+	
+	/* args */
+	char * ptr = vargp_start;
+	while ((void*)ptr <= vargp_last) {
+		TRACE(REPLAYER, "args: %s\n", ptr);
+
+		nr_args ++;
+		args = realloc(args, sizeof(char *) * nr_args);
+		args[nr_args - 1] = ptr;
+
+		ptr += strlen(ptr) + 1;
+	}
+
+	/* envs */
+	while (*ptr != '\0') {
+		TRACE(REPLAYER, "envs: %s\n", ptr);
+
+		nr_envs ++;
+		envs = realloc(envs, sizeof(char *) * nr_envs);
+		envs[nr_envs - 1] = ptr;
+
+		ptr += strlen(ptr) + 1;
+	}
+
+	*pargs = args;
+	*penvs = envs;
 }
 
 static void
@@ -75,10 +113,25 @@ do_recover(struct opts * opts)
 	struct checkpoint_head * phead = check_header(ckpt_img);
 	assert(phead != NULL);
 
-	/* iterate over memory regions */
 	struct mem_region * stack_region = find_region(&phead[1], "[stack]");
 	struct mem_region * vdso_region = find_region(&phead[1], "[vdso]");
+	assert(stack_region != NULL);
+	assert(vdso_region != NULL);
 
+	uintptr_t argp_first = phead->argp_first;
+	uintptr_t argp_last = phead->argp_last;
+	assert(argp_first <= stack_region->end);
+	assert(argp_first >= stack_region->start);
+	assert(argp_last <= stack_region->end);
+	assert(argp_last >= stack_region->start);
+
+	void * vstack_top = region_data(stack_region);
+	void * vargp_first = argp_first - stack_region->start + vstack_top;
+	void * vargp_last = argp_last - stack_region->start + vstack_top;
+
+	char ** args = NULL;
+	char ** envs = NULL;
+	build_argp(vargp_first, vargp_last, &args, &envs);
 
 	/* execve target and ptrace */
 	/* check the position of stack, vdso and libinterp.so */

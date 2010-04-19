@@ -19,13 +19,16 @@
 
 struct checkpoint_head {
 	char magic[CKPT_MAGIC_SZ];
-	uint32_t brk;
+	uintptr_t argp_first;
+	uintptr_t argp_last;
+	uintptr_t brk;
 	uint32_t pid;
 	uint32_t tid;
 	int tnr;
 	struct user_desc thread_area[GDT_ENTRY_TLS_ENTRIES];
 	struct reg_state reg_state;
 };
+
 
 struct mem_region {
 	uintptr_t start;
@@ -35,6 +38,10 @@ struct mem_region {
 	int fn_sz;
 	char fn[];
 };
+
+#define region_sz(r)	((r)->end - (r)->start)
+#define region_data(r)	((void*)((void*)(&(r)[1]) + (r)->fn_sz))
+#define next_region(r)	(region_data(r) + region_sz(r))
 
 /* MEM_REGIONS_END_MARK should be a number larger than 0xc0000000 and
  * not aligned to PAGE_SIZE */

@@ -61,6 +61,10 @@ struct thread_private_data {
 	uint32_t sigmask[4];
 	int sig_block_level;
 	struct list_head list;
+	/* the start position of argp, inited when loading and never changes */
+	uintptr_t argp_first;
+	uintptr_t argp_last;
+
 	/* access: *fs:(0x3000 - 4); stores: the base (lowest)
 	 * address of the TLS section */
 	void * tls_base;	

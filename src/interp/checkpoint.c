@@ -24,6 +24,10 @@ build_head(struct thread_private_data * tpd,
 	memset(head->magic, '\0', CKPT_MAGIC_SZ);
 	memcpy(head->magic, CKPT_MAGIC, sizeof(CKPT_MAGIC));
 
+	/* argp_start */
+	head->argp_first = tpd->argp_first;
+	head->argp_last = tpd->argp_last;
+
 	/* brk */
 	head->brk = INTERNAL_SYSCALL_int80(brk, 1, 0);
 
@@ -92,7 +96,8 @@ read_procmem_line(char * line, struct mem_region * region, char ** p_fn)
 	assert(eol != NULL);
 	assert(*eol == '\n');
 	*eol = '\0';
-	region->fn_sz = strlen(*p_fn);
+	/* plus a '\0' */
+	region->fn_sz = strlen(*p_fn) + 1;
 	return eol + 1;
 }
 

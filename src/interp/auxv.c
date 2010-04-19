@@ -34,7 +34,7 @@ print_auxv(void)
 }
 
 void
-find_auxv(void * oldesp)
+load_auxv(void * oldesp)
 {
 	/* find the aux vector */
 	uintptr_t * p = oldesp;

@@ -9,7 +9,7 @@
 #include <xasm/elf.h>
 #include <common/linux/auxvec.h>
 
-void find_auxv(void * oldesp);
+void load_auxv(void * oldesp);
 void print_auxv();
 
 struct auxv_info {
