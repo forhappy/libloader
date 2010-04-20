@@ -9,7 +9,7 @@
 #include <common/debug.h>
 #include <common/assert.h>
 #include <interp/checkpoint.h>
-#include <host/snitchaser_args.h>
+#include <host/snitchaser_opts.h>
 #include <sys/stat.h>
 #include <sys/ptrace.h>
 #include <sys/mman.h>
@@ -20,6 +20,7 @@
 #include <stdlib.h>
 
 #include <host/ptrace.h>
+#include <host/procmaps.h>
 
 static bool_t
 file_exist(const char * fn)
@@ -165,16 +166,58 @@ do_recover(struct opts * opts)
 	pid_t target_pid = ptrace_execve(args, envs, exec_fn);
 
 	/* check the position of stack, vdso and libinterp.so */
-	/* map the tls stack */
+	char * maps_data = NULL;
+	maps_data = proc_maps_load(target_pid);
+	if (maps_data == NULL)
+		goto errout;
+
+	struct proc_mem_region proc_stack;
+	struct proc_mem_region proc_vdso;
+	struct proc_mem_region proc_interp;
+
+	if (!proc_maps_find(&proc_stack, "[stack]", maps_data)) {
+		ERROR(REPLAYER, "unable to file \"[stack]\" section in /proc/%d/maps",
+				target_pid);
+		goto err_free_maps;
+	}
+
+	if (!proc_maps_find(&proc_vdso, "[vdso]", maps_data)) {
+		ERROR(REPLAYER, "unable to file \"[vdso]\" section in /proc/%d/maps",
+				target_pid);
+		goto err_free_maps;
+	}
+
+	if (!proc_maps_find(&proc_interp, opts->interp_so_fn, maps_data)) {
+		ERROR(REPLAYER, "unable to file \"%s\" section in /proc/%d/maps",
+				opts->interp_so_fn, target_pid);
+		goto err_free_maps;
+	}
+
+	if ((proc_vdso.start != vdso_region->start) ||
+			(proc_vdso.end != vdso_region->end)) {
+		ERROR(REPLAYER, "[vdso] section inconsistent\n");
+		goto err_free_maps;
+	}
+
+	if ((proc_stack.end != stack_region->end)) {
+		ERROR(REPLAYER, "[stack] section inconsistent\n");
+		goto err_free_maps;
+	}
+
 	/* find debug entry in libinterp.so */
 	/* adjust stack */
 	/* detach and continue. */
 
 out:
+	proc_maps_free(maps_data);
+	ptrace_kill(target_pid);
+	return;
 
+err_free_maps:
+	proc_maps_free(maps_data);
 errout:
 	ptrace_kill(target_pid);
-
+	return;
 }
 
 int
@@ -188,6 +231,8 @@ main(int argc, char * argv[])
 
 	CASSERT(REPLAYER, file_exist(opts->ckpt_fn),
 			"checkpoint file (-c) %s doesn't exist\n", opts->ckpt_fn);
+	CASSERT(REPLAYER, file_exist(opts->interp_so_fn),
+			"interp so file (-i) %s doesn't exist\n", opts->interp_so_fn);
 
 	do_recover(opts);
 

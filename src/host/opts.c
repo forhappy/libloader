@@ -9,7 +9,7 @@
 #include <error.h>
 #include <argp.h>
 #include <stdint.h>
-#include "snitchaser_args.h"
+#include "snitchaser_opts.h"
 
 const char *argp_program_version = "snitchaser-2.0";
 const char *argp_program_bug_address = "<wangnan06@ict.ac.cn>";
@@ -20,6 +20,8 @@ static char args_doc[] =
 
 
 static struct argp_option options[] = {
+	{"libinterpso",	'i', "libinterpso", 0,
+		"the file of desired libinterp.so", 0},
 	{"pthreadso",	't', "pthreadso", 0,
 		"desired libpthread.so file name, \'/lib/libpthread.so.0\' by default",
 		0},
@@ -40,19 +42,22 @@ static error_t
 parse_opt(int key, char *arg, struct argp_state *state ATTR(unused))
 {
 	switch (key) {
-		case 't':
-			opts.pthread_so_fn = arg;
-			return 0;
-		case 'c':
-			opts.ckpt_fn = arg;
-			return 0;
-		case -1:
-			opts.fix_pthread_tid = 0;
-			return 0;
-		case ARGP_KEY_END:
-			return 0;
-		default:
-			return ARGP_ERR_UNKNOWN;
+	case 'i':
+		opts.interp_so_fn = arg;
+		return 0;
+	case 't':
+		opts.pthread_so_fn = arg;
+		return 0;
+	case 'c':
+		opts.ckpt_fn = arg;
+		return 0;
+	case -1:
+		opts.fix_pthread_tid = 0;
+		return 0;
+	case ARGP_KEY_END:
+		return 0;
+	default:
+		return ARGP_ERR_UNKNOWN;
 	}
 	return 0;
 }

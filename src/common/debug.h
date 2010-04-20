@@ -36,6 +36,7 @@ enum __debug_component {
 	SIGNAL,
 	REPLAYER,
 	PTRACE,
+	PROCMAPS,
 	NR_DEBUG_COMPONENTS,
 };
 
@@ -67,6 +68,7 @@ __debug_component_names[NR_DEBUG_COMPONENTS] = {
 	[SIGNAL]	= "SIG",
 	[REPLAYER]	= "REP",
 	[PTRACE]	= "TRC",
+	[PROCMAPS]	= "MAP",
 };
 #endif
 
@@ -85,6 +87,7 @@ __debug_component_levels[NR_DEBUG_COMPONENTS] = {
 	[SIGNAL]	= DBG_LV_TRACE,
 	[REPLAYER]	= DBG_LV_TRACE,
 	[PTRACE]	= DBG_LV_TRACE,
+	[PROCMAPS]	= DBG_LV_TRACE,
 };
 
 #endif
