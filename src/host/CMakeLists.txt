@@ -8,6 +8,7 @@ SET(SRC
 	procmaps.c
 	exception.h
 	exception.c
+	mm.h
 	)
 
 ADD_EXECUTABLE(snitchaser ${SRC})

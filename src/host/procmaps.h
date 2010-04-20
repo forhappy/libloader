@@ -24,9 +24,8 @@ struct proc_mem_region {
 	uint32_t offset;
 };
 
-/* return true: found */
-/* return false: not found or error */
-bool_t
+/* if not find, throw an exception */
+void
 proc_maps_find(struct proc_mem_region * preg,
 		const char * filename, char * proc_data);
 

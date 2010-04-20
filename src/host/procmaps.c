@@ -6,6 +6,8 @@
 #include <common/defs.h>
 #include <common/debug.h>
 #include <host/procmaps.h>
+#include <host/exception.h>
+#include <host/mm.h>
 
 #include <sys/mman.h>
 #include <errno.h>
@@ -24,10 +26,9 @@ proc_maps_load(pid_t pid)
 	char maps_fn[32];
 	snprintf(maps_fn, 32, "/proc/%d/maps", pid);
 	int fd = open(maps_fn, O_RDONLY);
-	if (fd < 0) {
-		ERROR(PROCMAPS, "open %s failed: %s\n", maps_fn, strerror(errno));
-		return NULL;
-	}
+	if (fd < 0)
+		THROW_FATAL(EXP_PROC_MAPS, "open %s failed: %s\n",
+				maps_fn, strerror(errno));
 
 	int buf_sz = READ_STEP;
 	char * buffer = malloc(buf_sz);
@@ -57,7 +58,7 @@ proc_maps_load(pid_t pid)
 void
 proc_maps_free(char * buf)
 {
-	free(buf);
+	xfree(buf);
 }
 
 
@@ -68,12 +69,12 @@ readlink_malloc (const char *filename)
 	char *buffer = NULL;
 
 	while (1) {
-		buffer = (char *) realloc (buffer, size);
+		buffer = (char *) xrealloc (buffer, size);
 		assert(buffer != NULL);
 		memset(buffer, '\0', size);
 		int nchars = readlink (filename, buffer, size);
 		if (nchars < 0) {
-			free (buffer);
+			xfree(buffer);
 			return NULL;
 		}
 		if (nchars < size)
@@ -112,7 +113,7 @@ read_procmem_line(char * line, struct proc_mem_region * region, char ** p_fn)
 
 	/* find the mapped file name */
 	*p_fn = line + l;
-	if (*(*p_fn - 1) == '\n')
+	if ((*(*p_fn - 1) == '\n') || (*(*p_fn - 1) == '\0'))
 		*p_fn -= 1;
 
 	/* I don't know why err == 4, but err is 4. */
@@ -122,16 +123,22 @@ read_procmem_line(char * line, struct proc_mem_region * region, char ** p_fn)
 		return NULL;
 	}
 
-	/* if err != 0, then *p_fn must contain '\n' */
+	/* if err != 0, then *p_fn must contain '\n', or else, it has beed set
+	 * to '\0'. */
 	/* eat the last '\n' in file name */
 	char * eol = strchr(*p_fn, '\n');
-	assert(eol != NULL);
-	assert(*eol == '\n');
+	if (eol == NULL) {
+		eol = strchr(*p_fn, '\0');
+	}
+
+	if ((eol == NULL) || ((*eol != '\0') && (*eol != '\n')))
+		THROW_FATAL(EXP_PROC_MAPS, "proc maps format error: %s\n",
+				line);
 	*eol = '\0';
 	return eol + 1;
 }
 
-bool_t
+void
 proc_maps_find(struct proc_mem_region * preg,
 		const char * file_name, char * proc_data)
 {
@@ -143,11 +150,9 @@ proc_maps_find(struct proc_mem_region * preg,
 	if (file_name[0] != '[') {
 		/* get the full name of the file */
 		int fd = open(file_name, O_RDONLY);
-		if (fd < 0) {
-			ERROR(PROCMAPS, "open file %s failed: %s\n",
+		if (fd < 0)
+			THROW_FATAL(EXP_PROC_MAPS, "open file %s failed: %s\n",
 					file_name, strerror(errno));
-			return FALSE;
-		}
 
 		char proc_fd_name[64];
 		snprintf(proc_fd_name, 64, "/proc/self/fd/%d", fd);
@@ -157,25 +162,32 @@ proc_maps_find(struct proc_mem_region * preg,
 	}
 	TRACE(PROCMAPS, "full name of target file is %s\n", full_name);
 
-	/* iterate over each item  */
-	char * line = proc_data;
-	char * fn;
-	struct proc_mem_region reg;
-	while (line != NULL) {
-		line = read_procmem_line(line, &reg, &fn);
-		TRACE(PROCMAPS, "proc line: 0x%x--0x%x: |%s|\n",
-				reg.start, reg.end, fn);
-		if (strcmp(fn, full_name) == 0) {
-			*preg = reg;
-			if (full_name != file_name)
-				free(full_name);
-			return TRUE;
-		}
-	}
+	define_exp(exp);
+	TRY(exp) {
+		char * fn;
+		char * line = proc_data;
+		struct proc_mem_region reg;
+		bool_t found = FALSE;
 
-	if (full_name != file_name)
-		free(full_name);
-	return FALSE;
+		while (line != NULL) {
+			line = read_procmem_line(line, &reg, &fn);
+			if (strcmp(fn, full_name) == 0) {
+				*preg = reg;
+				found = TRUE;
+				TRACE(PROCMAPS, "found %s at 0x%x--0x%x\n",
+						full_name, reg.start, reg.end);
+				break;
+			}
+		}
+		if (!found)
+			THROW_FATAL(EXP_PROC_MAPS, "unable to find mapping of %s\n",
+					full_name);
+	} FINALLY {
+		if (full_name != file_name)
+			xfree(full_name);
+	} CATCH(exp) {
+		RETHROW(exp);
+	}
 }
 
 // vim:ts=4:sw=4

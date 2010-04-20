@@ -21,6 +21,8 @@
 
 #include <host/ptrace.h>
 #include <host/procmaps.h>
+#include <host/exception.h>
+#include <host/mm.h>
 
 static bool_t
 file_exist(const char * fn)
@@ -62,7 +64,8 @@ check_header(void * ptr)
 	struct checkpoint_head * phead = ptr;
 
 	/* check magic */
-	assert(memcmp(phead->magic, CKPT_MAGIC, CKPT_MAGIC_SZ) == 0);
+	if (memcmp(phead->magic, CKPT_MAGIC, CKPT_MAGIC_SZ) != 0)
+		THROW_FATAL(EXP_WRONG_CKPT, "checkpoint magic error");
 
 	VERBOSE(REPLAYER, "ckpt magic ok\n");
 	VERBOSE(REPLAYER, "brk=0x%x\n", phead->brk);
@@ -82,7 +85,7 @@ find_region(void * ptr, const char * fn)
 			return r;
 		ptr = next_region(r);
 	}
-	return NULL;
+	THROW_FATAL(EXP_WRONG_CKPT, "checkpoint error: miss region \"%s\"", fn);
 }
 
 static void
@@ -100,20 +103,21 @@ build_argp(void * vargp_start, void * vargp_last,
 	char * ptr = vargp_start;
 	while ((void*)ptr <= vargp_last) {
 		nr_args ++;
-		args = realloc(args, sizeof(char *) * nr_args);
+		args = xrealloc(args, sizeof(char *) * nr_args);
 		args[nr_args - 1] = ptr;
 
 		ptr += strlen(ptr) + 1;
 	}
 
 	/* expand args */
-	args = realloc(args, sizeof(char *) * (nr_args + 1));
+	args = xrealloc(args, sizeof(char *) * (nr_args + 1));
 	args[nr_args] = NULL;
 
 	/* envs */
 	while (*ptr != '\0') {
 		nr_envs ++;
-		envs = realloc(envs, sizeof(char *) * nr_envs);
+		envs = xrealloc(envs, sizeof(char *) * nr_envs);
+		assert(envs != NULL);
 		envs[nr_envs - 1] = ptr;
 
 		ptr += strlen(ptr) + 1;
@@ -131,93 +135,96 @@ static void
 do_recover(struct opts * opts)
 {
 	/* load checkpoint file, extract command line and env */
-	void * ckpt_img = map_ckpt(opts->ckpt_fn);
+	catch_var(pid_t, target_pid, -1);
+	catch_var(char *, maps_data, NULL);
+	catch_var(char **, args, NULL);
+	catch_var(char **, envs, NULL);
+	define_exp(exp);
+	TRY(exp) {
+		void * ckpt_img = map_ckpt(opts->ckpt_fn);
+		struct checkpoint_head * phead = check_header(ckpt_img);
 
-	struct checkpoint_head * phead = check_header(ckpt_img);
-	assert(phead != NULL);
+		struct mem_region * stack_region = find_region(&phead[1], "[stack]");
+		struct mem_region * vdso_region = find_region(&phead[1], "[vdso]");
 
-	struct mem_region * stack_region = find_region(&phead[1], "[stack]");
-	struct mem_region * vdso_region = find_region(&phead[1], "[vdso]");
-	assert(stack_region != NULL);
-	assert(vdso_region != NULL);
+		/* extract cmd line and env */
+		uintptr_t argp_first = phead->argp_first;
+		uintptr_t argp_last = phead->argp_last;
 
-	uintptr_t argp_first = phead->argp_first;
-	uintptr_t argp_last = phead->argp_last;
-	assert(argp_first <= stack_region->end);
-	assert(argp_first >= stack_region->start);
-	assert(argp_last <= stack_region->end);
-	assert(argp_last >= stack_region->start);
+		if ((argp_first > stack_region->end) ||
+				(argp_first < stack_region->start))
+			THROW_FATAL(EXP_WRONG_CKPT, "argp_first 0x%x not in stack",
+					argp_first);
+		if ((argp_last > stack_region->end) ||
+				(argp_last < stack_region->start))
+			THROW_FATAL(EXP_WRONG_CKPT, "argp_last 0x%x not in stack",
+					argp_last);
 
-	void * vstack_top = region_data(stack_region);
-	void * vargp_first = argp_first - stack_region->start + vstack_top;
-	void * vargp_last = argp_last - stack_region->start + vstack_top;
+		void * vstack_top = region_data(stack_region);
+		void * vargp_first = argp_first - stack_region->start + vstack_top;
+		void * vargp_last = argp_last - stack_region->start + vstack_top;
 
-	char ** args = NULL;
-	char ** envs = NULL;
-	char * exec_fn = NULL;
-	build_argp(vargp_first, vargp_last, &args, &envs, &exec_fn);
-	assert(args != NULL);
-	assert(envs != NULL);
-	assert(exec_fn != NULL);
+		char * exec_fn = NULL;
+		build_argp(vargp_first, vargp_last, &args, &envs, &exec_fn);
+		set_catched_var(args, args);
+		set_catched_var(envs, envs);
+		assert(args != NULL);
+		assert(envs != NULL);
+		assert(exec_fn != NULL);
 
-	/* execve target and ptrace */
-	CASSERT(REPLAYER, file_exist(exec_fn),
-			"file %s doesn't exist, check your cwd and try again\n", exec_fn);
-	pid_t target_pid = ptrace_execve(args, envs, exec_fn);
+		/* execve target and ptrace */
+		if (!file_exist(exec_fn))
+			THROW_FATAL(EXP_FILE_NOT_FOUND,
+					"file %s doesn't exist, check your cwd and try again\n",
+					exec_fn);
 
-	/* check the position of stack, vdso and libinterp.so */
-	char * maps_data = NULL;
-	maps_data = proc_maps_load(target_pid);
-	if (maps_data == NULL)
-		goto errout;
+		/* execve target process */
+		set_catched_var(target_pid, ptrace_execve(args, envs, exec_fn));
 
-	struct proc_mem_region proc_stack;
-	struct proc_mem_region proc_vdso;
-	struct proc_mem_region proc_interp;
+		xfree_null_catched(args);
+		xfree_null_catched(envs);
 
-	if (!proc_maps_find(&proc_stack, "[stack]", maps_data)) {
-		ERROR(REPLAYER, "unable to file \"[stack]\" section in /proc/%d/maps",
-				target_pid);
-		goto err_free_maps;
-	}
+		/* read its '/proc/xxx/maps' */
+		set_catched_var(maps_data, proc_maps_load(target_pid));
 
-	if (!proc_maps_find(&proc_vdso, "[vdso]", maps_data)) {
-		ERROR(REPLAYER, "unable to file \"[vdso]\" section in /proc/%d/maps",
-				target_pid);
-		goto err_free_maps;
-	}
+		/* find sections: [stack], [vdso] and libinterp.so */
+		struct proc_mem_region proc_stack;
+		struct proc_mem_region proc_vdso;
+		struct proc_mem_region proc_interp;
 
-	if (!proc_maps_find(&proc_interp, opts->interp_so_fn, maps_data)) {
-		ERROR(REPLAYER, "unable to file \"%s\" section in /proc/%d/maps",
-				opts->interp_so_fn, target_pid);
-		goto err_free_maps;
-	}
+		proc_maps_find(&proc_stack, "[stack]", maps_data);
+		proc_maps_find(&proc_vdso, "[vdso]", maps_data);
+		proc_maps_find(&proc_interp, opts->interp_so_fn, maps_data);
+		if ((proc_vdso.start != vdso_region->start) ||
+				(proc_vdso.end != vdso_region->end))
+			THROW_FATAL(EXP_WRONG_CKPT, "[vdso] section inconsistent\n");
 
-	if ((proc_vdso.start != vdso_region->start) ||
-			(proc_vdso.end != vdso_region->end)) {
-		ERROR(REPLAYER, "[vdso] section inconsistent\n");
-		goto err_free_maps;
-	}
+		if ((proc_stack.end != stack_region->end))
+			THROW_FATAL(EXP_WRONG_CKPT, "[stack] section inconsistent\n");
 
-	if ((proc_stack.end != stack_region->end)) {
-		ERROR(REPLAYER, "[stack] section inconsistent\n");
-		goto err_free_maps;
+	} FINALLY {
+		get_catched_var(maps_data);
+		get_catched_var(args);
+		get_catched_var(envs);
+		if (maps_data != NULL)
+			proc_maps_free(maps_data);
+		xfree_null(args);
+		xfree_null(envs);
+
+		/* XXXXXXXXXXXXXXX */
+		if (target_pid != -1)
+			ptrace_kill(target_pid);
+		/* XXXXXXXXXXXXXXXX */
+	} CATCH(exp) {
+		get_catched_var(target_pid);
+		if (target_pid != -1)
+			ptrace_kill(target_pid);
+		RETHROW(exp);
 	}
 
 	/* find debug entry in libinterp.so */
 	/* adjust stack */
 	/* detach and continue. */
-
-out:
-	proc_maps_free(maps_data);
-	ptrace_kill(target_pid);
-	return;
-
-err_free_maps:
-	proc_maps_free(maps_data);
-errout:
-	ptrace_kill(target_pid);
-	return;
 }
 
 int
