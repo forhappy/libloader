@@ -28,15 +28,12 @@ ptrace_kill(pid_t target);
 extern void
 ptrace_detach(pid_t target);
 
-extern struct user_regs_struct
-ptrace_peekuser(pid_t target);
+/* return the esp */
+extern uintptr_t
+ptrace_push(pid_t target, const void * data, int len, bool_t save_esp);
 
 extern void
-ptrace_pokeuser(pid_t target, struct user_regs_struct s);
-
-/* return the esp */
-extern uint32_t
-ptrace_push(pid_t target, const void * data, int len, bool_t save_esp);
+ptrace_seteip(pid_t target, uintptr_t eip);
 
 #endif
 

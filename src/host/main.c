@@ -197,28 +197,37 @@ do_recover(struct opts * opts)
 		proc_maps_find(&proc_interp, opts->interp_so_fn, maps_data);
 		if ((proc_vdso.start != vdso_region->start) ||
 				(proc_vdso.end != vdso_region->end))
-			THROW_FATAL(EXP_WRONG_CKPT, "[vdso] section inconsistent\n");
-
+			THROW_FATAL(EXP_WRONG_CKPT, "[vdso] section inconsistent");
 		if ((proc_stack.end != stack_region->end))
-			THROW_FATAL(EXP_WRONG_CKPT, "[stack] section inconsistent\n");
+			THROW_FATAL(EXP_WRONG_CKPT, "[stack] section inconsistent");
+
+		/* compare contents of libinterp.so: only the non-writable section */
+		if (proc_vdso.prot != (PROT_READ | PROT_EXEC))
+			THROW_FATAL(EXP_WRONG_CKPT,
+					"interp section's pretection bits inconsistent");
 
 	} FINALLY {
 		get_catched_var(maps_data);
 		get_catched_var(args);
 		get_catched_var(envs);
+		get_catched_var(target_pid);
 		if (maps_data != NULL)
 			proc_maps_free(maps_data);
 		xfree_null(args);
 		xfree_null(envs);
 
 		/* XXXXXXXXXXXXXXX */
-		if (target_pid != -1)
+		if (target_pid != -1) {
 			ptrace_kill(target_pid);
+			target_pid = -1;
+		}
 		/* XXXXXXXXXXXXXXXX */
 	} CATCH(exp) {
 		get_catched_var(target_pid);
-		if (target_pid != -1)
+		if (target_pid != -1) {
 			ptrace_kill(target_pid);
+			target_pid = -1;
+		}
 		RETHROW(exp);
 	}
 

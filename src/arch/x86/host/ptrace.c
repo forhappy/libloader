@@ -114,5 +114,62 @@ ptrace_execve(char ** argv, char ** env, char * exec_fn)
 	return pid;
 }
 
+void
+ptrace_dupmem(pid_t pid, void * dst, uintptr_t addr, int len)
+{
+	assert(dst != NULL);
+
+#if 0
+	assert(child_pid != -1);
+	assert(dst != NULL);
+
+	uintptr_t target_start, target_end;
+	target_start = (addr + 3) & 0xfffffffcul;
+	target_end = (addr + len) & 0xfffffffcul;
+
+	uintptr_t target_ptr = target_start;
+	uint32_t * dst_ptr = (uint32_t*)(dst + (target_start - addr));
+
+	while (target_ptr < target_end) {
+		long val;
+		val = ptrace(PTRACE_PEEKDATA, child_pid, target_ptr, NULL);
+		ETHROW("ptrace peek data failed: %s", 
+				strerror(errno));
+		(*(uint32_t*)(dst_ptr)) = val;
+		dst_ptr ++;
+		target_ptr += 4;
+	}
+
+	if (target_start != addr) {
+		/* head fragment */
+		uintptr_t target_frag = addr & 0xfffffffcul;
+		long val = ptrace(PTRACE_PEEKDATA, child_pid, target_frag, NULL);
+		uint8_t * ptr = (uint8_t*)&val;
+		int i = addr - target_frag;
+		int j = 0;
+		for (; (i < 4) && (j < len); i++, j++)
+			((uint8_t*)dst)[j] = ptr[i];
+	}
+
+	if (target_end != addr + len) {
+		if (((addr + len) & 0xfffffffcul) >= addr) {
+			/* tail fragment */
+			uintptr_t tail_frag = target_end;
+			long val = ptrace(PTRACE_PEEKDATA, child_pid, tail_frag, NULL);
+			uint8_t * ptr = (uint8_t*)&val;
+			int i = 0;
+			int j = target_end - addr;
+			for (; j < len; i++, j++) {
+				if (j < 0)
+					continue;
+				((uint8_t*)dst)[j] = ptr[i];
+			}
+		}
+	}
+	return;
+#endif
+}
+
+
 // vim:ts=4:sw=4
 
