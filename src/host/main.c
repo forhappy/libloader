@@ -8,8 +8,15 @@
 #include <common/defs.h>
 #include <common/debug.h>
 #include <common/assert.h>
+
 #include <interp/checkpoint.h>
 #include <host/snitchaser_opts.h>
+#include <host/ptrace.h>
+#include <host/procmaps.h>
+#include <host/exception.h>
+#include <host/mm.h>
+#include <host/elf.h>
+
 #include <sys/stat.h>
 #include <sys/ptrace.h>
 #include <sys/mman.h>
@@ -17,12 +24,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdio.h>
 #include <stdlib.h>
-
-#include <host/ptrace.h>
-#include <host/procmaps.h>
-#include <host/exception.h>
-#include <host/mm.h>
 
 static bool_t
 file_exist(const char * fn)
@@ -132,6 +135,24 @@ build_argp(void * vargp_start, void * vargp_last,
 }
 
 static void
+compare_section(uintptr_t start, uintptr_t end, pid_t pid, void * ref)
+{
+	catch_var(void *, tmp_ptr, NULL);
+	define_exp(exp);
+	TRY(exp) {
+		int sz = end - start;
+		set_catched_var(tmp_ptr, xmalloc(sz));
+		assert(tmp_ptr != NULL);
+		ptrace_dupmem(pid, tmp_ptr, start, sz);
+		if (memcmp(tmp_ptr, ref, sz) != 0)
+			THROW_FATAL(EXP_WRONG_CKPT, "libinterp.so inconsistent");
+	} FINALLY {
+		get_catched_var(tmp_ptr);
+		xfree_null(tmp_ptr);
+	} NO_CATCH(exp);
+}
+
+static void
 do_recover(struct opts * opts)
 {
 	/* load checkpoint file, extract command line and env */
@@ -146,6 +167,8 @@ do_recover(struct opts * opts)
 
 		struct mem_region * stack_region = find_region(&phead[1], "[stack]");
 		struct mem_region * vdso_region = find_region(&phead[1], "[vdso]");
+		struct mem_region * interp_region = find_region(&phead[1],
+				opts->interp_so_full_name);
 
 		/* extract cmd line and env */
 		uintptr_t argp_first = phead->argp_first;
@@ -194,7 +217,7 @@ do_recover(struct opts * opts)
 
 		proc_maps_find(&proc_stack, "[stack]", maps_data);
 		proc_maps_find(&proc_vdso, "[vdso]", maps_data);
-		proc_maps_find(&proc_interp, opts->interp_so_fn, maps_data);
+		proc_maps_find(&proc_interp, opts->interp_so_full_name, maps_data);
 		if ((proc_vdso.start != vdso_region->start) ||
 				(proc_vdso.end != vdso_region->end))
 			THROW_FATAL(EXP_WRONG_CKPT, "[vdso] section inconsistent");
@@ -205,7 +228,18 @@ do_recover(struct opts * opts)
 		if (proc_vdso.prot != (PROT_READ | PROT_EXEC))
 			THROW_FATAL(EXP_WRONG_CKPT,
 					"interp section's pretection bits inconsistent");
+		compare_section(proc_interp.start, proc_interp.end,
+				target_pid, region_data(interp_region));
+		TRACE(REPLAYER, "libinterp is consistent\n");
 
+		/* find the debug symbol */
+		uintptr_t entry = elf_find_symbol(opts->interp_so_full_name,
+				proc_interp.start, DEBUG_ENTRY_STR);
+
+		TRACE(REPLAYER, "debug entry at 0x%x\n", entry);
+
+		/* adjust stack */
+		/* detach and continue. */
 	} FINALLY {
 		get_catched_var(maps_data);
 		get_catched_var(args);
@@ -219,7 +253,7 @@ do_recover(struct opts * opts)
 		/* XXXXXXXXXXXXXXX */
 		if (target_pid != -1) {
 			ptrace_kill(target_pid);
-			target_pid = -1;
+			set_catched_var(target_pid, -1);
 		}
 		/* XXXXXXXXXXXXXXXX */
 	} CATCH(exp) {
@@ -231,9 +265,54 @@ do_recover(struct opts * opts)
 		RETHROW(exp);
 	}
 
-	/* find debug entry in libinterp.so */
-	/* adjust stack */
-	/* detach and continue. */
+}
+
+
+static char *
+readlink_malloc(const char *filename)
+{
+	int size = 100;
+	catch_var(char *, buffer, NULL);
+	define_exp(exp);
+	TRY(exp) {
+		set_catched_var(buffer, xrealloc(buffer, size));
+		assert(buffer != NULL);
+		memset(buffer, '\0', size);
+		int nchars = readlink(filename, buffer, size);
+		if (nchars < 0)
+			THROW_FATAL(EXP_UNCATCHABLE, "readlink failed");
+		if (nchars < size)
+			break;
+		size *= 2;
+	} FINALLY {
+	} CATCH(exp) {
+		get_catched_var(buffer);
+		xfree_null(buffer);
+		RETHROW(exp);
+	}
+	return buffer;
+}
+
+static const char *
+get_full_name(const char * fn)
+{
+	const char * full_name = NULL;
+	define_exp(exp);
+	catch_var(int, fd, -1);
+	TRY(exp) {
+		set_catched_var(fd, open(fn, O_RDONLY));
+		if (fd < 0)
+			THROW_FATAL(EXP_PROC_MAPS, "open file %s failed", fn);
+		char proc_fd_name[64];
+		snprintf(proc_fd_name, 64, "/proc/self/fd/%d", fd);
+		full_name = readlink_malloc(proc_fd_name);
+		assert(full_name != NULL);
+	} FINALLY {
+		get_catched_var(fd);
+		if (fd != -1)
+			close(fd);
+	} NO_CATCH(exp);
+	return full_name;
 }
 
 int
@@ -250,7 +329,29 @@ main(int argc, char * argv[])
 	CASSERT(REPLAYER, file_exist(opts->interp_so_fn),
 			"interp so file (-i) %s doesn't exist\n", opts->interp_so_fn);
 
-	do_recover(opts);
+	catch_var(const char *, interp_so_full_name, NULL);
+	catch_var(const char *, pthread_so_full_name, NULL);
+	define_exp(exp);
+	TRY(exp) {
+		set_catched_var(interp_so_full_name,
+				get_full_name(opts->interp_so_fn));
+		set_catched_var(pthread_so_full_name,
+				get_full_name(opts->pthread_so_fn));
+		opts->interp_so_full_name = interp_so_full_name;
+		opts->pthread_so_full_name = pthread_so_full_name;
+
+		do_recover(opts);
+
+	} FINALLY {
+		get_catched_var(interp_so_full_name);
+		get_catched_var(pthread_so_full_name);
+		if (interp_so_full_name != NULL)
+			xfree_null(interp_so_full_name);
+		if (pthread_so_full_name != NULL)
+			xfree_null(pthread_so_full_name);
+	} CATCH(exp) {
+		RETHROW(exp);
+	}
 
 	return 0;
 }

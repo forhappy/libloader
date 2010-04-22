@@ -122,6 +122,19 @@ struct elf32_phdr {
 	Elf32_Word p_align;
 };
 
+struct elf32_shdr {
+	Elf32_Word	sh_name;		/* Section name (string tbl index) */
+	Elf32_Word	sh_type;		/* Section type */
+	Elf32_Word	sh_flags;		/* Section flags */
+	Elf32_Addr	sh_addr;		/* Section virtual addr at execution */
+	Elf32_Off	sh_offset;		/* Section file offset */
+	Elf32_Word	sh_size;		/* Section size in bytes */
+	Elf32_Word	sh_link;		/* Link to another section */
+	Elf32_Word	sh_info;		/* Additional section information */
+	Elf32_Word	sh_addralign;		/* Section alignment */
+	Elf32_Word	sh_entsize;		/* Entry size if section holds table */
+};
+
 #define PT_NULL    0
 #define PT_LOAD    1
 #define PT_DYNAMIC 2
@@ -158,4 +171,6 @@ load_elf(const char * fn, void ** p_load_bias,
 		struct elf32_phdr ** ppuser_phdrs,
 		int * p_nr_user_phdrs);
 #endif
+
+// vim:ts=4:sw=4
 

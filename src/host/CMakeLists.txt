@@ -7,6 +7,7 @@ SET(SRC
 	exception.h
 	exception.c
 	mm.h
+	elf.h
 	)
 
 ADD_EXECUTABLE(snitchaser ${SRC})

@@ -10,6 +10,8 @@
 #include <common/defs.h>
 #include <common/debug.h>
 #include <host/exception.h>
+#include <stdlib.h>
+
 
 #define xmalloc(___sz)	({	\
 		void * ___ptr;		\

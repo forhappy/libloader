@@ -4,6 +4,7 @@
  */
 
 #include <asm_offsets.h>
+#include <config.h>
 
 .globl _start
 _start:
@@ -59,4 +60,10 @@ _xstart:
 	/* begin running */
 	2:	/* ret to its original entry */
 	ret
+
+.globl DEBUG_ENTRY
+DEBUG_ENTRY:
+	movl $1, %eax
+	int $0x80
+
 

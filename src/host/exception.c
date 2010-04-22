@@ -20,11 +20,11 @@ static const char * exception_names[] = {
 };
 
 static const char * exception_level_names[] DEBUG_DEF = {
-	[EXP_LV_NONE] = "system is okay",
-	[EXP_LV_LOWEST] = "system is safe",
-	[EXP_LV_TAINTED] = "system is tainted",
-	[EXP_LV_FATAL] = "system is in dangerous",
-	[EXP_LV_UNCATCHABLE] = "system is dead",
+	[EXP_LV_NONE] = "program is okay",
+	[EXP_LV_LOWEST] = "program is safe",
+	[EXP_LV_TAINTED] = "program is tainted",
+	[EXP_LV_FATAL] = "program is unable to continue",
+	[EXP_LV_UNCATCHABLE] = "program is dead",
 };
 
 /* 5 states of the catcher:

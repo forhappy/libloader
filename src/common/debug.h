@@ -37,6 +37,7 @@ enum __debug_component {
 	REPLAYER,
 	PTRACE,
 	PROCMAPS,
+	ELF,
 	NR_DEBUG_COMPONENTS,
 };
 
@@ -69,6 +70,7 @@ __debug_component_names[NR_DEBUG_COMPONENTS] = {
 	[REPLAYER]	= "REP",
 	[PTRACE]	= "TRC",
 	[PROCMAPS]	= "MAP",
+	[ELF]		= "ELF",
 };
 #endif
 
@@ -88,6 +90,7 @@ __debug_component_levels[NR_DEBUG_COMPONENTS] = {
 	[REPLAYER]	= DBG_LV_TRACE,
 	[PTRACE]	= DBG_LV_TRACE,
 	[PROCMAPS]	= DBG_LV_TRACE,
+	[ELF]		= DBG_LV_TRACE,
 };
 
 #endif

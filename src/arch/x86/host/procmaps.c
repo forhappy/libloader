@@ -61,28 +61,6 @@ proc_maps_free(char * buf)
 	xfree(buf);
 }
 
-
-static char *
-readlink_malloc (const char *filename)
-{
-	int size = 100;
-	char *buffer = NULL;
-
-	while (1) {
-		buffer = (char *) xrealloc (buffer, size);
-		assert(buffer != NULL);
-		memset(buffer, '\0', size);
-		int nchars = readlink (filename, buffer, size);
-		if (nchars < 0) {
-			xfree(buffer);
-			return NULL;
-		}
-		if (nchars < size)
-			return buffer;
-		size *= 2;
-	}
-}
-
 /* 
  * return value: start address of the next line.
  * if this is the last line, return NULL.
@@ -146,48 +124,24 @@ proc_maps_find(struct proc_mem_region * preg,
 	assert(file_name != NULL);
 	assert(preg != NULL);
 
-	char * full_name = (char*)file_name;
-	if (file_name[0] != '[') {
-		/* get the full name of the file */
-		int fd = open(file_name, O_RDONLY);
-		if (fd < 0)
-			THROW_FATAL(EXP_PROC_MAPS, "open file %s failed: %s\n",
-					file_name, strerror(errno));
+	char * fn;
+	char * line = proc_data;
+	struct proc_mem_region reg;
+	bool_t found = FALSE;
 
-		char proc_fd_name[64];
-		snprintf(proc_fd_name, 64, "/proc/self/fd/%d", fd);
-		full_name = readlink_malloc(proc_fd_name);
-		assert(full_name != NULL);
-		close(fd);
-	}
-	TRACE(PROCMAPS, "full name of target file is %s\n", full_name);
-
-	define_exp(exp);
-	TRY(exp) {
-		char * fn;
-		char * line = proc_data;
-		struct proc_mem_region reg;
-		bool_t found = FALSE;
-
-		while (line != NULL) {
-			line = read_procmem_line(line, &reg, &fn);
-			if (strcmp(fn, full_name) == 0) {
-				*preg = reg;
-				found = TRUE;
-				TRACE(PROCMAPS, "found %s at 0x%x--0x%x\n",
-						full_name, reg.start, reg.end);
-				break;
-			}
+	while (line != NULL) {
+		line = read_procmem_line(line, &reg, &fn);
+		if (strcmp(fn, file_name) == 0) {
+			*preg = reg;
+			found = TRUE;
+			TRACE(PROCMAPS, "found %s at 0x%x--0x%x\n",
+					file_name, reg.start, reg.end);
+			break;
 		}
-		if (!found)
-			THROW_FATAL(EXP_PROC_MAPS, "unable to find mapping of %s\n",
-					full_name);
-	} FINALLY {
-		if (full_name != file_name)
-			xfree(full_name);
-	} CATCH(exp) {
-		RETHROW(exp);
 	}
+	if (!found)
+		THROW_FATAL(EXP_PROC_MAPS, "unable to find mapping of %s\n",
+				file_name);
 }
 
 // vim:ts=4:sw=4

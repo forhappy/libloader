@@ -119,57 +119,38 @@ ptrace_dupmem(pid_t pid, void * dst, uintptr_t addr, int len)
 {
 	assert(dst != NULL);
 
-#if 0
-	assert(child_pid != -1);
-	assert(dst != NULL);
-
+#define LONGSZ	sizeof(long)
 	uintptr_t target_start, target_end;
-	target_start = (addr + 3) & 0xfffffffcul;
-	target_end = (addr + len) & 0xfffffffcul;
+	target_start = ALIGN_DOWN_PTR(addr, LONGSZ);
+	target_end = ALIGN_UP_PTR(addr + len, LONGSZ);
 
-	uintptr_t target_ptr = target_start;
-	uint32_t * dst_ptr = (uint32_t*)(dst + (target_start - addr));
+	int tmp_sz = target_end - target_start;
+	assert(tmp_sz >= (int)LONGSZ);
 
-	while (target_ptr < target_end) {
-		long val;
-		val = ptrace(PTRACE_PEEKDATA, child_pid, target_ptr, NULL);
-		ETHROW("ptrace peek data failed: %s", 
-				strerror(errno));
-		(*(uint32_t*)(dst_ptr)) = val;
-		dst_ptr ++;
-		target_ptr += 4;
-	}
-
-	if (target_start != addr) {
-		/* head fragment */
-		uintptr_t target_frag = addr & 0xfffffffcul;
-		long val = ptrace(PTRACE_PEEKDATA, child_pid, target_frag, NULL);
-		uint8_t * ptr = (uint8_t*)&val;
-		int i = addr - target_frag;
-		int j = 0;
-		for (; (i < 4) && (j < len); i++, j++)
-			((uint8_t*)dst)[j] = ptr[i];
-	}
-
-	if (target_end != addr + len) {
-		if (((addr + len) & 0xfffffffcul) >= addr) {
-			/* tail fragment */
-			uintptr_t tail_frag = target_end;
-			long val = ptrace(PTRACE_PEEKDATA, child_pid, tail_frag, NULL);
-			uint8_t * ptr = (uint8_t*)&val;
-			int i = 0;
-			int j = target_end - addr;
-			for (; j < len; i++, j++) {
-				if (j < 0)
-					continue;
-				((uint8_t*)dst)[j] = ptr[i];
-			}
+	define_exp(exp);
+	catch_var(void *, tmp_ptr, NULL);
+	TRY(exp) {
+		set_catched_var(tmp_ptr, xmalloc(target_end - target_start));
+		uintptr_t target_ptr = target_start;
+		long * dst_ptr = tmp_ptr;
+		errno = 0;
+		while (target_ptr < target_end) {
+			long val;
+			val = ptrace(PTRACE_PEEKDATA, pid, target_ptr, NULL);
+			if (errno != 0)
+				THROW_FATAL(EXP_PTRACE, "peek data failed: %s", strerror(errno));
+			*dst_ptr = val;
+			dst_ptr ++;
+			target_ptr += LONGSZ;
 		}
+		memcpy(dst, tmp_ptr + (addr - target_start), len);
+	} FINALLY {
+		get_catched_var(tmp_ptr);
+		xfree(tmp_ptr);
+	} CATCH(exp) {
+		RETHROW(exp);
 	}
-	return;
-#endif
 }
-
 
 // vim:ts=4:sw=4
 
