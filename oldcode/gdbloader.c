@@ -299,11 +299,11 @@ gdbloader_main(const char * target_fn)
 	 * will try to use libthread_db to retrive thread-local info.
 	 * some data, like `errno', is TLS and need those info.
 	 *
-	 * When gdb do the work, it use ptrace to peek memory from target image.
+	 * When gdb does the work, it use ptrace to peek memory from target image.
 	 * so gdb will see the original thread info, the tid is different from
 	 * current pid, therefore gdb will think there are at least 2 threads and
 	 * then it will try to attach to the 'old' one and definitely fail. When this
-	 * failure occure, gdb print a warning message.
+	 * failure occures, gdb print a warning message.
 	 *
 	 * We have 2 ways to solve this problem:
 	 *

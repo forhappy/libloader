@@ -253,6 +253,14 @@ ATTR(format(printf, 4, 5))
 
 #define THROWS(...)
 
+#define CTHROW_FATAL(___cond, ___exp, ___msg...) do { \
+	if (!(___cond))		\
+		THROW_FATAL((___exp), ___msg);\
+} while(0)
+
+#define ETHROW_FATAL(___exp, ___msg...) \
+		CTHROW_FATAL(errno == 0, ___exp, ___msg)
+
 __END_DECLS
 #endif
 // vim:ts=4:sw=4:cino=l1,\:0

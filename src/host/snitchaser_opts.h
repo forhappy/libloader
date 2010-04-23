@@ -12,8 +12,8 @@ struct opts {
 	char * ckpt_fn;
 	const char * interp_so_full_name;		/* set according to interp_so_fn */
 	const char * pthread_so_full_name;	/* set according to pthread_so_fn */
-	int fix_pthread_tid;	/* whether to fix libpthread's tid, for gdbloader only */
 	int cmd_idx;
+	int read_ckpt;
 };
 
 struct opts *

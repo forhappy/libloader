@@ -27,21 +27,24 @@ static struct argp_option options[] = {
 		0},
 	{"ckptfn",		'c', "checkpoint filename", 0,
 		"set checkpoint file name", 0},
-	{"no-fix-pthread",	-1, NULL, 0,
-		"don't fix libpthreaed tid and pid", 0},
+	{"readckpt",	'r', NULL, 0,
+		"don't run target exec, only read and check ckpt", 0},
 	{NULL, '\0', NULL, 0, NULL, 0},
 };
 
 static struct opts opts = {
 	.pthread_so_fn	= "/lib/libpthread.so.0",
 	.ckpt_fn	= NULL,
-	.fix_pthread_tid = 1,
+	.read_ckpt	= 0,
 };
 
 static error_t
 parse_opt(int key, char *arg, struct argp_state *state ATTR(unused))
 {
 	switch (key) {
+	case 'r':
+		opts.read_ckpt = 1;
+		return 0;
 	case 'i':
 		opts.interp_so_fn = arg;
 		return 0;
@@ -50,9 +53,6 @@ parse_opt(int key, char *arg, struct argp_state *state ATTR(unused))
 		return 0;
 	case 'c':
 		opts.ckpt_fn = arg;
-		return 0;
-	case -1:
-		opts.fix_pthread_tid = 0;
 		return 0;
 	case ARGP_KEY_END:
 		return 0;

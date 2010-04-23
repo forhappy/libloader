@@ -17,10 +17,10 @@ extern pid_t
 ptrace_execve(char ** argv, char ** environ, char * exec_fn);
 
 extern void
-ptrace_dupmem(pid_t target, void * dst, uintptr_t addr, int len);
+ptrace_dupmem(pid_t target, void * dst, uintptr_t addr, size_t len);
 
 extern void
-ptrace_updmem(pid_t target, const void * src, uintptr_t addr, int len);
+ptrace_updmem(pid_t target, const void * src, uintptr_t addr, size_t len);
 
 extern void
 ptrace_kill(pid_t target);
@@ -30,10 +30,10 @@ ptrace_detach(pid_t target);
 
 /* return the esp */
 extern uintptr_t
-ptrace_push(pid_t target, const void * data, int len, bool_t save_esp);
+ptrace_push(pid_t target, const void * data, size_t len);
 
 extern void
-ptrace_seteip(pid_t target, uintptr_t eip);
+ptrace_goto(pid_t target, uintptr_t eip);
 
 #endif
 

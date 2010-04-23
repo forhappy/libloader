@@ -70,7 +70,7 @@ elf_find_symbol(const char * elf_fn, ptrdiff_t load_bias, const char * name)
 	if (found)
 		return ret;
 	else
-		THROW_FATAL(EXP_ELF, "unable to find '%s' in '%s'\n",
+		THROW(EXP_ELF_SYMBOL_NOT_FOUND, "unable to find '%s' in '%s'\n",
 				name, elf_fn);
 }
 

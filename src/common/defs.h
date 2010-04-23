@@ -120,6 +120,7 @@ _strtok(const char * str, char tok)
 # define likely(x)	__builtin_expect(!!(x), 1)
 # define unlikely(x)	__builtin_expect(!!(x), 0)
 
+#define ATTR_UNUSED	ATTR(unused)
 #ifdef SNITCHASER_DEBUG
 # define DEBUG_ARG
 # define DEBUG_DEF

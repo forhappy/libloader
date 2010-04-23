@@ -8,6 +8,7 @@
 #include <host/exception.h>
 #include <host/mm.h>
 #include <common/debug.h>
+#include <common/defs.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,8 +36,7 @@ wait_and_check(pid_t pid)
 	signal(SIGINT, SIG_DFL);
 	TRACE(PTRACE, "wait over\n");
 
-	if (err < 0)
-		THROW_FATAL(EXP_PTRACE, "wait failed: %s", strerror(errno));
+	CTHROW_FATAL(err >= 0, EXP_PTRACE, "wait failed: %s", strerror(errno));
 
 	/* Check for siginfo */
 	if (si.si_code != CLD_TRAPPED) {
@@ -71,8 +71,8 @@ ptrace_execve(char ** argv, char ** env, char * exec_fn)
 	define_exp(exp);
 	TRY(exp) {
 		set_catched_var(pid, fork());
-		if (pid < 0)
-			THROW_FATAL(EXP_PTRACE, "fork failed: %s\n", strerror(errno));
+		CTHROW_FATAL(pid >= 0, EXP_PTRACE, "fork failed: %s\n",
+				strerror(errno));
 		if (pid == 0) {
 			/* child process */
 			err = personality(0xffffffffUL);
@@ -80,7 +80,7 @@ ptrace_execve(char ** argv, char ** env, char * exec_fn)
 			assert(err != -1);
 
 			err = ptrace(PTRACE_TRACEME, getpid(), NULL, NULL);
-			CASSERT(PTRACE, err != -1, "traceme failed: %s", strerror(errno));
+			CASSERT(PTRACE, errno == 0, "traceme failed: %s", strerror(errno));
 
 			err = execve(exec_fn, argv, env);
 			/* we shouldn't get here! */
@@ -101,8 +101,7 @@ ptrace_execve(char ** argv, char ** env, char * exec_fn)
 		 * ...
 		 * */
 		err = ptrace(PTRACE_SETOPTIONS, pid, 0, PTRACE_O_TRACESYSGOOD);
-		if (err == -1)
-			THROW_FATAL(EXP_PTRACE, "ptrace_setoptions failed: %s",
+		CTHROW_FATAL(err != -1, EXP_PTRACE, "ptrace_setoptions failed: %s",
 					strerror(errno));
 	} FINALLY {
 	} CATCH(exp) {
@@ -115,7 +114,7 @@ ptrace_execve(char ** argv, char ** env, char * exec_fn)
 }
 
 void
-ptrace_dupmem(pid_t pid, void * dst, uintptr_t addr, int len)
+ptrace_dupmem(pid_t pid, void * dst, uintptr_t addr, size_t len)
 {
 	assert(dst != NULL);
 
@@ -137,8 +136,7 @@ ptrace_dupmem(pid_t pid, void * dst, uintptr_t addr, int len)
 		while (target_ptr < target_end) {
 			long val;
 			val = ptrace(PTRACE_PEEKDATA, pid, target_ptr, NULL);
-			if (errno != 0)
-				THROW_FATAL(EXP_PTRACE, "peek data failed: %s", strerror(errno));
+			ETHROW_FATAL(EXP_PTRACE, "peek data failed: %s", strerror(errno));
 			*dst_ptr = val;
 			dst_ptr ++;
 			target_ptr += LONGSZ;
@@ -150,6 +148,109 @@ ptrace_dupmem(pid_t pid, void * dst, uintptr_t addr, int len)
 	} CATCH(exp) {
 		RETHROW(exp);
 	}
+}
+
+void
+ptrace_updmem(pid_t pid, const void * src, uintptr_t addr, size_t len)
+{
+	assert(pid > 0);
+	assert(src != NULL);
+	if (len == 0)
+		return;
+
+	const void * src_end = src + len;
+
+	errno = 0;
+	/* first, get the head fragment and upload data */
+	if (addr % LONGSZ != 0) {
+		/* we have head fragment */
+		uintptr_t frag_word = ALIGN_DOWN_PTR(addr, LONGSZ);
+		int offset = addr % LONGSZ;
+		/* dup the frag word */
+		long val = ptrace(PTRACE_PEEKDATA, pid, frag_word, NULL);
+		ETHROW_FATAL(EXP_PTRACE, "peek data failed: %s", strerror(errno));
+
+		/* fill fragment */
+		int cp_len = min(len, LONGSZ - offset);
+		memcpy((void*)(&val) + offset, src, cp_len);
+
+		/* push back */
+		ptrace(PTRACE_POKEDATA, pid, frag_word, val);
+		ETHROW_FATAL(EXP_PTRACE, "poke data failed: %s", strerror(errno));
+
+		/* adjust src and addr */
+		src += cp_len;
+		addr += cp_len;
+		len -= cp_len;
+	}
+
+	if (len == 0)
+		return;
+
+	assert(addr % LONGSZ == 0);
+
+	/* then, fill its main contents */
+	uintptr_t from = addr;
+	uintptr_t to = ALIGN_DOWN_PTR(addr + len, LONGSZ);
+	uintptr_t ptr = from;
+	while (ptr < to) {
+		long val = *((long *)(src));
+		ptrace(PTRACE_POKEDATA, pid, ptr, val);
+		ETHROW_FATAL(EXP_PTRACE, "poke data failed: %s", strerror(errno));
+		src += LONGSZ;
+		ptr += LONGSZ;
+		len -= LONGSZ;
+	}
+
+	/* finally, fill the tail fragment */
+	if (src != src_end) {
+		assert(src < src_end);
+		/* peek frag */
+		/* dup the frag word */
+		long val = ptrace(PTRACE_PEEKDATA, pid, ptr, NULL);
+		ETHROW_FATAL(EXP_PTRACE, "peek data failed: %s", strerror(errno));
+		memcpy(&val, src, src_end - src);
+		/* poke val back */
+		ptrace(PTRACE_POKEDATA, pid, ptr, val);
+		ETHROW_FATAL(EXP_PTRACE, "poke data failed: %s", strerror(errno));
+	}
+	return;
+}
+
+uintptr_t
+ptrace_push(pid_t pid, const void * data, size_t len)
+{
+	errno = 0;
+	uintptr_t esp = ptrace(PTRACE_PEEKUSER, pid,
+			(void*)(offsetof(struct user_regs_struct, esp)), NULL);
+	ETHROW_FATAL(EXP_PTRACE, "peekuser failed");
+
+	size_t real_len = ALIGN_UP(len, 4);
+	esp -= real_len;
+	ptrace_updmem(pid, data, esp, real_len);
+
+	ptrace(PTRACE_POKEUSER, pid,
+			(void*)(offsetof(struct user_regs_struct, esp)), esp);
+	ETHROW_FATAL(EXP_PTRACE, "reset esp failed\n");
+	return esp;
+}
+
+void
+ptrace_goto(pid_t pid, uintptr_t eip)
+{
+	ptrace(PTRACE_POKEUSER, pid,
+			(void*)offsetof(struct user_regs_struct, eip),
+			eip);
+	ETHROW_FATAL(EXP_PTRACE, "error in setting eip: %s",
+			strerror(errno));
+	return;
+}
+
+void
+ptrace_detach(pid_t pid)
+{
+	ptrace(PTRACE_DETACH, pid, NULL, NULL);
+	ETHROW_FATAL(EXP_PTRACE, "cannot detach: %s", strerror(errno));
 }
 
 // vim:ts=4:sw=4

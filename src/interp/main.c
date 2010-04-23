@@ -73,6 +73,9 @@ xmain(struct pusha_regs regs, uintptr_t unused ATTR(unused),
 
 	char ** argv = &argv0;
 
+	char * argp_first = argv[0];
+	char * argp_last = argv[argc - 1];
+
 	load_auxv(oldesp);
 
 	int esp_add = 0;
@@ -88,8 +91,8 @@ xmain(struct pusha_regs regs, uintptr_t unused ATTR(unused),
 			tpd->pid, tpd->tid);
 
 	/* set argp_start */
-	tpd->argp_first = (uintptr_t)(argv[0]);
-	tpd->argp_last = (uintptr_t)(argv[argc - 1]);
+	tpd->argp_first = (uintptr_t)argp_first;
+	tpd->argp_last = (uintptr_t)argp_last;
 	assert(argv[argc] == NULL);
 
 	/* for debug use */

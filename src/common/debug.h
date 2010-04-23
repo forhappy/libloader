@@ -144,8 +144,8 @@ dbg_fatal(void) ATTR(noreturn);
 	dbg_output(DBG_LV_FATAL, __VA_ARGS__); \
 	dbg_fatal();	\
 }while(0)
-#define FATAL_MSG(...)	dbg_output(DBG_LV_FATAL, __VA_ARGS__)
-#define FORCE(...)	dbg_output(DBG_LV_FORCE, __VA_ARGS__)
+#define FATAL_MSG(c, ...)	dbg_output(DBG_LV_FATAL, __VA_ARGS__)
+#define FORCE(c, ...)	dbg_output(DBG_LV_FORCE, __VA_ARGS__)
 
 #endif
 

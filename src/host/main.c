@@ -88,7 +88,7 @@ find_region(void * ptr, const char * fn)
 			return r;
 		ptr = next_region(r);
 	}
-	THROW_FATAL(EXP_WRONG_CKPT, "checkpoint error: miss region \"%s\"", fn);
+	THROW(EXP_CKPT_REGION_NOT_FOUND, "checkpoint error: miss region \"%s\"", fn);
 }
 
 static void
@@ -153,6 +153,56 @@ compare_section(uintptr_t start, uintptr_t end, pid_t pid, void * ref)
 }
 
 static void
+fix_pthread(const char * pthread_fn, void * regions,
+		uintptr_t * pp__stack_user, uintptr_t * ppstack_used)
+{
+	assert(pthread_fn != NULL);
+	assert(regions != NULL);
+	assert(pp__stack_user != NULL);
+	assert(ppstack_used != NULL);
+	define_exp(exp);
+	TRY(exp) {
+		struct mem_region * region = find_region(regions, pthread_fn);
+		assert(region != NULL);
+
+		uintptr_t load_bias = region->start;
+		uintptr_t p__stack_user = elf_find_symbol(pthread_fn,
+				load_bias, "__stack_user");
+		uintptr_t pstack_used = elf_find_symbol(pthread_fn,
+				load_bias, "stack_used");
+		*pp__stack_user = p__stack_user;
+		*ppstack_used = pstack_used;
+	} FINALLY {
+
+	} CATCH(exp) {
+		switch (exp.type) {
+		case EXP_CKPT_REGION_NOT_FOUND:
+			VERBOSE(REPLAYER,
+					"there's no libpthread in ckpt, things is simpler\n");
+			break;
+		default:
+			RETHROW(exp);
+		}
+	}
+}
+
+static void
+do_read_ckpt(struct opts * opts)
+{
+	void * ckpt_img = map_ckpt(opts->ckpt_fn);
+	struct checkpoint_head * phead = check_header(ckpt_img);
+	void * ckpt_regions = &phead[1];
+
+	void * ptr = ckpt_regions;
+	while (*((uint32_t*)(ptr)) != MEM_REGIONS_END_MARK) {
+		struct mem_region * r = ptr;
+		assert(r->end > r->start);
+		printf("%08x-%08x: %s\n", r->start, r->end, r->fn);
+		ptr = next_region(r);
+	}
+}
+
+static void
 do_recover(struct opts * opts)
 {
 	/* load checkpoint file, extract command line and env */
@@ -165,9 +215,13 @@ do_recover(struct opts * opts)
 		void * ckpt_img = map_ckpt(opts->ckpt_fn);
 		struct checkpoint_head * phead = check_header(ckpt_img);
 
-		struct mem_region * stack_region = find_region(&phead[1], "[stack]");
-		struct mem_region * vdso_region = find_region(&phead[1], "[vdso]");
-		struct mem_region * interp_region = find_region(&phead[1],
+		void * ckpt_regions = &phead[1];
+
+		struct mem_region * stack_region = find_region(ckpt_regions,
+				"[stack]");
+		struct mem_region * vdso_region = find_region(ckpt_regions,
+				"[vdso]");
+		struct mem_region * interp_region = find_region(ckpt_regions,
 				opts->interp_so_full_name);
 
 		/* extract cmd line and env */
@@ -200,8 +254,6 @@ do_recover(struct opts * opts)
 			THROW_FATAL(EXP_FILE_NOT_FOUND,
 					"file %s doesn't exist, check your cwd and try again\n",
 					exec_fn);
-
-		/* execve target process */
 		set_catched_var(target_pid, ptrace_execve(args, envs, exec_fn));
 
 		xfree_null_catched(args);
@@ -238,8 +290,35 @@ do_recover(struct opts * opts)
 
 		TRACE(REPLAYER, "debug entry at 0x%x\n", entry);
 
+		/* goto */
+		ptrace_goto(target_pid, entry);
+
+		/* fix pthread */
+		/* the arguments of interp:
+		 * xmain(const char * ckpt_name, const char * pthread_fn,
+		 * 			uintptr_t p__stack_user,
+		 * 			uintptr_t pstack_used)
+		 */
+		uintptr_t p__stack_user = 0;
+		uintptr_t pstack_used = 0;
+		fix_pthread(opts->pthread_so_full_name, ckpt_regions,
+				&p__stack_user, &pstack_used);
+
 		/* adjust stack */
+		uintptr_t pos_pthread_fn = ptrace_push(target_pid,
+				opts->pthread_so_full_name,
+				strlen(opts->pthread_so_full_name) + 1);
+		uintptr_t pos_ckpt_fn = ptrace_push(target_pid,
+				opts->ckpt_fn, strlen(opts->ckpt_fn) + 1);
+
+		ptrace_push(target_pid, &pstack_used, sizeof(pstack_used));
+		ptrace_push(target_pid, &p__stack_user, sizeof(p__stack_user));
+		ptrace_push(target_pid, &pos_pthread_fn, sizeof(pos_pthread_fn));
+		ptrace_push(target_pid, &pos_ckpt_fn, sizeof(pos_ckpt_fn));
+
 		/* detach and continue. */
+		ptrace_detach(target_pid);
+
 	} FINALLY {
 		get_catched_var(maps_data);
 		get_catched_var(args);
@@ -250,21 +329,14 @@ do_recover(struct opts * opts)
 		xfree_null(args);
 		xfree_null(envs);
 
-		/* XXXXXXXXXXXXXXX */
-		if (target_pid != -1) {
-			ptrace_kill(target_pid);
-			set_catched_var(target_pid, -1);
-		}
-		/* XXXXXXXXXXXXXXXX */
 	} CATCH(exp) {
 		get_catched_var(target_pid);
 		if (target_pid != -1) {
 			ptrace_kill(target_pid);
-			target_pid = -1;
+			set_catched_var(target_pid, -1);
 		}
 		RETHROW(exp);
 	}
-
 }
 
 
@@ -322,7 +394,6 @@ main(int argc, char * argv[])
 	/* check opts */
 	TRACE(REPLAYER, "target checkpoint: %s\n", opts->ckpt_fn);
 	TRACE(REPLAYER, "pthread_so_fn: %s\n", opts->pthread_so_fn);
-	TRACE(REPLAYER, "fix_pthread_tid: %d\n", opts->fix_pthread_tid);
 
 	CASSERT(REPLAYER, file_exist(opts->ckpt_fn),
 			"checkpoint file (-c) %s doesn't exist\n", opts->ckpt_fn);
@@ -339,6 +410,11 @@ main(int argc, char * argv[])
 				get_full_name(opts->pthread_so_fn));
 		opts->interp_so_full_name = interp_so_full_name;
 		opts->pthread_so_full_name = pthread_so_full_name;
+
+		if (opts->read_ckpt) {
+			do_read_ckpt(opts);
+			break;
+		}
 
 		do_recover(opts);
 

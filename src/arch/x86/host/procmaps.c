@@ -140,7 +140,7 @@ proc_maps_find(struct proc_mem_region * preg,
 		}
 	}
 	if (!found)
-		THROW_FATAL(EXP_PROC_MAPS, "unable to find mapping of %s\n",
+		THROW(EXP_PROC_MAPS_REGION_NOT_FOUND, "unable to find mapping of %s\n",
 				file_name);
 }
 
