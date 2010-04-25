@@ -644,6 +644,17 @@ do_compile(struct thread_private_data * tpd)
 	return block;
 }
 
+
+void
+first_branch(uintptr_t user_entry, uintptr_t interp_entry)
+{
+	VERBOSE(COMPILER, "user_entry=0x%x, interp_entry=0x%x\n",
+			user_entry, interp_entry);
+
+	/* FIXME */
+	__exit(1);
+}
+
 void
 do_real_branch(void)
 {

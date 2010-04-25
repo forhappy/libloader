@@ -8,7 +8,10 @@
 
 .globl _start
 _start:
+	/* the entry of interp */
  	push $0
+	/* the user entry */
+	push $0
 	pusha
 	pushf
 	/* xmain should be a hidden symbol */
@@ -31,12 +34,14 @@ _start:
 	movl -20(%esp), %esp
 	/* begin running */
 	2:
-	popl %fs:OFFSET_TARGET
-	jmpl *%fs:OFFSET_REAL_BRANCH
+	call *%fs:OFFSET_FIRST_BRANCH
+	addl $4, %esp
+	ret
 
 .globl _xstart
 _xstart:
  	push $0
+	push $0
 	pusha
 	pushf
 	/* xmain should be a hidden symbol */
@@ -59,6 +64,7 @@ _xstart:
 	movl -20(%esp), %esp
 	/* begin running */
 	2:	/* ret to its original entry */
+	addl $4, %esp
 	ret
 
 .globl DEBUG_ENTRY

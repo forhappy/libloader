@@ -178,7 +178,7 @@ fix_pthread(const char * pthread_fn, void * regions,
 		switch (exp.type) {
 		case EXP_CKPT_REGION_NOT_FOUND:
 			VERBOSE(REPLAYER,
-					"there's no libpthread in ckpt, things is simpler\n");
+					"there's no libpthread in ckpt, things are simpler\n");
 			break;
 		default:
 			RETHROW(exp);

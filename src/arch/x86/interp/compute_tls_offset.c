@@ -20,6 +20,7 @@ compute(void)
 	PRINT(target, TARGET);
 	PRINT(reg_saver1, REG_SAVER1);
 	PRINT(reg_saver2, REG_SAVER2);
+	PRINT(first_branch, FIRST_BRANCH);
 	PRINT(real_branch, REAL_BRANCH);
 	PRINT(int80_syscall_entry, INT80_SYSCALL_ENTRY);
 	PRINT(vdso_syscall_entry, VDSO_SYSCALL_ENTRY);

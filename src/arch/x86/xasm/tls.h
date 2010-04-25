@@ -43,6 +43,8 @@ struct thread_private_data {
 	void * target;
 
 	/* func pointers */
+	/* first run */
+	void * first_branch;
 	void * real_branch;
 	void * int80_syscall_entry;
 	void * vdso_syscall_entry;

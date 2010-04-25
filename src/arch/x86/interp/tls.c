@@ -155,6 +155,7 @@ static void
 build_tpd(struct thread_private_data * tpd)
 {
 	tpd->real_branch = real_branch;
+	tpd->first_branch = first_branch;
 
 	if (auxv_info.p_sysinfo != NULL) {
 		tpd->real_vdso_syscall_entry = *auxv_info.p_sysinfo;

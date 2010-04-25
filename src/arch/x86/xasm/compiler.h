@@ -12,9 +12,11 @@
 extern ATTR_HIDDEN void *
 scan_insts(void * stream);
 
-
 extern ATTR_HIDDEN void
 real_branch(void);
+
+extern ATTR_HIDDEN void
+first_branch(uintptr_t user_entry, uintptr_t interp_entry);
 
 #endif
 

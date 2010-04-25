@@ -62,11 +62,11 @@ reexec(void * old_esp)
 
 extern void * loader(void * oldesp, int * pesp_add);
 __attribute__((used, unused, visibility("hidden"))) int
-xmain(struct pusha_regs regs, uintptr_t unused ATTR(unused),
-		int argc, char * argv0)
+xmain(struct pusha_regs regs, uintptr_t unused1 ATTR(unused),
+		uintptr_t unused2 ATTR(unused), int argc, char * argv0)
 {
 	relocate_interp();
-	void * oldesp = (void*)stack_top(&regs) + sizeof(uintptr_t);
+	void * oldesp = (void*)stack_top(&regs) + sizeof(uintptr_t) * 2;
 	VERBOSE(LOADER, "oldesp=%p\n", oldesp);
 	
 	reexec(oldesp);
@@ -82,7 +82,8 @@ xmain(struct pusha_regs regs, uintptr_t unused ATTR(unused),
 	void * retaddr = loader(oldesp, &esp_add);
 
 	stack_top(&regs) += esp_add * sizeof(uintptr_t);
-	void ** pretaddr = (void**)(stack_top(&regs));
+	void ** p_user_entry = (void**)(stack_top(&regs));
+	void ** p_interp_entry = (void**)(stack_top(&regs) + sizeof(uintptr_t));
 
 	/* build first thread local area */
 	init_tls();
@@ -98,10 +99,16 @@ xmain(struct pusha_regs regs, uintptr_t unused ATTR(unused),
 	/* for debug use */
 	print_auxv();
 
+#if 0
+	/* don't make checkpoint here, make checkpoint at
+	 * the entry point of the real program */
 	/* first checkpoint */
 	fork_make_checkpoint(&regs, retaddr);
-
-	*pretaddr = retaddr;
+#endif
+	*p_interp_entry = retaddr;
+	*p_user_entry = *auxv_info.p_user_entry;
+	VERBOSE(LOADER, "interp entry: %p\n", retaddr);
+	VERBOSE(LOADER, "user entry: %p\n", *p_user_entry);
 	return esp_add;
 }
 
