@@ -45,7 +45,7 @@ struct mem_region {
 
 /* MEM_REGIONS_END_MARK should be a number larger than 0xc0000000 and
  * not aligned to PAGE_SIZE */
-#define MEM_REGIONS_END_MARK	(0xfefefefe)
+#define MEM_REGIONS_END_MARK	(0xf4f3f2f1)
 
 /* in some situation, such as log flushing, we already be in a child process
  * so needn't fork again. set real_fork to FALSE here. */

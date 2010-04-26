@@ -105,6 +105,10 @@ static void
 append_region(int fd, struct mem_region * region, const char * fn)
 {
 	int err;
+
+	FORCE(CKPT, "append region: 0x%x-0x%x:%04x:%s\n", region->start,
+			region->end, region->prot, fn);
+
 	/* write the region structure */
 	err = INTERNAL_SYSCALL_int80(write, 3,
 			fd, region, sizeof(*region));
@@ -128,12 +132,15 @@ append_region(int fd, struct mem_region * region, const char * fn)
 				region->prot & PROT_READ);
 		assert(err == 0);
 	}
-	
+
 	/* flush this memory region */
 	assert(region->start % PAGE_SIZE == 0);
 	assert(region_sz % PAGE_SIZE == 0);
 	err = INTERNAL_SYSCALL_int80(write, 3,
 			fd, region->start, region_sz);
+	/* FIXME potentian GCC bug: if print region_sz but not print err,
+	 * the 'assert' won't be triggered. */
+	FORCE(CKPT, "write 0x%x, 0x%x bytes\n", region_sz, 1);
 	assert(err == region_sz);
 
 	/* remark unreadable pages back */
