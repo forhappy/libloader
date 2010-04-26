@@ -11,6 +11,7 @@ SET(SRC
 	logger.S
 	compiler.c
 	compiler.S
+	user_entry.c
 	elf.c
 	tls.c
 	utils.c

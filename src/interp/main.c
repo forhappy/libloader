@@ -60,9 +60,11 @@ reexec(void * old_esp)
 	return;
 }
 
+
+/* use volatile to suppress optmization, guarantee stack top modification  */
 extern void * loader(void * oldesp, int * pesp_add);
 __attribute__((used, unused, visibility("hidden"))) int
-xmain(struct pusha_regs regs, uintptr_t unused1 ATTR(unused),
+xmain(volatile struct pusha_regs regs, uintptr_t unused1 ATTR(unused),
 		uintptr_t unused2 ATTR(unused), int argc, char * argv0)
 {
 	relocate_interp();

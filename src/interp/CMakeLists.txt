@@ -20,6 +20,8 @@ SET(SRC
 	checkpoint.c
 	signal.h
 	signal.c
+	user_entry.h
+	user_entry.c
 	)
 ADD_LIBRARY(interp SHARED
 	${SRC})

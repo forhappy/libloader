@@ -13,6 +13,7 @@
 #include <interp/logger.h>
 #include <interp/signal.h>
 #include <interp/auxv.h>
+#include <interp/user_entry.h>
 /* struct user_desc */
 #include <xasm/types_helper.h>
 #include <xasm/logger.h>
