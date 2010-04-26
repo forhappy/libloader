@@ -65,6 +65,10 @@ proc_maps_free(char * buf)
  * return value: start address of the next line.
  * if this is the last line, return NULL.
  */
+/* 
+ * NOTE!! This is DIFFERENT from interp version of read_procmem_line!!!
+ * host version allow the '\n' be replaced by '\0'
+ * */
 static char *
 read_procmem_line(char * line, struct proc_mem_region * region, char ** p_fn)
 {

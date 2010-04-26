@@ -36,9 +36,6 @@ user_branch:
 	 * do_user_branch:
 	 * minus by 4 and push target address
 	 */
-	ret
-#if 0
 	popl %fs:OFFSET_TARGET
 	jmpl *%fs:OFFSET_REAL_BRANCH
-#endif
 

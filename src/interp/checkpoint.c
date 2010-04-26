@@ -106,7 +106,7 @@ append_region(int fd, struct mem_region * region, const char * fn)
 {
 	int err;
 
-	FORCE(CKPT, "append region: 0x%x-0x%x:%04x:%s\n", region->start,
+	TRACE(CKPT, "append region: 0x%x-0x%x:%04x:%s\n", region->start,
 			region->end, region->prot, fn);
 
 	/* write the region structure */
@@ -129,7 +129,7 @@ append_region(int fd, struct mem_region * region, const char * fn)
 	if (!(region->prot & PROT_READ)) {
 		err = INTERNAL_SYSCALL_int80(mprotect, 3,
 				region->start, region_sz,
-				region->prot & PROT_READ);
+				region->prot | PROT_READ);
 		assert(err == 0);
 	}
 
@@ -138,9 +138,6 @@ append_region(int fd, struct mem_region * region, const char * fn)
 	assert(region_sz % PAGE_SIZE == 0);
 	err = INTERNAL_SYSCALL_int80(write, 3,
 			fd, region->start, region_sz);
-	/* FIXME potentian GCC bug: if print region_sz but not print err,
-	 * the 'assert' won't be triggered. */
-	FORCE(CKPT, "write 0x%x, 0x%x bytes\n", region_sz, 1);
 	assert(err == region_sz);
 
 	/* remark unreadable pages back */
@@ -181,10 +178,8 @@ flush_mem_regions(int fd)
 	/* begin to process proc_map */
 	struct mem_region region;
 	char * mapped_fn;
-	char * line = read_procmem_line(proc_map, &region, &mapped_fn);
+	char * line = read_procmem_line(proc_map, &region, &mapped_fn);;
 	while (line != NULL) {
-		line = read_procmem_line(line, &region, &mapped_fn);
-		
 		/* append region */
 		if ((region.start <= (uintptr_t)proc_map) &&
 				(region.end > (uintptr_t)proc_map))
@@ -201,11 +196,14 @@ flush_mem_regions(int fd)
 				append_region(fd, &r1, mapped_fn);
 			r2.start = (uintptr_t)(proc_map + MAX_PROC_MAPS_FILE_SZ);
 			r2.end = region.end;	/* useless */
+			/* needn't consider offser field because proc_map is in
+			 * anon section*/
 			if (r2.end - r2.start > 0)
 				append_region(fd, &r2, mapped_fn);
 		} else {
 			append_region(fd, &region, mapped_fn);
 		}
+		line = read_procmem_line(line, &region, &mapped_fn);
 	}
 	/* write a memory map end mark */
 	uint32_t end_mark = MEM_REGIONS_END_MARK;
