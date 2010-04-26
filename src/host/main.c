@@ -202,10 +202,12 @@ do_read_ckpt(struct opts * opts)
 	}
 }
 
-static void
+static pid_t
 do_recover(struct opts * opts)
 {
 	/* load checkpoint file, extract command line and env */
+	pid_t ret = -1;
+
 	catch_var(pid_t, target_pid, -1);
 	catch_var(char *, maps_data, NULL);
 	catch_var(char **, args, NULL);
@@ -286,7 +288,7 @@ do_recover(struct opts * opts)
 
 		/* find the debug symbol */
 		uintptr_t entry = elf_find_symbol(opts->interp_so_full_name,
-				proc_interp.start, DEBUG_ENTRY_STR);
+				proc_interp.start, REPLAYER_ENTRY_STR);
 
 		TRACE(REPLAYER, "debug entry at 0x%x\n", entry);
 
@@ -319,6 +321,8 @@ do_recover(struct opts * opts)
 		/* detach and continue. */
 		ptrace_detach(target_pid);
 
+		ret = target_pid;
+
 	} FINALLY {
 		get_catched_var(maps_data);
 		get_catched_var(args);
@@ -337,6 +341,7 @@ do_recover(struct opts * opts)
 		}
 		RETHROW(exp);
 	}
+	return ret;
 }
 
 
@@ -403,6 +408,9 @@ main(int argc, char * argv[])
 	catch_var(const char *, interp_so_full_name, NULL);
 	catch_var(const char *, pthread_so_full_name, NULL);
 	define_exp(exp);
+
+	pid_t child_pid;
+
 	TRY(exp) {
 		set_catched_var(interp_so_full_name,
 				get_full_name(opts->interp_so_fn));
@@ -416,7 +424,7 @@ main(int argc, char * argv[])
 			break;
 		}
 
-		do_recover(opts);
+		child_pid = do_recover(opts);
 
 	} FINALLY {
 		get_catched_var(interp_so_full_name);
@@ -428,6 +436,11 @@ main(int argc, char * argv[])
 	} CATCH(exp) {
 		RETHROW(exp);
 	}
+
+	/* wait for child so that it can recieve C-c */
+	/* we cannot incluse sys/wait.h because of type conflict */
+	extern pid_t waitpid(pid_t, int *, int);
+	waitpid(child_pid, NULL, 0);
 
 	return 0;
 }

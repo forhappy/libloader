@@ -17,8 +17,8 @@
 #cmakedefine INTERP_FILE	"@INTERP_FILE@"
 #cmakedefine LOG_DIR		"@LOG_DIR@"
 
-#define __mkstr1(a)		#a
-#define __mkstr2(a)		__mkstr1(a)
-#define DEBUG_ENTRY		__debug_entry
-#define DEBUG_ENTRY_STR		__mkstr2(DEBUG_ENTRY)
+#define __mkstr1(___a)		#___a
+#define __mkstr2(___a)		__mkstr1(___a)
+#define REPLAYER_ENTRY		__replayer_entry
+#define REPLAYER_ENTRY_STR	__mkstr2(REPLAYER_ENTRY)
 

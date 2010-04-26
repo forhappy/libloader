@@ -22,6 +22,7 @@ SET(SRC
 	signal.c
 	user_entry.h
 	user_entry.c
+	replayer.c
 	)
 ADD_LIBRARY(interp SHARED
 	${SRC})

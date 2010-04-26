@@ -67,8 +67,9 @@ _xstart:
 	addl $4, %esp
 	ret
 
-.globl DEBUG_ENTRY
-DEBUG_ENTRY:
+.globl REPLAYER_ENTRY
+REPLAYER_ENTRY:
+	call replayer_main
 	movl $1, %eax
 	int $0x80
 
