@@ -206,9 +206,17 @@ flush_mem_regions(int fd)
 		line = read_procmem_line(line, &region, &mapped_fn);
 	}
 	/* write a memory map end mark */
+	
 	uint32_t end_mark = MEM_REGIONS_END_MARK;
-	INTERNAL_SYSCALL_int80(write, 3,
+	err = INTERNAL_SYSCALL_int80(write, 3,
 			fd, &end_mark, sizeof(uint32_t));
+	assert(err == sizeof(uint32_t));
+
+	/* write the ckpt end mark */
+	end_mark = CKPT_END_MARK;
+	err = INTERNAL_SYSCALL_int80(write, 3,
+			fd, &end_mark, sizeof(uint32_t));
+	assert(err == sizeof(uint32_t));
 
 	/* free the mmap storages */
 	free_cont_space2(proc_map, MAX_PROC_MAPS_FILE_SZ);

@@ -41,24 +41,51 @@ file_exist(const char * fn)
 	return TRUE;
 }
 
-static void *
-map_ckpt(const char * filename)
+static char *
+readlink_malloc(const char *filename)
 {
-	assert(filename != NULL);
-	int fd = open(filename, O_RDONLY);
-	assert(fd > 0);
+	int size = 100;
+	catch_var(char *, buffer, NULL);
+	define_exp(exp);
+	TRY(exp) {
+		set_catched_var(buffer, xrealloc(buffer, size));
+		assert(buffer != NULL);
+		memset(buffer, '\0', size);
+		int nchars = readlink(filename, buffer, size);
+		if (nchars < 0)
+			THROW_FATAL(EXP_UNCATCHABLE, "readlink failed");
+		if (nchars < size)
+			break;
+		size *= 2;
+	} FINALLY {
+	} CATCH(exp) {
+		get_catched_var(buffer);
+		xfree_null(buffer);
+		RETHROW(exp);
+	}
+	return buffer;
+}
 
-	/* the length of ckpt */
-	struct stat st;
-	int err = fstat(fd, &st);
-	assert(err == 0);
-
-	size_t sz = st.st_size;
-	void * ptr = mmap(NULL, sz, PROT_READ, MAP_PRIVATE, fd, 0);
-	assert((int)(ptr) != -1);
-	assert(ptr != NULL);
-	close(fd);
-	return ptr;
+static const char *
+get_full_name(const char * fn)
+{
+	const char * full_name = NULL;
+	define_exp(exp);
+	catch_var(int, fd, -1);
+	TRY(exp) {
+		set_catched_var(fd, open(fn, O_RDONLY));
+		if (fd < 0)
+			THROW_FATAL(EXP_PROC_MAPS, "open file %s failed", fn);
+		char proc_fd_name[64];
+		snprintf(proc_fd_name, 64, "/proc/self/fd/%d", fd);
+		full_name = readlink_malloc(proc_fd_name);
+		assert(full_name != NULL);
+	} FINALLY {
+		get_catched_var(fd);
+		if (fd != -1)
+			close(fd);
+	} NO_CATCH(exp);
+	return full_name;
 }
 
 static struct checkpoint_head *
@@ -74,6 +101,54 @@ check_header(void * ptr)
 	VERBOSE(REPLAYER, "brk=0x%x\n", phead->brk);
 	VERBOSE(REPLAYER, "pid=%d\n", phead->pid);
 	VERBOSE(REPLAYER, "tid=%d\n", phead->tid);
+
+	return phead;
+}
+
+static void
+check_ckpt(struct checkpoint_head * phead, void * boundry)
+{
+	/* check the 'ckpt end mark' */
+	uint32_t * p_end_mark = boundry - sizeof(uint32_t);
+	if (*p_end_mark != CKPT_END_MARK)
+		THROW_FATAL(EXP_WRONG_CKPT, "checkpoint corrupted: no end mark");
+
+	void * ckpt_regions = &phead[1];
+	void * ptr = ckpt_regions;
+	while (*((uint32_t*)(ptr)) != MEM_REGIONS_END_MARK) {
+		if (ptr >= boundry)
+			THROW_FATAL(EXP_WRONG_CKPT,
+					"checkpoint corrupted: out of boundry");
+		struct mem_region * r = ptr;
+		if (r->end <= r->start)
+			THROW_FATAL(EXP_WRONG_CKPT,
+					"checkpoint corrupted: data corrupted");
+		ptr = next_region(r);
+	}
+}
+
+static struct checkpoint_head *
+map_ckpt(const char * filename)
+{
+	assert(filename != NULL);
+	int fd = open(filename, O_RDONLY);
+	assert(fd > 0);
+
+	/* the length of ckpt */
+	struct stat st;
+	int err = fstat(fd, &st);
+	assert(err == 0);
+
+	size_t sz = st.st_size;
+	if (sz < sizeof(struct checkpoint_head))
+		THROW_FATAL(EXP_WRONG_CKPT, "ckpt corrupted: too small");
+	void * ptr = mmap(NULL, sz, PROT_READ, MAP_PRIVATE, fd, 0);
+	assert((int)(ptr) != -1);
+	assert(ptr != NULL);
+	close(fd);
+	
+	struct checkpoint_head * phead = check_header(ptr);
+	check_ckpt(phead, ptr + sz);
 
 	return phead;
 }
@@ -189,8 +264,7 @@ fix_pthread(const char * pthread_fn, void * regions,
 static void
 do_read_ckpt(struct opts * opts)
 {
-	void * ckpt_img = map_ckpt(opts->ckpt_fn);
-	struct checkpoint_head * phead = check_header(ckpt_img);
+	struct checkpoint_head * phead = map_ckpt(opts->ckpt_fn);
 	void * ckpt_regions = &phead[1];
 
 	void * ptr = ckpt_regions;
@@ -210,12 +284,12 @@ do_recover(struct opts * opts)
 
 	catch_var(pid_t, target_pid, -1);
 	catch_var(char *, maps_data, NULL);
+	catch_var(const char *, exec_full_fn, NULL);
 	catch_var(char **, args, NULL);
 	catch_var(char **, envs, NULL);
 	define_exp(exp);
 	TRY(exp) {
-		void * ckpt_img = map_ckpt(opts->ckpt_fn);
-		struct checkpoint_head * phead = check_header(ckpt_img);
+		struct checkpoint_head * phead = map_ckpt(opts->ckpt_fn);
 
 		void * ckpt_regions = &phead[1];
 
@@ -256,6 +330,10 @@ do_recover(struct opts * opts)
 			THROW_FATAL(EXP_FILE_NOT_FOUND,
 					"file %s doesn't exist, check your cwd and try again\n",
 					exec_fn);
+
+		set_catched_var(exec_full_fn, get_full_name(exec_fn));
+		assert(exec_full_fn != NULL);
+
 		set_catched_var(target_pid, ptrace_execve(args, envs, exec_fn));
 
 		xfree_null_catched(args);
@@ -312,11 +390,14 @@ do_recover(struct opts * opts)
 				strlen(opts->pthread_so_full_name) + 1);
 		uintptr_t pos_ckpt_fn = ptrace_push(target_pid,
 				opts->ckpt_fn, strlen(opts->ckpt_fn) + 1);
+		uintptr_t pos_exec_fn = ptrace_push(target_pid,
+				exec_full_fn, strlen(exec_full_fn) + 1);
 
 		ptrace_push(target_pid, &pstack_used, sizeof(pstack_used));
 		ptrace_push(target_pid, &p__stack_user, sizeof(p__stack_user));
 		ptrace_push(target_pid, &pos_pthread_fn, sizeof(pos_pthread_fn));
 		ptrace_push(target_pid, &pos_ckpt_fn, sizeof(pos_ckpt_fn));
+		ptrace_push(target_pid, &pos_exec_fn, sizeof(pos_exec_fn));
 
 		/* detach and continue. */
 		ptrace_detach(target_pid);
@@ -328,10 +409,12 @@ do_recover(struct opts * opts)
 		get_catched_var(args);
 		get_catched_var(envs);
 		get_catched_var(target_pid);
+		get_catched_var(exec_full_fn);
 		if (maps_data != NULL)
 			proc_maps_free(maps_data);
 		xfree_null(args);
 		xfree_null(envs);
+		xfree_null(exec_full_fn);
 
 	} CATCH(exp) {
 		get_catched_var(target_pid);
@@ -344,53 +427,6 @@ do_recover(struct opts * opts)
 	return ret;
 }
 
-
-static char *
-readlink_malloc(const char *filename)
-{
-	int size = 100;
-	catch_var(char *, buffer, NULL);
-	define_exp(exp);
-	TRY(exp) {
-		set_catched_var(buffer, xrealloc(buffer, size));
-		assert(buffer != NULL);
-		memset(buffer, '\0', size);
-		int nchars = readlink(filename, buffer, size);
-		if (nchars < 0)
-			THROW_FATAL(EXP_UNCATCHABLE, "readlink failed");
-		if (nchars < size)
-			break;
-		size *= 2;
-	} FINALLY {
-	} CATCH(exp) {
-		get_catched_var(buffer);
-		xfree_null(buffer);
-		RETHROW(exp);
-	}
-	return buffer;
-}
-
-static const char *
-get_full_name(const char * fn)
-{
-	const char * full_name = NULL;
-	define_exp(exp);
-	catch_var(int, fd, -1);
-	TRY(exp) {
-		set_catched_var(fd, open(fn, O_RDONLY));
-		if (fd < 0)
-			THROW_FATAL(EXP_PROC_MAPS, "open file %s failed", fn);
-		char proc_fd_name[64];
-		snprintf(proc_fd_name, 64, "/proc/self/fd/%d", fd);
-		full_name = readlink_malloc(proc_fd_name);
-		assert(full_name != NULL);
-	} FINALLY {
-		get_catched_var(fd);
-		if (fd != -1)
-			close(fd);
-	} NO_CATCH(exp);
-	return full_name;
-}
 
 int
 main(int argc, char * argv[])
@@ -429,10 +465,9 @@ main(int argc, char * argv[])
 	} FINALLY {
 		get_catched_var(interp_so_full_name);
 		get_catched_var(pthread_so_full_name);
-		if (interp_so_full_name != NULL)
-			xfree_null(interp_so_full_name);
-		if (pthread_so_full_name != NULL)
-			xfree_null(pthread_so_full_name);
+
+		xfree_null(interp_so_full_name);
+		xfree_null(pthread_so_full_name);
 	} CATCH(exp) {
 		RETHROW(exp);
 	}
