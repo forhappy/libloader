@@ -35,25 +35,21 @@ mask_uent_pages(bool_t writable)
 	assert(err == 0);
 }
 
+/* user_branch is defined in compiler.S, it calls do_user_branch */
 extern void user_branch(void) ATTR_HIDDEN;
 void
 do_user_branch(struct pusha_regs regs)
 {
 	VERBOSE(LOADER, "in do_user_branch\n");
-
 	struct thread_private_data * tpd = get_tpd();
-	uintptr_t * old_esp = tpd->old_stack_top - 4;
-	*old_esp = (uintptr_t)(saved_user_entry);
+	tpd->target = saved_user_entry;
 
 	/* unpatch user code */
 	mask_uent_pages(TRUE);
 	memcpy(saved_user_entry, saved_patch_bytes, PATCH_SZ);
 	mask_uent_pages(FALSE);
 
-	tpd->old_stack_top = old_esp;
-	struct pusha_regs adj_regs = regs;
-	adj_regs.esp = (uintptr_t)old_esp;
-	enter_user_code(&adj_regs, saved_user_entry);
+	enter_user_code(&regs, saved_user_entry);
 	return;
 }
 
@@ -71,6 +67,7 @@ first_branch(void * user_entry, void * interp_entry)
 	memcpy(saved_patch_bytes, saved_user_entry, PATCH_SZ);
 
 	uint8_t * ptr = user_entry;
+	/* this is 'jmp user_branch' */
 	ptr[0] = 0xe9;
 	*((ptrdiff_t *)(&ptr[1])) = (void *)(user_branch) -
 		(void *)(&ptr[PATCH_SZ]);

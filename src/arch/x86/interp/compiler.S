@@ -32,10 +32,6 @@ user_branch:
 	popfl
 	popa
 	movl %fs:OFFSET_OLD_STACK_TOP, %esp
-	/* NOTICE: %fs:OFFSET_OLD_STACK_TOP should have been adjusted by
-	 * do_user_branch:
-	 * minus by 4 and push target address
-	 */
-	popl %fs:OFFSET_TARGET
+	/* tpd->target should has been set by do_user_branch */
 	jmpl *%fs:OFFSET_REAL_BRANCH
 

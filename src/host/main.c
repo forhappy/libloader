@@ -70,20 +70,18 @@ static const char *
 get_full_name(const char * fn)
 {
 	const char * full_name = NULL;
+	int fd = open(fn, O_RDONLY);
+	if (fd < 0)
+		THROW_FATAL(EXP_PROC_MAPS, "open file %s failed", fn);
+
 	define_exp(exp);
-	catch_var(int, fd, -1);
 	TRY(exp) {
-		set_catched_var(fd, open(fn, O_RDONLY));
-		if (fd < 0)
-			THROW_FATAL(EXP_PROC_MAPS, "open file %s failed", fn);
 		char proc_fd_name[64];
 		snprintf(proc_fd_name, 64, "/proc/self/fd/%d", fd);
 		full_name = readlink_malloc(proc_fd_name);
 		assert(full_name != NULL);
 	} FINALLY {
-		get_catched_var(fd);
-		if (fd != -1)
-			close(fd);
+		close(fd);
 	} NO_CATCH(exp);
 	return full_name;
 }
@@ -212,17 +210,16 @@ build_argp(void * vargp_start, void * vargp_last,
 static void
 compare_section(uintptr_t start, uintptr_t end, pid_t pid, void * ref)
 {
-	catch_var(void *, tmp_ptr, NULL);
+	int sz = end - start;
+	void * tmp_ptr = xmalloc(sz);
+	assert(tmp_ptr != NULL);
+
 	define_exp(exp);
 	TRY(exp) {
-		int sz = end - start;
-		set_catched_var(tmp_ptr, xmalloc(sz));
-		assert(tmp_ptr != NULL);
 		ptrace_dupmem(pid, tmp_ptr, start, sz);
 		if (memcmp(tmp_ptr, ref, sz) != 0)
 			THROW_FATAL(EXP_WRONG_CKPT, "libinterp.so inconsistent");
 	} FINALLY {
-		get_catched_var(tmp_ptr);
 		xfree_null(tmp_ptr);
 	} NO_CATCH(exp);
 }
@@ -271,7 +268,8 @@ do_read_ckpt(struct opts * opts)
 	while (*((uint32_t*)(ptr)) != MEM_REGIONS_END_MARK) {
 		struct mem_region * r = ptr;
 		assert(r->end > r->start);
-		printf("%08x-%08x: %s\n", r->start, r->end, r->fn);
+		printf("%08x-%08x:%08x:%01x %s\n", r->start, r->end,
+				r->offset, r->prot, r->fn);
 		ptr = next_region(r);
 	}
 }

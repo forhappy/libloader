@@ -106,8 +106,8 @@ append_region(int fd, struct mem_region * region, const char * fn)
 {
 	int err;
 
-	TRACE(CKPT, "append region: 0x%x-0x%x:%04x:%s\n", region->start,
-			region->end, region->prot, fn);
+	TRACE(CKPT, "append region: 0x%08x-0x%08x:0x%08x:%01x:%s\n", region->start,
+			region->end, region->offset, region->prot, fn);
 
 	/* write the region structure */
 	err = INTERNAL_SYSCALL_int80(write, 3,
@@ -169,16 +169,23 @@ flush_mem_regions(int fd)
 
 	err = INTERNAL_SYSCALL_int80(read, 3, proc_fd,
 			proc_map, MAX_PROC_MAPS_FILE_SZ);
+	if (err < 0)
+		FATAL(CKPT, "read /proc/self/maps failed\n");
 	if (!(err < MAX_PROC_MAPS_FILE_SZ))
 		FATAL(CKPT, "memory map too complex, "
 				"increase MAX_PROC_MAPS_FILE_SZ!\n");
+
+
+	if (err + 64 < FDPRINTF_MAX)
+		TRACE(CKPT, "%s\n", (char*)proc_map);
+
 	err = INTERNAL_SYSCALL_int80(close, 1, proc_fd);
 	assert(err == 0);
 
 	/* begin to process proc_map */
 	struct mem_region region;
 	char * mapped_fn;
-	char * line = read_procmem_line(proc_map, &region, &mapped_fn);;
+	char * line = read_procmem_line(proc_map, &region, &mapped_fn);
 	while (line != NULL) {
 		/* append region */
 		if ((region.start <= (uintptr_t)proc_map) &&
@@ -205,8 +212,8 @@ flush_mem_regions(int fd)
 		}
 		line = read_procmem_line(line, &region, &mapped_fn);
 	}
+
 	/* write a memory map end mark */
-	
 	uint32_t end_mark = MEM_REGIONS_END_MARK;
 	err = INTERNAL_SYSCALL_int80(write, 3,
 			fd, &end_mark, sizeof(uint32_t));

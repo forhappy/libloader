@@ -9,6 +9,8 @@
 #include <xasm/syscall.h>
 #include <stdarg.h>
 
+#define FDPRINTF_MAX	(4096)
+
 extern int ATTR(format(printf, 2, 3))
 fdprintf(int fd, const char * fmt, ...);
 

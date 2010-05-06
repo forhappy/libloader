@@ -7,12 +7,12 @@
 #include <xasm/utils.h>
 #include <sys/mman.h>
 
-static char fdprintf_buf[1024];
+static char fdprintf_buf[FDPRINTF_MAX];
 
 int
 vfdprintf(int fd, const char * fmt, va_list args)
 {
-	int n = vsnprintf(fdprintf_buf, 1024, fmt, args);
+	int n = vsnprintf(fdprintf_buf, FDPRINTF_MAX, fmt, args);
 	INTERNAL_SYSCALL_int80(write, 3, fd, fdprintf_buf, n);
 	return n;
 }
