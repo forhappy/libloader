@@ -77,7 +77,7 @@ __debug_component_names[NR_DEBUG_COMPONENTS] = {
 static const enum __debug_level
 __debug_component_levels[NR_DEBUG_COMPONENTS] = {
 	[SYSTEM]	= DBG_LV_VERBOSE,
-	[LOADER]	= DBG_LV_VERBOSE,
+	[LOADER]	= DBG_LV_TRACE,
 	[TLS]		= DBG_LV_VERBOSE,
 	[DECODER]	= DBG_LV_VERBOSE,
 	[MEM]		= DBG_LV_VERBOSE,

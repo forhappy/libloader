@@ -327,3 +327,7 @@ __vdso_syscall_inst_end:
 	 *   we can check this), this instruction must be reverted, and reexec when signal return.
 	 *
 	 */
+
+/* don't generate executable stack */
+.section        .note.GNU-stack,"",@progbits
+

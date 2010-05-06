@@ -34,5 +34,9 @@ vdso_syscall_entry:
 	jmpl *%fs:OFFSET_REAL_BRANCH
 	nop
 
+/* don't generate executable stack */
+.section        .note.GNU-stack,"",@progbits
+
+
 // vim:ts=4:sw=4
 

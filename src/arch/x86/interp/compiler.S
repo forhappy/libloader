@@ -35,3 +35,6 @@ user_branch:
 	/* tpd->target should has been set by do_user_branch */
 	jmpl *%fs:OFFSET_REAL_BRANCH
 
+/* don't generate executable stack */
+.section        .note.GNU-stack,"",@progbits
+

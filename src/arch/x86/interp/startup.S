@@ -73,4 +73,6 @@ REPLAYER_ENTRY:
 	movl $1, %eax
 	int $0x80
 
+/* don't generate executable stack */
+.section        .note.GNU-stack,"",@progbits
 
