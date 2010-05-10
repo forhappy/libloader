@@ -35,7 +35,7 @@ struct mem_region {
 	uintptr_t end;
 	uint32_t prot;
 	uint32_t offset;
-	int fn_sz;
+	unsigned int fn_sz;
 	char fn[];
 };
 

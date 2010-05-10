@@ -117,7 +117,7 @@ append_region(int fd, struct mem_region * region, const char * fn)
 	/* append file name */
 	err = INTERNAL_SYSCALL_int80(write, 3,
 			fd, fn, region->fn_sz);
-	assert(err == region->fn_sz);
+	assert(err == (int)region->fn_sz);
 
 	/* write the memory image */
 	/* if the memory is mapped from /dev/xxx, don't write it */
@@ -175,9 +175,10 @@ flush_mem_regions(int fd)
 		FATAL(CKPT, "memory map too complex, "
 				"increase MAX_PROC_MAPS_FILE_SZ!\n");
 
-
+#if 0
 	if (err + 64 < FDPRINTF_MAX)
 		TRACE(CKPT, "%s\n", (char*)proc_map);
+#endif
 
 	err = INTERNAL_SYSCALL_int80(close, 1, proc_fd);
 	assert(err == 0);
@@ -213,14 +214,20 @@ flush_mem_regions(int fd)
 		line = read_procmem_line(line, &region, &mapped_fn);
 	}
 
-	/* write a memory map end mark */
-	uint32_t end_mark = MEM_REGIONS_END_MARK;
+	/* write a struct mem_region which mark the end of regions */
+	struct mem_region end_region = {
+		.start = MEM_REGIONS_END_MARK,
+		.end = MEM_REGIONS_END_MARK,
+		.prot = 0,
+		.offset = 0,
+		.fn_sz = 0,
+	};
 	err = INTERNAL_SYSCALL_int80(write, 3,
-			fd, &end_mark, sizeof(uint32_t));
-	assert(err == sizeof(uint32_t));
+			fd, &end_region, sizeof(end_region));
+	assert(err == sizeof(end_region));
 
 	/* write the ckpt end mark */
-	end_mark = CKPT_END_MARK;
+	uint32_t end_mark = CKPT_END_MARK;
 	err = INTERNAL_SYSCALL_int80(write, 3,
 			fd, &end_mark, sizeof(uint32_t));
 	assert(err == sizeof(uint32_t));

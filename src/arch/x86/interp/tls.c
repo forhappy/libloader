@@ -117,7 +117,7 @@ setup_tls_area(int tnr)
 	assert(p == stack_base_addr);
 	/* mprotect */
 	err = INTERNAL_SYSCALL_int80(mprotect, 3,
-			p + GUARDER_START, GUARDER_LENGTH, PROT_NONE);
+			p, GUARDER_LENGTH, PROT_NONE);
 	assert(err == 0);
 
 	/* setup ldt */
@@ -209,6 +209,12 @@ init_tls(void)
 	tpd->pid = pid;
 	build_tpd(tpd);
 	spin_unlock(&__tls_ctl_lock);
+}
+
+void
+replay_init_tls(int tnr)
+{
+	struct thread_private_data * tpd = setup_tls_area(tnr);
 }
 
 static void

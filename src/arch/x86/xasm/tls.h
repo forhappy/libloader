@@ -26,7 +26,7 @@
  * each thread has 2 pages for stack, the thread self's info
  * is located at the bottom of the stack.
  * if we have 8192 (0x2000) threads, the tls stack is from 0x3000 to 0x6003000;
- * normal program always put its ode section at 0x8048000, so
+ * normal program always put its first section at 0x8048000, so
  * the stack never clobber code section.
  */
 
@@ -76,10 +76,9 @@ extern struct list_head tpd_list_head;
 
 #define TLS_STACK_SIZE		(0x3000)
 #define MAX_TLS_ADDR_FS		(TLS_STACK_SIZE)
-#define TPD_ADDR_FS			(MAX_TLS_ADDR_FS-sizeof(struct thread_private_data))
+#define TPD_ADDR_FS			(MAX_TLS_ADDR_FS - sizeof(struct thread_private_data))
 #define TNR_TO_STACK(n)		((void*)(((n) + 1) * TLS_STACK_SIZE))
 #define STACK_TO_TNR(a)		(((unsigned int)(a)) / TLS_STACK_SIZE - 1)
-#define GUARDER_START		(0)
 #define GUARDER_LENGTH		(0x1000)
 
 
@@ -88,6 +87,9 @@ extern struct list_head tpd_list_head;
  * TLS stack! */
 extern void init_tls(void);
 extern void clear_tls(void);
+
+/* only setup the tls area */
+extern void replay_init_tls(int tnr);
 
 extern void lock_tls(void);
 extern void unlock_tls(void);

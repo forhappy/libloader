@@ -112,16 +112,15 @@ check_ckpt(struct checkpoint_head * phead, void * boundry)
 		THROW_FATAL(EXP_WRONG_CKPT, "checkpoint corrupted: no end mark");
 
 	void * ckpt_regions = &phead[1];
-	void * ptr = ckpt_regions;
-	while (*((uint32_t*)(ptr)) != MEM_REGIONS_END_MARK) {
-		if (ptr >= boundry)
+	struct mem_region * r = ckpt_regions;
+	while (r->start != MEM_REGIONS_END_MARK) {
+		if ((void*)(r) >= boundry)
 			THROW_FATAL(EXP_WRONG_CKPT,
 					"checkpoint corrupted: out of boundry");
-		struct mem_region * r = ptr;
 		if (r->end <= r->start)
 			THROW_FATAL(EXP_WRONG_CKPT,
 					"checkpoint corrupted: data corrupted");
-		ptr = next_region(r);
+		r = next_region(r);
 	}
 }
 
@@ -166,7 +165,8 @@ find_region(void * ptr, const char * fn)
 
 static void
 build_argp(void * vargp_start, void * vargp_last,
-		char *** pargs, char *** penvs, char ** exec_fn)
+		char *** pargs, char *** penvs,
+		char ** exec_fn, char ** exec_fn_2)
 {
 	char ** args = NULL;
 	char ** envs = NULL;
@@ -202,6 +202,11 @@ build_argp(void * vargp_start, void * vargp_last,
 	/* the last slot of 'envs' is actually 'exec_fn' */
 	*exec_fn = envs[nr_envs - 1];
 	envs[nr_envs - 1] = NULL;
+
+	assert(nr_args >= 1);
+	/* the second argument. if the process is started by
+	 * libinterp.so, this is the real executable name */
+	*exec_fn_2 = args[1];
 
 	*pargs = args;
 	*penvs = envs;
@@ -283,6 +288,7 @@ do_recover(struct opts * opts)
 	catch_var(pid_t, target_pid, -1);
 	catch_var(char *, maps_data, NULL);
 	catch_var(const char *, exec_full_fn, NULL);
+	catch_var(const char *, exec_full_fn_2, NULL);
 	catch_var(char **, args, NULL);
 	catch_var(char **, envs, NULL);
 	define_exp(exp);
@@ -316,7 +322,10 @@ do_recover(struct opts * opts)
 		void * vargp_last = argp_last - stack_region->start + vstack_top;
 
 		char * exec_fn = NULL;
-		build_argp(vargp_first, vargp_last, &args, &envs, &exec_fn);
+		/* if the process is start by libinterp.so, use exec_fn_2 */
+		char * exec_fn_2 = NULL;
+		build_argp(vargp_first, vargp_last, &args, &envs,
+				&exec_fn, &exec_fn_2);
 		set_catched_var(args, args);
 		set_catched_var(envs, envs);
 		assert(args != NULL);
@@ -331,6 +340,20 @@ do_recover(struct opts * opts)
 
 		set_catched_var(exec_full_fn, get_full_name(exec_fn));
 		assert(exec_full_fn != NULL);
+
+		/* if exec_full_fn same as interp_so_full_name, the real exec file
+		 * is from exec_fn_2. */
+		if (strcmp(exec_full_fn, opts->interp_so_full_name) == 0) {
+			TRACE(REPLAYER, "target program %s is started by libinterp.so\n",
+					exec_fn_2);
+			if (!file_exist(exec_fn_2))
+				THROW_FATAL(EXP_FILE_NOT_FOUND,
+						"file %s doesn't exist, check your cwd and try again\n",
+						exec_fn_2);
+
+			set_catched_var(exec_full_fn_2, get_full_name(exec_fn_2));
+			assert(exec_full_fn_2 != NULL);
+		}
 
 		set_catched_var(target_pid, ptrace_execve(args, envs, exec_fn));
 
@@ -383,19 +406,37 @@ do_recover(struct opts * opts)
 				&p__stack_user, &pstack_used);
 
 		/* adjust stack */
+		/* arguments transfer to replayer:
+		 * full filename of libinterp.so;
+		 * full filename of executable;
+		 * full filename of checkpoint;
+		 * full filename of libpthread.so
+		 * address of __stack_user
+		 * address of stack_used
+		 * */
 		uintptr_t pos_pthread_fn = ptrace_push(target_pid,
 				opts->pthread_so_full_name,
 				strlen(opts->pthread_so_full_name) + 1);
 		uintptr_t pos_ckpt_fn = ptrace_push(target_pid,
 				opts->ckpt_fn, strlen(opts->ckpt_fn) + 1);
-		uintptr_t pos_exec_fn = ptrace_push(target_pid,
+		uintptr_t pos_exec_fn;
+		if (exec_full_fn_2 != NULL) {
+			pos_exec_fn = ptrace_push(target_pid,
+				exec_full_fn_2, strlen(exec_full_fn_2) + 1);
+		} else {
+			pos_exec_fn = ptrace_push(target_pid,
 				exec_full_fn, strlen(exec_full_fn) + 1);
+		}
+		uintptr_t pos_interp_fn = ptrace_push(target_pid,
+				opts->interp_so_full_name,
+				strlen(opts->interp_so_full_name) + 1);
 
 		ptrace_push(target_pid, &pstack_used, sizeof(pstack_used));
 		ptrace_push(target_pid, &p__stack_user, sizeof(p__stack_user));
 		ptrace_push(target_pid, &pos_pthread_fn, sizeof(pos_pthread_fn));
 		ptrace_push(target_pid, &pos_ckpt_fn, sizeof(pos_ckpt_fn));
 		ptrace_push(target_pid, &pos_exec_fn, sizeof(pos_exec_fn));
+		ptrace_push(target_pid, &pos_interp_fn, sizeof(pos_interp_fn));
 
 		/* detach and continue. */
 		ptrace_detach(target_pid);
@@ -408,12 +449,13 @@ do_recover(struct opts * opts)
 		get_catched_var(envs);
 		get_catched_var(target_pid);
 		get_catched_var(exec_full_fn);
+		get_catched_var(exec_full_fn_2);
 		if (maps_data != NULL)
 			proc_maps_free(maps_data);
 		xfree_null(args);
 		xfree_null(envs);
 		xfree_null(exec_full_fn);
-
+		xfree_null(exec_full_fn_2);
 	} CATCH(exp) {
 		get_catched_var(target_pid);
 		if (target_pid != -1) {

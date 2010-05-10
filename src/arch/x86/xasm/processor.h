@@ -77,6 +77,54 @@ __save_i387(struct i387_fxsave_struct * fx)
 }
 
 inline static void
+__restore_i387(struct i387_fxsave_struct * fx)
+{
+	asm volatile (
+			"fxrstor (%[fx])\n\t"
+			:
+			: [fx] "m" (*fx));
+}
+
+inline static void
+restore_reg_state(struct reg_state * p, struct pusha_regs * r,
+		void ** peip)
+{
+	struct user_regs_struct * u = &(p->user_regs);
+	struct pad_fx {
+		struct i387_fxsave_struct fx;
+		uint8_t __padding[16];
+	} pad_fx;
+	struct i387_fxsave_struct * fx = ALIGN_UP(&(pad_fx.fx), 16);
+	*fx = p->fx_state;
+
+	r->ebx = u->ebx;
+	r->ecx = u->ecx;
+	r->edx = u->edx;
+	r->esi = u->esi;
+	r->edi = u->edi;
+	r->ebp = u->ebp;
+	r->eax = u->eax;
+
+	if (peip != NULL)
+		*peip = (void*)u->eip;
+	r->flags = u->eflags;
+	r->esp = u->esp;
+
+#define restorsr(s, r) asm volatile("movl %%eax, %%" #r : : "a" (s))
+#if 0
+	restorsr(u->xcs, cs);
+	restorsr(u->xds, ds);
+	restorsr(u->xes, es);
+	restorsr(u->xss, ss);
+#endif
+	restorsr(u->xfs, fs);
+	restorsr(u->xgs, gs);
+#undef loadsr
+
+	__restore_i387(fx);
+}
+
+inline static void
 build_reg_state(struct reg_state * p, struct pusha_regs * r,
 		void * eip)
 {
@@ -101,14 +149,14 @@ build_reg_state(struct reg_state * p, struct pusha_regs * r,
 	u->eflags = r->flags;
 	u->esp = r->esp;
 
-#define loadsr(d, r) asm volatile("movl %%" #r ", %%eax" : "=a" (d))
-	loadsr(u->xcs, cs);
-	loadsr(u->xds, ds);
-	loadsr(u->xes, es);
-	loadsr(u->xfs, fs);
-	loadsr(u->xgs, gs);
-	loadsr(u->xss, ss);
-#undef loadsr
+#define readsr(d, r) asm volatile("movl %%" #r ", %%eax" : "=a" (d))
+	readsr(u->xcs, cs);
+	readsr(u->xds, ds);
+	readsr(u->xes, es);
+	readsr(u->xfs, fs);
+	readsr(u->xgs, gs);
+	readsr(u->xss, ss);
+#undef readsr
 
 	/* i387 fx */
 	__save_i387(fx);

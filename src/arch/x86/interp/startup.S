@@ -34,7 +34,10 @@ _start:
 	movl -20(%esp), %esp
 	/* begin running */
 	2:
+	/* tpd->first_branch is set in interp/tls.c,
+	 * to first_branch in user_entry.c */
 	call *%fs:OFFSET_FIRST_BRANCH
+	/* pop the user_entry, stack top is interp_entry */
 	addl $4, %esp
 	ret
 
@@ -67,11 +70,30 @@ _xstart:
 	addl $4, %esp
 	ret
 
+/* replayer start from this entry */
 .globl REPLAYER_ENTRY
 REPLAYER_ENTRY:
+	/* open checkpoint file, restore tls stack */
+	/* gs and fs should have been restored in restore_tls_stack */
+	call restore_tls_stack
+	movl %esp, %fs:OFFSET_OLD_STACK_TOP
+	movl %fs:OFFSET_STACK_TOP, %esp
+	pushl $0x0202
+	popfl
+
+	/* gs, fs and floating registers should have
+	 * been restored in replayer_main */
+	/* ckeckpoint file should be closed in replayer_main */
+	/* the registers should be fixed in replayer_main */
+	pusha
+	pushf
 	call replayer_main
-	movl $1, %eax
-	int $0x80
+	popf
+	popa
+	/* tls->old_stack_top should have been adjusted by replayer_main */
+	movl %fs:OFFSET_OLD_STACK_TOP, %esp
+	/* real_branch should have been set in replayer_main */
+	jmpl *%fs:OFFSET_REAL_BRANCH
 
 /* don't generate executable stack */
 .section        .note.GNU-stack,"",@progbits
