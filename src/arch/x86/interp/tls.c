@@ -214,7 +214,7 @@ init_tls(void)
 void
 replay_init_tls(int tnr)
 {
-	struct thread_private_data * tpd = setup_tls_area(tnr);
+	setup_tls_area(tnr);
 }
 
 static void

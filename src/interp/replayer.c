@@ -218,15 +218,54 @@ do_restore_mem_region(struct mem_region * region,
 	read_from_file(ckpt_fd, fn, region->fn_sz);
 	TRACE(REPLAYER, "restoring 0x%8x-0x%8x:%s\n", region->start, region->end,
 			fn);
+
+	struct thread_private_data * tpd = get_tpd();
+	if (region->start == TNR_TO_STACK(tpd->tnr) + GUARDER_LENGTH) {
+		assert(region->end == TNR_TO_STACK(tpd->tnr) +
+				GUARDER_LENGTH + TLS_STACK_SIZE);
+		return;
+	}
+
+	bool_t anon_mapping = FALSE;
+	bool_t file_mapping = TRUE;
+	bool_t do_fill = TRUE;
+	if ((fn[0] != '\0') && (fn[0] != '[')) {
+		/* this is file mapping */
+		if (strncmp("/dev", fn) == 0) {
+			anon_mapping = TRUE;
+			file_mapping = FALSE;
+			do_fill = FALSE;
+		} else if (strcmp(exec_fn, fn) == 0) {
+			/* don't do the file mapping,  */
+			anon_mapping = FALSE;
+			file_mapping = FALSE;
+			do_fill = TRUE;
+		} else if (strcmp(pthread_fn, fn) == 0) {
+			anon_mapping = TRUE;
+			file_mapping = FALSE;
+			do_fill = TRUE;
+		} else {
+			anon_mapping = FALSE;
+			file_mapping = TRUE;
+			do_fill = TRUE;
+		}
+	} else {
+	}
+
 	/* FIXME */
-	/* 1. how to setup the region:
+	/* 0. if it is TNR_TO_STACK + GUARDER_LENGTH, skip this section
+	 * 1. setup the region:
 	 *   if it is file mapping, then
 	 *     if it is mapped from a device file, use anon mapping;
 	 *     if it is mapped from exec_fn, then it should have been mapped,
 	 *        do nothing
 	 *     if it is mapped from pthread_fn, use anon mapping,
 	 *     if it is mapped from normal file, do the file mapping
-	 * 2. how to fill its content
+	 *   if it is anon mapping, then
+	 *     if it is interp's own data section, skip;
+	 *     if it is stack, skip;
+	 *     if it is heap?
+	 * 2. fill its content
 	 *   if it is mapped from "/dev/xxx", fill it with zero
 	 *   if not: 
 	 *   don't fill interp(myself)'s own data section. We can find their
