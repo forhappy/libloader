@@ -231,7 +231,7 @@ do_restore_mem_region(struct mem_region * region,
 	bool_t do_fill = TRUE;
 	if ((fn[0] != '\0') && (fn[0] != '[')) {
 		/* this is file mapping */
-		if (strncmp("/dev", fn) == 0) {
+		if (strncmp("/dev", fn, 4) == 0) {
 			anon_mapping = TRUE;
 			file_mapping = FALSE;
 			do_fill = FALSE;
