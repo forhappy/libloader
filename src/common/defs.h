@@ -88,12 +88,6 @@ typedef int bool_t;
 #define ALIGN_DOWN_PTR(v, a)	(typeof(v))((uintptr_t)(v) & (~((a) - 1)))
 #define ALIGN_UP_PTR(v, a)		(typeof(v))(ALIGN_DOWN_PTR((uintptr_t)(v) + (uintptr_t)(a) - 1, (a)))
 
-enum process_number {
-	MAIN_PROCESS,
-	RESOURCE_PROCESS,
-	AUDIO_PROCESS,
-};
-
 #define read_le16(p)	(le16toh((*((uint16_t*)(p)))))
 #define read_le32(p)	(le32toh((*((uint32_t*)(p)))))
 #define read_le64(p)	(le64toh((*((uint64_t*)(p)))))
@@ -107,6 +101,9 @@ enum process_number {
 
 #define max0(a, b)	max(a, b)
 #define min0(a, b)	((((a) < (b)) && ((a) != 0)) ? (a) : (b))
+
+#define ptr_diff(a, b)	((ptrdiff_t)((uintptr_t)(a) - (uintptr_t)(b)))
+
 
 static inline char *
 _strtok(const char * str, char tok)

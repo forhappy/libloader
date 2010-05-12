@@ -31,8 +31,10 @@ skip_nbytes(int fd, size_t n)
 {
 	int err;
 	unsigned long long cur_pos ATTR_UNUSED;
+	TRACE(REPLAYER, "skip %u bytes\n", n);
 	err = INTERNAL_SYSCALL_int80(_llseek, 5, fd,
 			0, n, &cur_pos, SEEK_CUR);
+	TRACE(REPLAYER, "cur_pos = %llu, err=%d\n", cur_pos, err);
 	CASSERT(REPLAYER, err >= 0, "_llseek failed: %d\n", err);
 }
 
@@ -148,6 +150,9 @@ static void
 do_restore_tls_stack(void)
 {
 	int tnr = ckpt_head.tnr;
+
+	TRACE(REPLAYER, "tnr = %d\n", tnr);
+
 	replay_init_tls(tnr);
 
 	void * stack_base = TNR_TO_STACK(tnr) + GUARDER_LENGTH;
@@ -210,68 +215,180 @@ restore_tls_stack(
 }
 
 static void
+fix_unwritable_region(struct mem_region * region, bool_t mark_writable)
+{
+	int err;
+	int prot = region->prot;
+	if (prot & PROT_WRITE)
+		return;
+
+	if (mark_writable)
+		prot |= PROT_WRITE;
+	err = INTERNAL_SYSCALL_int80(mprotect, 3, region->start,
+			region_sz(region), prot);
+	assert(err == 0);
+}
+
+static void
+do_file_mapping(struct mem_region * region, const char * fn)
+{
+	int fd = INTERNAL_SYSCALL_int80(open, 2, fn, O_RDONLY);
+	int prot = region->prot;
+	/* make all exec section writable */
+	if (prot & PROT_EXEC)
+		prot |= PROT_WRITE;
+	int map_type = MAP_FIXED | MAP_PRIVATE;
+
+	if (fd < 0) {
+		WARNING(REPLAYER, "open file %s failed: %d\n", fn, fd);
+		/* do anon mapping */
+		map_type |= MAP_ANONYMOUS;
+	}
+
+	void * addr = (void*)INTERNAL_SYSCALL_int80(mmap2, 6,
+			region->start, region_sz(region), prot,
+			map_type, fd, region->offset >> 12);
+	assert(addr == (void*)region->start);
+	if (fd >= 0)
+		INTERNAL_SYSCALL_int80(close, 1, fd);
+}
+
+static void
+do_anon_mapping(struct mem_region * region)
+{
+	int prot = region->prot;
+	/* make all exec section writable */
+	if (prot & PROT_EXEC)
+		prot |= PROT_WRITE;
+	int map_type = MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS;
+
+	void * addr = (void*)INTERNAL_SYSCALL_int80(mmap2, 6,
+			region->start, region_sz(region), prot,
+			map_type, 0, 0);
+	assert(addr == (void*)region->start);
+}
+
+static void
 do_restore_mem_region(struct mem_region * region,
 		const char * interp_fn, const char * exec_fn,
-		const char * ckpt_fn, const char * pthread_fn)
+		const char * pthread_fn)
 {
+	extern int _end[];
 	char * fn = alloca(region->fn_sz);
 	read_from_file(ckpt_fd, fn, region->fn_sz);
 	TRACE(REPLAYER, "restoring 0x%8x-0x%8x:%s\n", region->start, region->end,
 			fn);
 
 	struct thread_private_data * tpd = get_tpd();
-	if (region->start == TNR_TO_STACK(tpd->tnr) + GUARDER_LENGTH) {
-		assert(region->end == TNR_TO_STACK(tpd->tnr) +
-				GUARDER_LENGTH + TLS_STACK_SIZE);
+	if (region->start == (uintptr_t)(TNR_TO_STACK(tpd->tnr) +
+				GUARDER_LENGTH)) {
+		TRACE(REPLAYER, "this is tls stack\n");
+		assert(region->end == (uintptr_t)(TNR_TO_STACK(tpd->tnr) +
+					TLS_STACK_SIZE));
+		skip_nbytes(ckpt_fd, region_sz(region));
 		return;
 	}
 
-	bool_t anon_mapping = FALSE;
-	bool_t file_mapping = TRUE;
-	bool_t do_fill = TRUE;
-	if ((fn[0] != '\0') && (fn[0] != '[')) {
-		/* this is file mapping */
-		if (strncmp("/dev", fn, 4) == 0) {
-			anon_mapping = TRUE;
-			file_mapping = FALSE;
-			do_fill = FALSE;
-		} else if (strcmp(exec_fn, fn) == 0) {
-			/* don't do the file mapping,  */
-			anon_mapping = FALSE;
-			file_mapping = FALSE;
-			do_fill = TRUE;
-		} else if (strcmp(pthread_fn, fn) == 0) {
-			anon_mapping = TRUE;
-			file_mapping = FALSE;
-			do_fill = TRUE;
-		} else {
-			anon_mapping = FALSE;
-			file_mapping = TRUE;
-			do_fill = TRUE;
-		}
-	} else {
+	/* if it is interp mapping, skip and return */
+	if (strcmp(fn, interp_fn) == 0) {
+		/* this is interp_fn mapping */
+		skip_nbytes(ckpt_fd, region_sz(region));
+		return;
 	}
 
 	/* FIXME */
 	/* 0. if it is TNR_TO_STACK + GUARDER_LENGTH, skip this section
 	 * 1. setup the region:
 	 *   if it is file mapping, then
-	 *     if it is mapped from a device file, use anon mapping;
+	 *     if it is mapped from a device file, use anon mapping, fill = false;
 	 *     if it is mapped from exec_fn, then it should have been mapped,
-	 *        do nothing
+	 *        however we still issue a file mapping
 	 *     if it is mapped from pthread_fn, use anon mapping,
 	 *     if it is mapped from normal file, do the file mapping
 	 *   if it is anon mapping, then
-	 *     if it is interp's own data section, skip;
-	 *     if it is stack, skip;
-	 *     if it is heap?
+	 *     if it is interp's own data section, don't fill data before _end;
+	 *     if it is tls-stack, skip;
 	 * 2. fill its content
 	 *   if it is mapped from "/dev/xxx", fill it with zero
 	 *   if not: 
 	 *   don't fill interp(myself)'s own data section. We can find their
 	 *   address from _end and _edata
 	 * */
-	skip_nbytes(ckpt_fd, region_sz(region));
+
+	bool_t anon_mapping = FALSE;
+	bool_t file_mapping = FALSE;
+	bool_t do_fill = TRUE;
+
+	if ((fn[0] != '\0') && (fn[0] != '[')) {
+		/* the original section is file mapping */
+		if (strncmp("/dev", fn, 4) == 0) {
+			do_fill = FALSE;
+			anon_mapping = TRUE;
+			file_mapping = FALSE;
+		} else if (strcmp(exec_fn, fn) == 0) {
+			do_fill = TRUE;
+			file_mapping = TRUE;
+			anon_mapping = FALSE;
+		} else if (strcmp(pthread_fn, fn) == 0) {
+			do_fill = TRUE;
+			file_mapping = FALSE;
+			anon_mapping = TRUE;
+		} else {
+			do_fill = TRUE;
+			file_mapping = TRUE;
+			anon_mapping = FALSE;
+		}
+		/* we have already skip libinterp.so mapping */
+	} else {
+		/* the original section is anon mapping */
+		if ((region->start < (uintptr_t)_end) &&
+				(region->end >= (uintptr_t)_end)) {
+			/* check whether this section is the interp's data. if it is:
+			 *   1. if this program is loaded by libinterp.so, this is the [heap]
+			 *      section. we have already restore heap by 'brk' call in
+			 *      replayer_main, so we needn't do any mapping.
+			 *   2. if this program is loaded by itself, then the data section of
+			 *      libinterp.so never expand.
+			 * In short, we needn't to mapping for it, and when filling, we only need
+			 * to fill those data after _end
+			 * */
+			do_fill = TRUE;
+			file_mapping = FALSE;
+			anon_mapping = FALSE;
+		} else {
+			do_fill = TRUE;
+			file_mapping = FALSE;
+			anon_mapping = TRUE;
+		}
+	}
+
+	/* mapping */
+	assert(!(file_mapping && anon_mapping));
+	if (file_mapping) {
+		TRACE(REPLAYER, "file mapping...\n");
+		do_file_mapping(region, fn);
+	} else if (anon_mapping) {
+		TRACE(REPLAYER, "anon mapping...\n");
+		do_anon_mapping(region);
+	}
+
+	if (do_fill) {
+		fix_unwritable_region(region, TRUE);
+		if ((region->start < (uintptr_t)_end) &&
+				(region->end >= (uintptr_t)_end)) {
+			TRACE(REPLAYER, "_end=%p\n", _end);
+
+			skip_nbytes(ckpt_fd,
+					region_sz(region) -
+					ptr_diff(region->end, _end));
+			read_from_file(ckpt_fd, _end,
+					ptr_diff(region->end, _end));
+		} else {
+			read_from_file(ckpt_fd, (void*)region->start,
+					region_sz(region));
+		}
+		fix_unwritable_region(region, FALSE);
+	}
 }
 
 __attribute__((used, unused, visibility("hidden"))) void
@@ -295,18 +412,27 @@ replayer_main(volatile struct pusha_regs pusha_regs)
 	VERBOSE(REPLAYER, "p__stack_user: %p\n", p__stack_user);
 	VERBOSE(REPLAYER, "pstack_used: %p\n", pstack_used);
 
+	/* restore brk */
+	/* it will expand the heap and maps the pages */
+	int err = INTERNAL_SYSCALL_int80(brk, 1, ckpt_head.brk);
+	assert((uintptr_t)err == ckpt_head.brk);
+
 	/* load each memory region */
 	struct mem_region region;
 	do {
 		read_from_file(ckpt_fd, &region, sizeof(region));
 		if (region.start != MEM_REGIONS_END_MARK) {
-			do_restore_mem_region(&region, interp_fn, exec_fn, ckpt_fn,
+			do_restore_mem_region(&region, interp_fn, exec_fn,
 					pthread_fn);
 		}
 	} while (region.start != MEM_REGIONS_END_MARK);
 
 	INTERNAL_SYSCALL_int80(close, 1, ckpt_fd);
+
+	/* restore register state */
+
 	FATAL(REPLAYER, "Quit\n");
 }
+
 // vim:ts=4:sw=4
 
