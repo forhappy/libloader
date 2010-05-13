@@ -119,29 +119,30 @@ restore_tls_stack(
 	CASSERT(REPLAYER, err >= 0, "revert file pos failed\n");
 }
 
-static void
-fix_unwritable_region(struct mem_region * region, bool_t mark_writable)
-{
-	int err;
-	int prot = region->prot;
-	if (prot & PROT_WRITE)
-		return;
-
-	if (mark_writable)
-		prot |= PROT_WRITE;
-	err = INTERNAL_SYSCALL_int80(mprotect, 3, region->start,
-			region_sz(region), prot);
-	assert(err == 0);
-}
-
 /* make all exec section writable */
 static int
 get_new_prot(int old_prot)
 {
 	if (old_prot & PROT_EXEC)
 		old_prot |= PROT_WRITE;
-	TRACE(REPLAYER, "prot=%d\n", old_prot);
 	return old_prot;
+}
+
+
+static void
+fix_unwritable_region(struct mem_region * region, bool_t mark_writable)
+{
+	int err;
+	int prot = get_new_prot(region->prot);
+	if (prot & PROT_WRITE)
+		return;
+	/* all executable regions should have been set as 'writable' when mapping */
+
+	if (mark_writable)
+		prot |= PROT_WRITE;
+	err = INTERNAL_SYSCALL_int80(mprotect, 3, region->start,
+			region_sz(region), prot);
+	assert(err == 0);
 }
 
 static void
@@ -362,18 +363,12 @@ replayer_main(volatile struct pusha_regs pusha_regs)
 
 	/* load each memory region */
 	struct mem_region region;
-	int n = 0;
 	do {
 
 		read_from_file(ckpt_fd, &region, sizeof(region));
 		if (region.start != MEM_REGIONS_END_MARK) {
 			do_restore_mem_region(&region, interp_fn, exec_fn,
 					pthread_fn);
-		}
-		/* FIXME */
-		n ++;
-		if (n == 3) {
-			while(1);
 		}
 	} while (region.start != MEM_REGIONS_END_MARK);
 
@@ -396,9 +391,23 @@ replayer_main(volatile struct pusha_regs pusha_regs)
 
 	tpd->target = eip;
 	TRACE(REPLAYER, "target eip = %p\n", eip);
+
 #if 1
 	volatile int i = 0;
-	while (i == 0);
+
+	pid_t self_pid = INTERNAL_SYSCALL_int80(getpid, 0);
+
+	VERBOSE(REPLAYER, "state has been restored, run gdb:\n");
+	VERBOSE(REPLAYER, "\t(gdb) attach %d\n", self_pid);
+	VERBOSE(REPLAYER, "\t(gdb) p *(int*)(%p) = 1\n", &i);
+	while (i == 0) {
+		struct timespec {
+			long       ts_sec;
+			long       ts_nsec;
+		};
+		struct timespec tm = {1, 0};
+		INTERNAL_SYSCALL_int80(nanosleep, 2, &tm, NULL);
+	}
 #endif
 }
 
