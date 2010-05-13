@@ -134,14 +134,20 @@ fix_unwritable_region(struct mem_region * region, bool_t mark_writable)
 	assert(err == 0);
 }
 
+/* make all exec section writable */
+static int
+get_new_prot(int old_prot)
+{
+	if (old_prot & PROT_EXEC)
+		old_prot |= PROT_WRITE;
+	return old_prot;
+}
+
 static void
 do_file_mapping(struct mem_region * region, const char * fn)
 {
 	int fd = INTERNAL_SYSCALL_int80(open, 2, fn, O_RDONLY);
-	int prot = region->prot;
-	/* make all exec section writable */
-	if (prot & PROT_EXEC)
-		prot |= PROT_WRITE;
+	int prot = get_new_prot(region->prot);
 	int map_type = MAP_FIXED | MAP_PRIVATE;
 
 	if (fd < 0) {
@@ -161,16 +167,22 @@ do_file_mapping(struct mem_region * region, const char * fn)
 static void
 do_anon_mapping(struct mem_region * region)
 {
-	int prot = region->prot;
-	/* make all exec section writable */
-	if (prot & PROT_EXEC)
-		prot |= PROT_WRITE;
+	int prot = get_new_prot(region->prot);
 	int map_type = MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS;
 
 	void * addr = (void*)INTERNAL_SYSCALL_int80(mmap2, 6,
 			region->start, region_sz(region), prot,
 			map_type, 0, 0);
 	assert(addr == (void*)region->start);
+}
+
+static void
+do_reprotect(struct mem_region * region)
+{
+	int prot = get_new_prot(region->prot);
+	int err = INTERNAL_SYSCALL_int80(mprotect, 3,
+			region->start, region_sz(region), prot);
+	assert(err == 0);
 }
 
 static void
@@ -207,7 +219,8 @@ do_restore_mem_region(struct mem_region * region,
 	 *   if it is file mapping, then
 	 *     if it is mapped from a device file, use anon mapping, fill = false;
 	 *     if it is mapped from exec_fn, then it should have been mapped,
-	 *        however we still issue a file mapping
+	 *        we issue 'reprotect'. I've tried force-remap, it cause the lost
+	 *        of /proc/xxx/exec.
 	 *     if it is mapped from pthread_fn, use anon mapping,
 	 *     if it is mapped from normal file, do the file mapping
 	 *   if it is anon mapping, then
@@ -222,6 +235,7 @@ do_restore_mem_region(struct mem_region * region,
 
 	bool_t anon_mapping = FALSE;
 	bool_t file_mapping = FALSE;
+	bool_t reprotect = FALSE;
 	bool_t do_fill = TRUE;
 
 	if ((fn[0] != '\0') && (fn[0] != '[')) {
@@ -230,18 +244,22 @@ do_restore_mem_region(struct mem_region * region,
 			do_fill = FALSE;
 			anon_mapping = TRUE;
 			file_mapping = FALSE;
+			reprotect = FALSE;
 		} else if (strcmp(exec_fn, fn) == 0) {
 			do_fill = TRUE;
-			file_mapping = TRUE;
+			file_mapping = FALSE;
 			anon_mapping = FALSE;
+			reprotect = TRUE;
 		} else if (strcmp(pthread_fn, fn) == 0) {
 			do_fill = TRUE;
 			file_mapping = FALSE;
 			anon_mapping = TRUE;
+			reprotect = FALSE;
 		} else {
 			do_fill = TRUE;
 			file_mapping = TRUE;
 			anon_mapping = FALSE;
+			reprotect = FALSE;
 		}
 		/* we have already skip libinterp.so mapping */
 	} else {
@@ -260,21 +278,25 @@ do_restore_mem_region(struct mem_region * region,
 			do_fill = TRUE;
 			file_mapping = FALSE;
 			anon_mapping = FALSE;
+			reprotect = FALSE;
 		} else {
 			do_fill = TRUE;
 			file_mapping = FALSE;
 			anon_mapping = TRUE;
+			reprotect = FALSE;
 		}
 	}
 
 	/* mapping */
-	assert(!(file_mapping && anon_mapping));
 	if (file_mapping) {
 		TRACE(REPLAYER, "file mapping...\n");
 		do_file_mapping(region, fn);
 	} else if (anon_mapping) {
 		TRACE(REPLAYER, "anon mapping...\n");
 		do_anon_mapping(region);
+	} else if (reprotect) {
+		TRACE(REPLAYER, "reprotecting...\n");
+		do_reprotect(region);
 	}
 
 	if (do_fill) {
@@ -289,6 +311,7 @@ do_restore_mem_region(struct mem_region * region,
 			read_from_file(ckpt_fd, _end,
 					ptr_diff(region->end, _end));
 		} else {
+			TRACE(REPLAYER, "fill %d bytes\n", region_sz(region));
 			read_from_file(ckpt_fd, (void*)region->start,
 					region_sz(region));
 		}
@@ -351,15 +374,9 @@ replayer_main(volatile struct pusha_regs pusha_regs)
 
 	tpd->target = eip;
 	TRACE(REPLAYER, "target eip = %p\n", eip);
-	
-	
 
-	/* problem: why /proc/xxx/exe failure */
-	volatile int x = 0;
-	while (x == 0);
-
-
-	FATAL(REPLAYER, "Quit\n");
+	volatile int i = 0;
+	while (i == 0);
 }
 
 // vim:ts=4:sw=4
