@@ -140,6 +140,7 @@ get_new_prot(int old_prot)
 {
 	if (old_prot & PROT_EXEC)
 		old_prot |= PROT_WRITE;
+	TRACE(REPLAYER, "prot=%d\n", old_prot);
 	return old_prot;
 }
 
@@ -156,6 +157,8 @@ do_file_mapping(struct mem_region * region, const char * fn)
 		map_type |= MAP_ANONYMOUS;
 	}
 
+	TRACE(REPLAYER, "doing file mapping: 0x%8x-0x%8x:%d\n",
+			region->start, region->end, prot);
 	void * addr = (void*)INTERNAL_SYSCALL_int80(mmap2, 6,
 			region->start, region_sz(region), prot,
 			map_type, fd, region->offset >> 12);
@@ -176,13 +179,20 @@ do_anon_mapping(struct mem_region * region)
 	assert(addr == (void*)region->start);
 }
 
-static void
+static bool_t
 do_reprotect(struct mem_region * region)
 {
 	int prot = get_new_prot(region->prot);
 	int err = INTERNAL_SYSCALL_int80(mprotect, 3,
 			region->start, region_sz(region), prot);
-	assert(err == 0);
+	if (err != 0) {
+		if (err == -ENOMEM)
+			return err;
+		else
+			FATAL(REPLAYER, "reprotect 0x%8x-0x%8x failed: %d\n",
+				region->start, region->end, err);
+	}
+	return 0;
 }
 
 static void
@@ -249,6 +259,7 @@ do_restore_mem_region(struct mem_region * region,
 			do_fill = TRUE;
 			file_mapping = FALSE;
 			anon_mapping = FALSE;
+			/* see the previous discussing of reprotect */
 			reprotect = TRUE;
 		} else if (strcmp(pthread_fn, fn) == 0) {
 			do_fill = TRUE;
@@ -296,7 +307,11 @@ do_restore_mem_region(struct mem_region * region,
 		do_anon_mapping(region);
 	} else if (reprotect) {
 		TRACE(REPLAYER, "reprotecting...\n");
-		do_reprotect(region);
+		int err = do_reprotect(region);
+		if (err) {
+			TRACE(REPLAYER, "reprotect failed, use file mapping...\n");
+			do_file_mapping(region, fn);
+		}
 	}
 
 	if (do_fill) {
@@ -347,11 +362,18 @@ replayer_main(volatile struct pusha_regs pusha_regs)
 
 	/* load each memory region */
 	struct mem_region region;
+	int n = 0;
 	do {
+
 		read_from_file(ckpt_fd, &region, sizeof(region));
 		if (region.start != MEM_REGIONS_END_MARK) {
 			do_restore_mem_region(&region, interp_fn, exec_fn,
 					pthread_fn);
+		}
+		/* FIXME */
+		n ++;
+		if (n == 3) {
+			while(1);
 		}
 	} while (region.start != MEM_REGIONS_END_MARK);
 
@@ -374,9 +396,10 @@ replayer_main(volatile struct pusha_regs pusha_regs)
 
 	tpd->target = eip;
 	TRACE(REPLAYER, "target eip = %p\n", eip);
-
+#if 1
 	volatile int i = 0;
 	while (i == 0);
+#endif
 }
 
 // vim:ts=4:sw=4

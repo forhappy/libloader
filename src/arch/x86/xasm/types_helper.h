@@ -13,6 +13,7 @@
 #include <sys/user.h>
 #include <fcntl.h>
 #include <sys/mman.h>
+#include <errno.h>
 
 #endif
 

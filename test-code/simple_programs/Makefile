@@ -1,4 +1,4 @@
-TARGETS=simple.exe simple2.exe simple3 simple4.exe simple5
+TARGETS=simple.exe simple2.exe simple3 simple4.exe simple5 simple6.exe
 CFLAGS=-g -O0
 
 

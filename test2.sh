@@ -14,9 +14,9 @@ done
 
 ./src/host/snitchaser -i ./src/interp/libinterp.so -c /tmp/snitchaser/*.ckpt &
 
-while ! ps -e | grep test_linker > /dev/null ; do
+#while ! ps -e | grep test_linker > /dev/null ; do
 	sleep .1
-done
+#done
 
 PID=`ps -e | grep "\<test_linker\>" | awk '{print $1}'`
 
