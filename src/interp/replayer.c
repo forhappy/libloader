@@ -51,101 +51,6 @@ read_head(struct checkpoint_head * head, int fd)
 	TRACE(REPLAYER, "pid=%d, tid=%d, tnr=%d\n", head->pid, head->tid, head->tnr);
 }
 
-#if 0
-
-/* if return FALSE, the regions end */
-/* we use a function here because we want to use alloca */
-static bool_t
-restore_memory_region(int fd, const char * interp_fn, const char * exec_fn,
-		const char * pthread_fn)
-{
-	struct mem_region region;
-	read_from_file(fd, &region, sizeof(region));
-
-	if (region.start == MEM_REGIONS_END_MARK)
-		return FALSE;
-
-	assert(region.fn_sz > 0);
-	char * fn = alloca(region.fn_sz);
-	read_from_file(fd, fn, region.fn_sz);
-	TRACE(REPLAYER, "restoring region 0x%x-0x%x:%1x:0x%x:%d:%s\n",
-			region.start, region.end, region.prot, region.offset,
-			region.fn_sz, fn);
-#if 0
-	/* FIXME */
-	INTERNAL_SYSCALL_int80(lseek, 3, fd, region_sz(&region), SEEK_CUR);
-#endif
-
-
-
-
-#if 0
-	if ((fn[0] != '\0') && (fn[0] != '[')) {
-		/* this is file mapping */
-		/* if map from a device, create a anonymouse mapping for it */
-		bool_t anon = FALSE;
-		if (strncmp("/dev", fn, 4) == 0) {
-			anon = TRUE;
-		}
-
-	} else {
-		/* this is anonymouse mapping */
-	}
-#endif
-	return TRUE;
-}
-
-static void
-restore_memory(int fd, const char * interp_fn, const char * exec_fn,
-		const char * pthread_fn)
-{
-	TRACE(REPLAYER, "restoring memory image\n");
-	while (restore_memory_region(fd, interp_fn, exec_fn, pthread_fn));
-}
-
-#endif
-#if 0
-/* if return true, continue the iteration.
- * if return false, stop the iteration */
-/* we use a function because we want to use alloca */
-/* handler returns false then interrupt the iteration */
-static bool_t
-process_next_region(bool_t (*handler)(struct mem_region *, const char *, intptr_t),
-		intptr_t arg)
-{
-	struct mem_region region;
-	read_from_file(ckpt_fd, &region, sizeof(region));
-
-	if (region.start == MEM_REGIONS_END_MARK)
-		return FALSE;
-
-	assert(region.fn_sz > 0);
-	char * fn = alloca(region.fn_sz);
-	read_from_file(fd, fn, region.fn_sz);
-	TRACE(REPLAYER, "processing region 0x%x-0x%x:%1x:0x%x:%d:%s\n",
-			region.start, region.end, region.prot, region.offset,
-			region.fn_sz, fn);
-
-	if (!handler(&region, fn, arg))
-		return FALSE;
-	return TRUE;
-}
-
-static bool_t
-check_restore_tls_stack(struct mem_region * r, const char * fn ATTR_UNUSED,
-		intptr_t arg)
-{
-	int tnr = arg;
-	void * stack_base = TNR_TO_STACK(tnr);
-	void * stack_end = stack_base + TLS_STACK_SIZE;
-	if ((r->start == (uintptr_t)stack_base) &&
-		(r->end == (uintptr_t)stack_end)) {
-		/* find it! */
-		return FALSE;
-	}
-}
-#endif
-
 static void
 do_restore_tls_stack(void)
 {
@@ -430,6 +335,29 @@ replayer_main(volatile struct pusha_regs pusha_regs)
 	INTERNAL_SYSCALL_int80(close, 1, ckpt_fd);
 
 	/* restore register state */
+	void * eip;
+	struct pusha_regs * pregs = (struct pusha_regs *)(&pusha_regs);
+	restore_reg_state(&ckpt_head.reg_state, pregs, &eip);
+
+	/* restoring thread area */
+	/* thread areas */
+	TRACE(REPLAYER, "restoring thread area\n");
+	for (int i = 0; i < GDT_ENTRY_TLS_ENTRIES; i++) {
+		int err;
+		err = INTERNAL_SYSCALL_int80(set_thread_area,
+				1, &(ckpt_head.thread_area[i]));
+		assert(err == 0);
+	}
+
+	tpd->target = eip;
+	TRACE(REPLAYER, "target eip = %p\n", eip);
+	
+	
+
+	/* problem: why /proc/xxx/exe failure */
+	volatile int x = 0;
+	while (x == 0);
+
 
 	FATAL(REPLAYER, "Quit\n");
 }

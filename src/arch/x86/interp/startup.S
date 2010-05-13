@@ -93,7 +93,8 @@ REPLAYER_ENTRY:
 	/* tls->old_stack_top should have been adjusted by replayer_main */
 	movl %fs:OFFSET_OLD_STACK_TOP, %esp
 	/* real_branch should have been set in replayer_main */
-	jmpl *%fs:OFFSET_REAL_BRANCH
+	int3
+	jmpl *%fs:OFFSET_TARGET
 
 /* don't generate executable stack */
 .section        .note.GNU-stack,"",@progbits
