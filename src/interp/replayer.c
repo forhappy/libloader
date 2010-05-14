@@ -374,11 +374,6 @@ replayer_main(volatile struct pusha_regs pusha_regs)
 
 	INTERNAL_SYSCALL_int80(close, 1, ckpt_fd);
 
-	/* restore register state */
-	void * eip;
-	struct pusha_regs * pregs = (struct pusha_regs *)(&pusha_regs);
-	restore_reg_state(&ckpt_head.reg_state, pregs, &eip);
-
 	/* restoring thread area */
 	/* thread areas */
 	TRACE(REPLAYER, "restoring thread area\n");
@@ -388,6 +383,11 @@ replayer_main(volatile struct pusha_regs pusha_regs)
 				1, &(ckpt_head.thread_area[i]));
 		assert(err == 0);
 	}
+
+	/* restore register state */
+	void * eip;
+	struct pusha_regs * pregs = (struct pusha_regs *)(&pusha_regs);
+	restore_reg_state(&ckpt_head.reg_state, pregs, &eip);
 
 	tpd->target = eip;
 	TRACE(REPLAYER, "target eip = %p\n", eip);

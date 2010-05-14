@@ -115,16 +115,15 @@ restore_reg_state(struct reg_state * p, struct pusha_regs * r,
 	r->flags = u->eflags;
 	r->esp = u->esp;
 
-	/* don't restore any control register here */
 #define restorsr(s, r) asm volatile("movl %%eax, %%" #r : : "a" (s))
 #if 0
 	restorsr(u->xcs, cs);
 	restorsr(u->xds, ds);
 	restorsr(u->xes, es);
 	restorsr(u->xss, ss);
+#endif
 	restorsr(u->xfs, fs);
 	restorsr(u->xgs, gs);
-#endif
 #undef loadsr
 
 	__restore_i387(fx);
