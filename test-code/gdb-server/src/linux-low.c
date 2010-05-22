@@ -2129,8 +2129,8 @@ usr_store_inferior_registers (int regno)
 		{
 		  char *err = strerror (errno);
 		  char *msg = alloca (strlen (err) + 128);
-		  sprintf (msg, "writing register %d: %s",
-			   regno, err);
+		  sprintf (msg, "writing register %d to (0x%x): %s",
+			   regno, *(unsigned *) (buf + i), err);
 		  error (msg);
 		  return;
 		}

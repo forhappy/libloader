@@ -134,7 +134,15 @@ setup_tls_area(int tnr)
 	write_ldt(&desc);
 
 	/* finally load fs */
-	asm volatile ("movw %w0, %%fs\n" :: "R" (tnr * 8 + 4));
+	/* segregister: 16bits
+	 * 
+	 * X X X X X X X X X X X X X X X X
+	 *                           ^ ^ ^
+	 *                           | |-|
+	 *        <--- Index ---    TI RPL
+	 * 3 is 'user'
+	 * */
+	asm volatile ("movw %w0, %%fs\n" :: "R" (tnr * 8 + 4 + 3));
 
 	/* set tpd */
 	struct thread_private_data * tpd =
