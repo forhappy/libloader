@@ -20,6 +20,10 @@ real_branch:
 	movl %fs:OFFSET_OLD_STACK_TOP, %esp
 	jmpl *%fs:OFFSET_TARGET
 
+
+/* user_branch is the patched '_start' code. The loader
+ * needs to patch the '_start' code to direct control flow
+ * to user_branch */
 .globl user_branch
 user_branch:
 	movl %esp, %fs:OFFSET_OLD_STACK_TOP

@@ -355,7 +355,7 @@ do_recover(struct opts * opts)
 			assert(exec_full_fn_2 != NULL);
 		}
 
-		set_catched_var(target_pid, ptrace_execve(args, envs, exec_fn));
+		set_catched_var(target_pid, ptrace_execve(args, envs, exec_fn, TRUE));
 
 		xfree_null_catched(args);
 		xfree_null_catched(envs);
@@ -513,10 +513,13 @@ main(int argc, char * argv[])
 	}
 
 	/* wait for child so that it can recieve C-c */
-	/* we cannot incluse sys/wait.h because of type conflict */
+	/* we cannot include sys/wait.h because of type conflict */
+	/* needn't to do this: see ptrace_execve, we have uesd parent execve,
+	 * the frontend process is the parent and the recovered process. */
+#if 0
 	extern pid_t waitpid(pid_t, int *, int);
 	waitpid(child_pid, NULL, 0);
-
+#endif
 	return 0;
 }
 

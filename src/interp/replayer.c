@@ -389,8 +389,13 @@ replayer_main(volatile struct pusha_regs pusha_regs)
 	struct pusha_regs * pregs = (struct pusha_regs *)(&pusha_regs);
 	restore_reg_state(&ckpt_head.reg_state, pregs, &eip);
 
+
+	/* prepare replay: */
+	/* setup offset */
 	tpd->target = eip;
 	TRACE(REPLAYER, "target eip = %p\n", eip);
+
+	/* setup function pointers */
 
 #if 1
 	volatile int i = 0;

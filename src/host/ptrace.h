@@ -14,7 +14,7 @@
 #include <common/defs.h>
 
 extern pid_t
-ptrace_execve(char ** argv, char ** environ, char * exec_fn);
+ptrace_execve(char ** argv, char ** environ, char * exec_fn, bool_t parent_execve);
 
 extern void
 ptrace_dupmem(pid_t target, void * dst, uintptr_t addr, size_t len);
