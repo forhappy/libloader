@@ -6,6 +6,7 @@
 #ifndef __DEBUG_H
 #define __DEBUG_H
 #include <common/defs.h>
+#include <xasm/debug.h>
 
 __BEGIN_DECLS
 
@@ -38,6 +39,7 @@ enum __debug_component {
 	PTRACE,
 	PROCMAPS,
 	ELF,
+	LOG_SYSCALL,
 	NR_DEBUG_COMPONENTS,
 };
 
@@ -71,6 +73,7 @@ __debug_component_names[NR_DEBUG_COMPONENTS] = {
 	[PTRACE]	= "TRC",
 	[PROCMAPS]	= "MAP",
 	[ELF]		= "ELF",
+	[LOG_SYSCALL]	= "LCA",
 };
 #endif
 
@@ -91,6 +94,7 @@ __debug_component_levels[NR_DEBUG_COMPONENTS] = {
 	[PTRACE]	= DBG_LV_VERBOSE,
 	[PROCMAPS]	= DBG_LV_VERBOSE,
 	[ELF]		= DBG_LV_VERBOSE,
+	[LOG_SYSCALL] = DBG_LV_TRACE,
 };
 
 #endif

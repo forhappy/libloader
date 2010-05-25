@@ -41,8 +41,10 @@ ADD_CUSTOM_COMMAND(OUTPUT asm_offsets.h
 	)
 
 ADD_SUBDIRECTORY(printf)
+ADD_SUBDIRECTORY(syscalls)
 
 TARGET_LINK_LIBRARIES(platform printf)
+TARGET_LINK_LIBRARIES(platform log_syscall)
 TARGET_LINK_LIBRARIES(platform interp_common)
 
 ADD_EXECUTABLE(compute_tls_offset compute_tls_offset.c)

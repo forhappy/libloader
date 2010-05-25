@@ -467,6 +467,7 @@ compile_branch(uint8_t * patch_code, uint8_t * branch,
 		}
 
 		case 0xcc: {
+			VERBOSE(COMPILER, "int3 at branch %p\n", branch);
 			/* this is int3! we must restore eip and move the control back! */
 			/* generate code: pushl $xxxxxxx; ret */
 			/* this is push */
