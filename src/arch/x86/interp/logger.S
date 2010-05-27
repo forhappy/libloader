@@ -31,6 +31,9 @@ int80_syscall_entry:
 	pushl $0x0202
 	popfl
 	call pre_log_syscall_int80
+	cmp $0, %eax
+	jne 1f
+
 	popf
 	popa
 	movl %fs:OFFSET_OLD_STACK_TOP, %esp
@@ -43,7 +46,7 @@ int80_syscall_entry:
 	pushf
 	pushl $0x0202
 	popfl
-	call post_log_syscall_int80
+	1: call post_log_syscall_int80
 	popf
 	popa
 	movl %fs:OFFSET_OLD_STACK_TOP, %esp
@@ -60,6 +63,9 @@ vdso_syscall_entry:
 	pushl $0x0202
 	popfl
 	call pre_log_syscall_vdso
+	cmp $0, %eax
+	jne 1f
+
 	popf
 	popa
 	movl %fs:OFFSET_OLD_STACK_TOP, %esp
@@ -72,7 +78,7 @@ vdso_syscall_entry:
 	pushf
 	pushl $0x0202
 	popfl
-	call post_log_syscall_vdso
+	1: call post_log_syscall_vdso
 	popf
 	popa
 	movl %fs:OFFSET_OLD_STACK_TOP, %esp

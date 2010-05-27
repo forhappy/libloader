@@ -60,8 +60,7 @@ init_logger(struct tls_logger * logger, int pid, int tid)
 
 	logger->log_buffer_current = logger->log_buffer_start;
 	/* additional bytes! see branch_template.S */
-	logger->log_buffer_end = logger->log_buffer_start +
-		LOG_PAGES_NR * PAGE_SIZE - LOGGER_ADDITIONAL_BYTES;
+	logger->log_buffer_end = logger->log_buffer_start + MAX_LOGGER_SIZE;
 
 	prepare_tls_compress(&logger->compress,
 			LOG_PAGES_NR * PAGE_SIZE);
@@ -101,6 +100,26 @@ compress_logger_buffer(uint8_t * start, int in_sz, unsigned int * p_out_sz,
 	DEBUG(LOGGER, "flush logger buffer: ori sz=%d, compressed sz=%d\n",
 			in_sz, out_sz);
 	return out_buf;
+}
+
+static void
+write_to_logger_file(struct tls_logger * logger, void * data, size_t size)
+{
+	int fd = INTERNAL_SYSCALL_int80(open, 3, logger->log_fn,
+			O_WRONLY|O_APPEND|O_CREAT, 0664);
+	if (fd <= 0)
+		FATAL(LOGGER, "open logger file %s failed: %d\n",
+				logger->log_fn, fd);
+	TRACE(LOGGER, "log file %s opened, fd=%d\n", logger->log_fn, fd);
+
+	int err = INTERNAL_SYSCALL_int80(write, 3, fd, data,
+			size);
+	assert(err == (int)(size));
+
+	err = INTERNAL_SYSCALL_int80(close, 1, fd);
+	TRACE(LOGGER, "close %d: %d\n", fd, err);
+	assert(err == 0);
+#warning "also need to trigger ckpt switching here"
 }
 
 static void
@@ -147,6 +166,7 @@ do_flush_logger_buffer(struct tls_logger * logger)
 	err = INTERNAL_SYSCALL_int80(close, 1, fd);
 	TRACE(LOGGER, "close %d: %d\n", fd, err);
 	assert(err == 0);
+#warning "needs to trigger ckpt switching here"
 }
 
 /* A straightforward idea is to fork a new process and put
@@ -178,11 +198,6 @@ do_flush_logger_buffer(struct tls_logger * logger)
 static void
 flush_logger_buffer(struct tls_logger * logger)
 {
-	/* we need check buffer again because signal may raise after
-	 * the previous check and before we block signal */
-	if (logger->log_buffer_current < logger->log_buffer_end)
-		return;
-
 	do_flush_logger_buffer(logger);
 
 	/* clear logger status and return */
@@ -201,8 +216,56 @@ do_check_logger_buffer(void)
 	if (tpd->logger.log_buffer_current < tpd->logger.log_buffer_end)
 		return;
 	BLOCK_SIGNALS(tpd);
-	flush_logger_buffer(&tpd->logger);
+	if (tpd->logger.log_buffer_current >= tpd->logger.log_buffer_end) {
+		/* we need check buffer again because signal may raise after
+		 * the previous check and before we block signal */
+		flush_logger_buffer(&tpd->logger);
+	}
 	UNBLOCK_SIGNALS(tpd);
+	return;
+}
+
+void
+append_buffer(void * data, size_t size)
+{
+
+	assert(data != NULL);
+	assert(size != 0);
+
+	struct thread_private_data * tpd = get_tpd();
+	struct tls_logger * logger = &tpd->logger;
+
+	TRACE(LOGGER, "append %d bytes into buffer\n", size);
+
+	if (logger->log_buffer_current + size <
+			logger->log_buffer_end)
+	{
+		/* we have enough space */
+		memcpy(logger->log_buffer_current, data, size);
+		logger->log_buffer_current += size;
+		return;
+	}
+
+	/* we don't have enough space */
+	if (logger->log_buffer_current > logger->log_buffer_start) {
+		BLOCK_SIGNALS(tpd);
+		flush_logger_buffer(logger);
+		UNBLOCK_SIGNALS(tpd);
+	}
+
+	if (logger->log_buffer_current + size <
+			logger->log_buffer_end)
+	{
+		/* now we have enough space */
+		memcpy(logger->log_buffer_current, data, size);
+		logger->log_buffer_current += size;
+		return;
+	}
+
+	assert(size > MAX_LOGGER_SIZE);
+	/* direct write */
+	write_to_logger_file(logger, data, size);
+
 	return;
 }
 

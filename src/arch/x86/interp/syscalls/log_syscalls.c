@@ -6,25 +6,26 @@
 #include <common/debug.h>
 #include "log_syscalls.h"
 
-static void
+static int
 pre_log_syscall(struct pusha_regs * pregs)
 {
-	breakpoint();
-	FATAL(LOG_SYSCALL, "come here!\n");
+	VERBOSE(LOG_SYSCALL, "come here, eax=%d, ebx=%d\n",
+			pregs->eax, pregs->ebx);
+	return 0;
 }
 
 
 static void
 post_log_syscall(struct pusha_regs * pregs)
 {
-	breakpoint();
-	FATAL(LOG_SYSCALL, "come here!\n");
+	VERBOSE(LOG_SYSCALL, "come here, eax=0x%x\n",
+			pregs->eax);
 }
 
-void
+int
 pre_log_syscall_int80(struct pusha_regs regs)
 {
-	pre_log_syscall(&regs);
+	return pre_log_syscall(&regs);
 }
 
 void
@@ -33,10 +34,10 @@ post_log_syscall_int80(struct pusha_regs regs)
 	post_log_syscall(&regs);
 }
 
-void
+int
 pre_log_syscall_vdso(struct pusha_regs regs)
 {
-	pre_log_syscall(&regs);
+	return pre_log_syscall(&regs);
 }
 
 void

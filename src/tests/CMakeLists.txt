@@ -3,6 +3,7 @@ SET(tests
 	test_linker
 	test_xlinker
 	test_ylinker
+	test_normal_linker
 	)
 
 build_tests("${tests}" "")

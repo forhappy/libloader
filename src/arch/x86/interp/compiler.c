@@ -412,7 +412,6 @@ compile_branch(uint8_t * patch_code, uint8_t * branch,
 				+ real_branch_template_sz;
 		}
 
-
 		case 0x0f: {
 			switch (inst2) {
 #define COMP_Jxx_32b(jxx) COMP_Jxx(jxx, branch + 6, branch + 6 + *((int32_t*)(branch + 2)))
@@ -468,6 +467,7 @@ compile_branch(uint8_t * patch_code, uint8_t * branch,
 
 		case 0xcc: {
 			VERBOSE(COMPILER, "int3 at branch %p\n", branch);
+#warning ignore int3
 			/* this is int3! we must restore eip and move the control back! */
 			/* generate code: pushl $xxxxxxx; ret */
 			/* this is push */

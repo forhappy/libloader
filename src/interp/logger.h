@@ -9,7 +9,11 @@
 #include <interp/mm.h>
 #include <interp/compress.h>
 
+#include <xasm/logger.h>
+
 #define LOG_PAGES_NR	(1024*10)
+
+#define MAX_LOGGER_SIZE	(LOG_PAGES_NR * PAGE_SIZE - LOGGER_ADDITIONAL_BYTES)
 
 /* 
  * TLS support for logger:
@@ -54,6 +58,12 @@ init_logger(struct tls_logger * tl, int pid, int tid);
 /* close logger can be called multiple times */
 extern void
 close_logger(struct tls_logger * tl);
+
+extern void
+do_check_logger_buffer(void);
+
+extern void
+append_buffer(void * data, size_t size);
 
 #endif
 
