@@ -2,6 +2,7 @@
 #define __X86_PROCESSOR_H
 #include <stdint.h>
 /*  struct user_regs_struct */
+#include <common/defs.h>
 #include <sys/user.h>
 
 /* xmain return stack adjustment value, in dwords */

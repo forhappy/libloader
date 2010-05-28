@@ -4,14 +4,21 @@
  */
 
 #include <common/debug.h>
+#include <interp/logger.h>
 #include "log_syscalls.h"
+#include "syscall_table.h"
 
 static int
-pre_log_syscall(struct pusha_regs * pregs)
+pre_log_syscall(struct pusha_regs * regs)
 {
 	VERBOSE(LOG_SYSCALL, "come here, eax=%d, ebx=%d\n",
-			pregs->eax, pregs->ebx);
-	return 0;
+			regs->eax, regs->ebx);
+
+	/*  */
+	int nr = regs->eax;
+	append_buffer(&nr, sizeof(nr));
+	if (syscall_table[nr].pre_handler)
+		return syscall_table[nr].pre_handler(regs);
 }
 
 
