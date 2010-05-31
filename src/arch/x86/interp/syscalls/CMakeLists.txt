@@ -24,20 +24,24 @@ set_interp_properties(pre_library)
 set_interp_properties(post_library)
 set_interp_properties(replay_library)
 
+GET_TARGET_PROPERTY(pre_ori_cflags pre_library COMPILE_FLAGS)
+GET_TARGET_PROPERTY(post_ori_cflags pre_library COMPILE_FLAGS)
+GET_TARGET_PROPERTY(replay_ori_cflags pre_library COMPILE_FLAGS)
+
 SET_PROPERTY(TARGET pre_library
 	PROPERTY COMPILE_DEFINITIONS PRE_LIBRARY)
 SET_PROPERTY(TARGET pre_library
-	PROPERTY COMPILE_FLAGS ${KERNEL_CFLAGS})
+	PROPERTY COMPILE_FLAGS "${pre_ori_cflags} ${KERNEL_CFLAGS}")
 
 SET_PROPERTY(TARGET post_library
 	PROPERTY COMPILE_DEFINITIONS POST_LIBRARY)
 SET_PROPERTY(TARGET post_library
-	PROPERTY COMPILE_FLAGS ${KERNEL_CFLAGS})
+	PROPERTY COMPILE_FLAGS "${post_ori_cflags} ${KERNEL_CFLAGS}")
 
 SET_PROPERTY(TARGET replay_library
 	PROPERTY COMPILE_DEFINITIONS REPLAY_LIBRARY)
 SET_PROPERTY(TARGET replay_library
-	PROPERTY COMPILE_FLAGS ${KERNEL_CFLAGS})
+	PROPERTY COMPILE_FLAGS "${replay_ori_cflags} ${KERNEL_CFLAGS}")
 
 
 

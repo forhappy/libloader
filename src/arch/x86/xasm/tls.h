@@ -70,6 +70,9 @@ struct thread_private_data {
 	/* access: *fs:(0x3000 - 4); stores: the base (lowest)
 	 * address of the TLS section */
 	void * tls_base;	
+
+	int current_syscall_nr;
+	struct thread_private_data * next_tpd;
 };
 
 extern struct list_head tpd_list_head;

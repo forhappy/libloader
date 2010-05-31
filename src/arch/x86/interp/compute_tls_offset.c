@@ -42,6 +42,9 @@ compute(void)
 	PRINT(tnr, TNR);
 	PRINT(stack_top, STACK_TOP);
 	PRINT(tls_base, TLS_BASE);
+
+	PRINT(current_syscall_nr, CURRENT_SYSCALL_NR);
+	PRINT(next_tpd, next_tpd);
 }
 
 int main()
