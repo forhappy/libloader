@@ -111,9 +111,9 @@ dbg_output(enum __debug_level level,
 #endif
 		char * fmt, ...)
 #ifdef SNITCHASER_DEBUG
-ATTR(format(printf, 6, 7));
+ATTR(format(printf, 6, 7)) ATTR_HIDDEN;
 #else
-ATTR(format(printf, 2, 3));
+ATTR(format(printf, 2, 3)) ATTR_HIDDEN;
 #endif
 
 extern void

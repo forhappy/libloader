@@ -3,8 +3,13 @@
 #ifndef DEFS_H
 #define DEFS_H
 #include <config.h>
-#include <sys/cdefs.h>
-#include <stdint.h>
+#ifndef __KERNEL__
+# include <sys/cdefs.h>
+# include <stdint.h>
+#else
+# include <linux/types.h>
+#endif
+
 #include <endian.h>
 #include <assert.h>
 #include <stddef.h>
@@ -96,8 +101,13 @@ typedef int bool_t;
 #define tole32(p)	((p) = le32toh((p)))
 #define tole16(p)	((p) = le16toh((p)))
 
-#define max(a, b)	(((a) > (b)) ? (a) : (b))
-#define min(a, b)	(((a) < (b)) ? (a) : (b))
+#ifndef max
+# define max(a, b)	(((a) > (b)) ? (a) : (b))
+#endif
+
+#ifndef min
+# define min(a, b)	(((a) < (b)) ? (a) : (b))
+#endif
 
 #define max0(a, b)	max(a, b)
 #define min0(a, b)	((((a) < (b)) && ((a) != 0)) ? (a) : (b))
@@ -117,7 +127,10 @@ _strtok(const char * str, char tok)
 # define likely(x)	__builtin_expect(!!(x), 1)
 # define unlikely(x)	__builtin_expect(!!(x), 0)
 
-#define ATTR_UNUSED	ATTR(unused)
+#ifndef ATTR_UNUSED
+# define ATTR_UNUSED	ATTR(unused)
+#endif
+
 #ifdef SNITCHASER_DEBUG
 # define DEBUG_ARG
 # define DEBUG_DEF

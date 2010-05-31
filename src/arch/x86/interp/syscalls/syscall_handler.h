@@ -24,7 +24,9 @@ append_buffer(void * data, size_t size);
 extern void
 load_from_buffer(void * data, size_t size);
 
-#define ATTR_UNUSED __attribute__((unused))
+#ifndef ATTR_UNUSED
+# define ATTR_UNUSED __attribute__((unused))
+#endif
 
 struct pusha_regs {
 	uint32_t flags;

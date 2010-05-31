@@ -66,9 +66,9 @@ typedef uint16_t	Elf32_Section;
 #define ELF32_R_SYM(x) ((x) >> 8)
 #define ELF32_R_TYPE(x) ((x) & 0xff)
 
-#define R_386_GLOB_DAT	   6		/* Adjust by program base */
-#define R_386_RELATIVE	   8		/* Adjust by program base */
-
+#define R_386_GLOB_DAT		6		/* Adjust by program base */
+#define R_386_RELATIVE		8		/* Adjust by program base */
+#define R_386_32			1		/*  Direct 32 bit  */
 
 struct elf32_dyn {
   Elf32_Sword d_tag;

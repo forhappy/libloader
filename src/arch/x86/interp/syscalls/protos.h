@@ -6,6 +6,10 @@
 #ifndef PROTOS_H
 #define PROTOS_H
 
+#ifndef ATTR_HIDDEN
+# define ATTR_HIDDEN __attribute__((visibility ("hidden")))
+#endif
+
 #include <xasm/unistd_32.h>
 #include "syscall_table.h"
 
@@ -21,14 +25,15 @@ extern int
 trival_replay_handler(struct pusha_regs * regs);
 
 #define __def_handler(name, pre, post, replay)	\
-	extern int pre(struct pusha_regs * regs);	\
-	extern int post(struct pusha_regs * regs);	\
-	extern int replay(struct pusha_regs * regs);
+	extern int pre(struct pusha_regs * regs) ATTR_HIDDEN;	\
+	extern int post(struct pusha_regs * regs) ATTR_HIDDEN;	\
+	extern int replay(struct pusha_regs * regs) ATTR_HIDDEN;
 
 #define def_trival_handler(name)
 
 #define def_handler(name)	\
-	__def_handler(name, trival_pre_handler, post_##name, replay_##name)
+	extern int post_##name(struct pusha_regs * regs) ATTR_HIDDEN; \
+	extern int replay_##name(struct pusha_regs * regs) ATTR_HIDDEN;
 
 #define def_complex_handler(name)	\
 	__def_handler(name, pre_##name, post_##name, replay_##name)

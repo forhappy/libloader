@@ -82,6 +82,7 @@ relocate_interp(void)
 		switch (type) {
 			case R_386_RELATIVE: {
 				uint32_t old_val = *(uint32_t*)(address);
+				/* B + A */
 				real_val = old_val + load_bias;
 				break;
 			}
@@ -90,13 +91,14 @@ relocate_interp(void)
 				int nsym = ELF32_R_SYM(info);
 				struct elf32_sym * sym = &symtab[nsym];
 				uint32_t sym_val = sym->st_value;
+				/* S */
 				real_val = sym_val + load_bias;
 				break;
 			}
 			default: {
 				/* printf may be unusable now */
 				/* printf("relocate error: unknown relocate type 0x%x\n", type); */
-				__exit(-1);
+				__exit(-1234);
 			}
 		}
 		*(uint32_t*)(address) = real_val;

@@ -5,6 +5,7 @@
 
 #include "syscall_handler.h"
 
+
 #include <linux/module.h>
 #include <linux/mm.h>
 #include <linux/errno.h>
@@ -19,9 +20,12 @@
 #include <asm/uaccess.h>
 #include <asm/unistd.h>
 
+#include <common/debug.h>
+
 #ifndef PRE_LIBRARY
 DEF_HANDLER(fstat64)
 {
+//	TRACE(LOG_SYSCALL, "I'm here\n");
 	int r = EAX_AS_INT;
 	if (r >= 0)
 		BUFFER((void*)(regs->ecx), sizeof(struct stat64));

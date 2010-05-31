@@ -3,6 +3,7 @@ extern void test_tls(void);
 extern void test_mm(void);
 extern void test_dict(void);
 extern void test_compression(void);
+extern void test_relocation(void);
 
 int main()
 {
@@ -11,8 +12,9 @@ int main()
 	test_tls();
 	test_mm();
 	test_dict();
-#endif
 	test_compression();
+#endif
+	test_relocation();
 	return 0;
 }
 

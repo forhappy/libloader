@@ -15,6 +15,21 @@
 #include <interp/compress.h>
 
 void ATTR_EXPORT
+test_relocation(void)
+{
+
+	VERBOSE(SYSTEM, "--- test relocation\n");
+#if 0
+	{
+		extern int _end[] ATTR_HIDDEN;
+		extern int post_fstat64() ATTR_HIDDEN;
+		VERBOSE(SYSTEM, "value of '_end': %p\n", _end);
+		VERBOSE(SYSTEM, "value of 'post_fstat64': %p\n", post_fstat64);
+	}
+#endif
+}
+
+void ATTR_EXPORT
 test_debug(void)
 {
 	VERBOSE(SYSTEM, "this is exported func, for test use only\n");

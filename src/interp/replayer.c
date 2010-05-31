@@ -201,7 +201,7 @@ do_restore_mem_region(struct mem_region * region,
 		const char * interp_fn, const char * exec_fn,
 		const char * pthread_fn)
 {
-	extern int _end[];
+	extern int _end[] ATTR_HIDDEN;
 	char * fn = alloca(region->fn_sz);
 	read_from_file(ckpt_fd, fn, region->fn_sz);
 	TRACE(REPLAYER, "restoring 0x%8x-0x%8x:%s\n", region->start, region->end,
