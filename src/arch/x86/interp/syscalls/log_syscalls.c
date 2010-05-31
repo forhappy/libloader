@@ -3,6 +3,7 @@
  * by WN @ May. 25, 2010
  */
 
+#include <config.h>
 #include <common/debug.h>
 #include <interp/logger.h>
 #include "log_syscalls.h"
@@ -17,8 +18,11 @@ pre_log_syscall(struct pusha_regs * regs)
 	/*  */
 	int nr = regs->eax;
 	append_buffer(&nr, sizeof(nr));
-	if (syscall_table[nr].pre_handler)
+	if (syscall_table[nr].pre_handler) {
 		return syscall_table[nr].pre_handler(regs);
+	} else {
+		FATAL(LOG_SYSCALL, "doesn't support syscall %d\n", nr);
+	}
 }
 
 

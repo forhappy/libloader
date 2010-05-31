@@ -28,10 +28,14 @@ trival_replay_handler(struct pusha_regs * regs);
 #define def_trival_handler(name)
 
 #define def_handler(name)	\
+	__def_handler(name, trival_pre_handler, post_##name, replay_##name)
+
+#define def_complex_handler(name)	\
 	__def_handler(name, pre_##name, post_##name, replay_##name)
 
 #include "handlers.h"
 
+#undef def_complex_handler
 #undef def_handler
 #undef def_trival_handler
 #undef __def_handler

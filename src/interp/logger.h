@@ -65,6 +65,10 @@ do_check_logger_buffer(void);
 extern void
 append_buffer(void * data, size_t size);
 
+/* ********* replay code *********** */
+extern void
+load_from_buffer(void * data, size_t size);
+
 #endif
 
 // vim:ts=4:sw=4
