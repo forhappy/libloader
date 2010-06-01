@@ -25,7 +25,7 @@
 #ifndef PRE_LIBRARY
 DEF_HANDLER(fstat64)
 {
-	FATAL(LOG_SYSCALL, "I'm here\n");
+	TRACE(LOG_SYSCALL, "fstat64\n");
 	int r = EAX_AS_INT;
 	if (r >= 0)
 		BUFFER((void*)(regs->ecx), sizeof(struct stat64));

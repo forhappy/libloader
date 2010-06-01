@@ -226,6 +226,13 @@ do_check_logger_buffer(void)
 }
 
 void
+flush_logger(void)
+{
+	struct thread_private_data * tpd = get_tpd();
+	do_flush_logger_buffer(&tpd->logger);
+}
+
+void
 append_buffer(void * data, size_t size)
 {
 

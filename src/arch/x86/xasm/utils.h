@@ -17,8 +17,10 @@ fdprintf(int fd, const char * fmt, ...);
 extern int
 vfdprintf(int fd, const char * fmt, va_list args);
 
+/* don't call it __printf because I want to avoid a macro name
+ * '__printf' defined in kernel's code include/linux/compiler-gcc.h */
 extern int ATTR(format(printf, 1, 2))
-__printf(const char * fmt, ...);
+__xprintf(const char * fmt, ...);
 
 extern void
 relocate_interp(void);

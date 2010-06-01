@@ -63,6 +63,9 @@ extern void
 do_check_logger_buffer(void);
 
 extern void
+flush_logger(void);
+
+extern void
 append_buffer(void * data, size_t size);
 
 /* ********* replay code *********** */

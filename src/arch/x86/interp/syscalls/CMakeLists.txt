@@ -10,6 +10,9 @@ SET(SRC
 SET(SYSCALLS
 	syscall_handler.h
 	fstat64.c
+	mmap2.c
+	write.c
+	exit_group.c
 	)
 
 ADD_LIBRARY(log_syscall STATIC ${SRC})

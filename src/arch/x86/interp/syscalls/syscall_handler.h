@@ -42,17 +42,20 @@ struct pusha_regs {
 
 #ifdef POST_LIBRARY
 # define DEF_HANDLER(name)	int post_##name(struct pusha_regs * regs ATTR_UNUSED)
-# define INT_VAL(x)		({int ___x = (x); append_buffer(&___x, sizeof(int)); ___x;})
+# define INT_VAL(x)		({int ___x = (int)(x); append_buffer(&___x, sizeof(int)); ___x;})
+# define PTR_VAL(x)		({void * ___x = (void*)(x); append_buffer(&___x, sizeof(void *)); ___x;})
 # define BUFFER(p, s)	do {append_buffer((p), (s));} while(0)
 #endif
 
 #ifdef REPLAY_LIBRARY
 # define DEF_HANDLER(name)	int replay_##name(struct pusha_regs * regs ATTR_UNUSED)
 # define INT_VAL(x)		({load_from_buffer(&(x), sizeof(int)); (x);})
+# define PTR_VAL(x)		({load_from_buffer(&(x), sizeof(void*)); (void*)(x);})
 # define BUFFER(p, s)	do {load_from_buffer((p), (s));} while(0)
 #endif
 
 #define EAX_AS_INT		(INT_VAL(regs->eax))
+#define EAX_AS_PTR		(PTR_VAL(regs->eax))
 
 #endif
 

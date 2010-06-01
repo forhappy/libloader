@@ -24,7 +24,7 @@
 static void
 usage(const char ** argv)
 {
-	__printf("Usage: %s EXECUTABLE-FILE [ARGS-FOR-PROGRAM...]\n",
+	__xprintf("Usage: %s EXECUTABLE-FILE [ARGS-FOR-PROGRAM...]\n",
 			argv[0]);
 	__exit(0);
 }
