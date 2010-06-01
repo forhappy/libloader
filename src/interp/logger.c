@@ -24,6 +24,22 @@
 
 #include <zlib/zlib.h>
 
+/* 
+ * the format of log file:
+ *
+ * mark(1byte)+data
+ *
+ * mark: 0x1: compressed data
+ * mark: 0x0: uncompressed data
+ *
+ * if mark == 0x1:
+ *   data ::= comp-head compressed-data
+ *   comp-head ::= real_sz compressed_sz
+ * else if mark == 0x0:
+ *   data ::= uncomp-head uncompressed-data
+ *   uncomp-head ::= real_sz
+ */
+
 static void
 reset_fns(struct tls_logger * logger, int pid, int tid)
 {
@@ -102,8 +118,8 @@ compress_logger_buffer(uint8_t * start, int in_sz, unsigned int * p_out_sz,
 	return out_buf;
 }
 
-static void
-write_to_logger_file(struct tls_logger * logger, void * data, size_t size)
+static int
+open_logger_file(struct tls_logger * logger)
 {
 	int fd = INTERNAL_SYSCALL_int80(open, 3, logger->log_fn,
 			O_WRONLY|O_APPEND|O_CREAT, 0664);
@@ -111,11 +127,21 @@ write_to_logger_file(struct tls_logger * logger, void * data, size_t size)
 		FATAL(LOGGER, "open logger file %s failed: %d\n",
 				logger->log_fn, fd);
 	TRACE(LOGGER, "log file %s opened, fd=%d\n", logger->log_fn, fd);
+	return fd;
+}
 
+static void
+write_to_logger_file(int fd, void * data, size_t size)
+{
 	int err = INTERNAL_SYSCALL_int80(write, 3, fd, data,
 			size);
 	assert(err == (int)(size));
+}
 
+static void
+close_logger_file(int fd)
+{
+	int err;
 	err = INTERNAL_SYSCALL_int80(close, 1, fd);
 	TRACE(LOGGER, "close %d: %d\n", fd, err);
 	assert(err == 0);
@@ -137,35 +163,25 @@ do_flush_logger_buffer(struct tls_logger * logger)
 	assert(compressed_data != NULL);
 	assert(out_sz != 0);
 
-	int fd = INTERNAL_SYSCALL_int80(open, 3, logger->log_fn,
-			O_WRONLY|O_APPEND|O_CREAT, 0664);
-	if (fd <= 0)
-		FATAL(LOGGER, "open logger file %s failed: %d\n",
-				logger->log_fn, fd);
+	int fd = open_logger_file(logger);
 
 	TRACE(LOGGER, "log file %s opened, fd=%d\n", logger->log_fn, fd);
+
+	/* write mark */
+
+	uint32_t mark = COMPRESSED_DATA_MARK;
+	write_to_logger_file(fd, &mark, sizeof(mark));
+
 	struct log_block_tag tag = {
 		.real_sz = log_sz,
 		.compressed_sz = out_sz,
 	};
 
 	/* write the tag */
-	int err = INTERNAL_SYSCALL_int80(write, 3, fd, &tag, sizeof(tag));
-	assert(err == sizeof(tag));
-	
-	/* write data */
-	err = INTERNAL_SYSCALL_int80(write, 3, fd, compressed_data,
-			out_sz);
-	assert(err == (int)(out_sz));
+	write_to_logger_file(fd, &tag, sizeof(tag));
+	write_to_logger_file(fd, compressed_data, out_sz);
 
-	/* check whether to checkpoint */
-	struct stat64 st;
-	err = INTERNAL_SYSCALL_int80(fstat64, 2, fd, &st);
-	assert(err == 0);
-
-	err = INTERNAL_SYSCALL_int80(close, 1, fd);
-	TRACE(LOGGER, "close %d: %d\n", fd, err);
-	assert(err == 0);
+	close_logger_file(fd);
 #warning "needs to trigger ckpt switching here"
 }
 
@@ -271,7 +287,11 @@ append_buffer(void * data, size_t size)
 
 	assert(size > MAX_LOGGER_SIZE);
 	/* direct write */
-	write_to_logger_file(logger, data, size);
+	int fd = open_logger_file(logger);
+	uint32_t mark = UNCOMPRESSED_DATA_MARK;
+	write_to_logger_file(fd, &mark, sizeof(mark));
+	write_to_logger_file(fd, data, size);
+	close_logger_file(fd);
 
 	return;
 }

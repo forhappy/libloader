@@ -42,8 +42,8 @@ SET_PROPERTY(TARGET xinterp
 ADD_LIBRARY(interp_common STATIC
 	debug.c)
 
-TARGET_LINK_LIBRARIES(interp interp_common platform zlib lzo)
-TARGET_LINK_LIBRARIES(xinterp interp_common platform zlib lzo)
+TARGET_LINK_LIBRARIES(interp interp_common platform lzo)
+TARGET_LINK_LIBRARIES(xinterp interp_common platform lzo)
 
 
 

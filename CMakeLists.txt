@@ -191,21 +191,6 @@ SET(INTERP_FILE "/lib/ld-linux.so.2"
 SET(LOG_DIR "/tmp/snitchaser"
 	CACHE PATH "log file dir")
 
-
-SET(USE_ZLIB FALSE
-	CACHE BOOL "use zlib to compress log")
-
-# according to test results, lzo is MUCH BETTER (both faster and smaller) than zlib
-
-SET(USE_LZO TRUE
-	CACHE BOOL "use lzo to compress log")
-
-IF(USE_LZO)
-	SET(USE_ZLIB FALSE CACHE BOOL "use zlib to compress log" FORCE)
-ELSE(USE_LZO)
-	SET(USE_ZLIB TRUE CACHE BOOL "use zlib to compress log" FORCE)
-ENDIF(USE_LZO)
-
 # check environment
 
 CONFIGURE_FILE(config.h.cmake.in config.h)

@@ -72,6 +72,9 @@ append_buffer(void * data, size_t size);
 extern void
 load_from_buffer(void * data, size_t size);
 
+#define COMPRESSED_DATA_MARK	(0x1)
+#define UNCOMPRESSED_DATA_MARK	(0x0)
+
 #endif
 
 // vim:ts=4:sw=4

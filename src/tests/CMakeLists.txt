@@ -4,6 +4,7 @@ SET(tests
 	test_xlinker
 	test_ylinker
 	test_normal_linker
+	test_flush_logger
 	)
 
 build_tests("${tests}" "")
@@ -21,6 +22,10 @@ SET_PROPERTY(TARGET test_xlinker
 	PROPERTY LINK_FLAGS "-Wl,-dynamic-linker,${CMAKE_BINARY_DIR}/src/interp/libxinterp.so"
 	)
 SET_PROPERTY(TARGET test_ylinker
+	APPEND
+	PROPERTY LINK_FLAGS "-Wl,-dynamic-linker,${CMAKE_BINARY_DIR}/src/interp/libinterp.so"
+	)
+SET_PROPERTY(TARGET test_flush_logger
 	APPEND
 	PROPERTY LINK_FLAGS "-Wl,-dynamic-linker,${CMAKE_BINARY_DIR}/src/interp/libinterp.so"
 	)

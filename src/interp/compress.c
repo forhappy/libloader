@@ -11,7 +11,7 @@
 #include <xasm/string.h>
 
 
-#ifdef USE_ZLIB
+#if 0
 
 # warning you choose to use zlib to compress log, it is not recommended.
 # warning results show that LZO is both faster and smaller.
@@ -176,7 +176,7 @@ __zlib_decompress(const uint8_t * in_buf, int in_sz,
 
 #endif
 
-#ifdef USE_LZO
+#if 1
 
 #include <lzo/lzo.h>
 

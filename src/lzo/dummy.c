@@ -1,1 +1,1 @@
-/* This is only a dymmu file */
+/* This is only a dummy file */
