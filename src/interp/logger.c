@@ -169,7 +169,7 @@ do_flush_logger_buffer(struct tls_logger * logger)
 
 	/* write mark */
 
-	uint32_t mark = COMPRESSED_DATA_MARK;
+	uint8_t mark = COMPRESSED_DATA_MARK;
 	write_to_logger_file(fd, &mark, sizeof(mark));
 
 	struct log_block_tag tag = {
@@ -288,8 +288,9 @@ append_buffer(void * data, size_t size)
 	assert(size > MAX_LOGGER_SIZE);
 	/* direct write */
 	int fd = open_logger_file(logger);
-	uint32_t mark = UNCOMPRESSED_DATA_MARK;
+	uint8_t mark = UNCOMPRESSED_DATA_MARK;
 	write_to_logger_file(fd, &mark, sizeof(mark));
+	write_to_logger_file(fd, &size, sizeof(size));
 	write_to_logger_file(fd, data, size);
 	close_logger_file(fd);
 

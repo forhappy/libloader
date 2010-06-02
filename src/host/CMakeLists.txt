@@ -1,17 +1,28 @@
-SET(SRC
-	main.c
+SET(COMMONSRC
 	debug.c
+	exception.h
+	exception.c
+	)
+
+SET(SN_SRC
+	main.c
 	opts.c
 	ptrace.h
 	procmaps.h
-	exception.h
-	exception.c
 	mm.h
 	elf.h
 	)
 
-ADD_EXECUTABLE(snitchaser ${SRC})
-TARGET_LINK_LIBRARIES(snitchaser platform_host)
+SET(UC_SRC
+	uncompress_log.c
+	)
+
+ADD_LIBRARY(common_host ${COMMONSRC})
+
+ADD_EXECUTABLE(snitchaser ${SN_SRC})
+ADD_EXECUTABLE(uncompress_log ${UC_SRC})
+TARGET_LINK_LIBRARIES(snitchaser common_host platform_host)
+TARGET_LINK_LIBRARIES(uncompress_log common_host lzo)
 
 # vim:ts=4:sw=4
 

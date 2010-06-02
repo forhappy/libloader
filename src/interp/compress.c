@@ -264,9 +264,6 @@ __lzo_decompress(const uint8_t * in_buf, int in_sz,
 		uint8_t * out_buf, int * p_out_sz)
 {
 	TRACE(COMPRESS, "lzo decompress\n");
-	/* alloc workspace */
-	void * workspace = alloc_cont_space2(LZO1X_1_MEM_COMPRESS);
-	assert(workspace != NULL);
 
 	int err;
 	err = lzo1x_decompress_safe(in_buf, in_sz, out_buf, (unsigned int*)p_out_sz);
