@@ -6,10 +6,11 @@ int main()
 
 	printf("program runs normally\n");
 	int i = 0;
+	int s = 0;
 	while(i < 100000000)
-		i++;
+		s += i++;
 	printf("end\n");
-	return 0;
+	return s;
 }
 
 // vim:ts=4:sw=4
