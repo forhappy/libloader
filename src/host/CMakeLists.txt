@@ -19,9 +19,15 @@ SET(UC_SRC
 
 ADD_LIBRARY(common_host ${COMMONSRC})
 
+ADD_SUBDIRECTORY(gdbserver)
+
+
 ADD_EXECUTABLE(snitchaser ${SN_SRC})
 ADD_EXECUTABLE(uncompress_log ${UC_SRC})
-TARGET_LINK_LIBRARIES(snitchaser common_host platform_host)
+# This is a trick to force cmake list "-lthread_db" at the beginning of
+# generated command line. This is because libthread_db rely on some symbols
+# defined in gdbserver
+TARGET_LINK_LIBRARIES(snitchaser ${THREADDB_LIBS} gdbserver common_host platform_host)
 TARGET_LINK_LIBRARIES(uncompress_log common_host lzo)
 
 ################ wrapped gdbserver ################
