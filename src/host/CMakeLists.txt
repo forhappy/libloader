@@ -24,5 +24,8 @@ ADD_EXECUTABLE(uncompress_log ${UC_SRC})
 TARGET_LINK_LIBRARIES(snitchaser common_host platform_host)
 TARGET_LINK_LIBRARIES(uncompress_log common_host lzo)
 
+################ wrapped gdbserver ################
+
+
 # vim:ts=4:sw=4
 
