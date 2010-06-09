@@ -70,6 +70,8 @@
 #include <sys/iomgr.h>
 #endif /* __QNX__ */
 
+#include <common/defs.h>
+
 #ifndef HAVE_SOCKLEN_T
 typedef int socklen_t;
 #endif
@@ -761,7 +763,7 @@ putpkt_notif (char *buf)
    will cause us to request child interruption.  */
 
 static void
-input_interrupt (int unused)
+input_interrupt (int unused ATTR_UNUSED)
 {
   fd_set readset;
   struct timeval immediate = { 0, 0 };
@@ -1278,7 +1280,7 @@ decode_X_packet (char *from, int packet_len, CORE_ADDR *mem_addr_ptr,
     }
 
   if (remote_unescape_input ((const gdb_byte *) &from[i], packet_len - i,
-			     to, *len_ptr) != *len_ptr)
+			     to, *len_ptr) != (int)*len_ptr)
     return -1;
 
   return 0;

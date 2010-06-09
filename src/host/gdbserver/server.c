@@ -32,6 +32,8 @@
 #include <malloc.h>
 #endif
 
+#include <common/defs.h>
+
 ptid_t cont_thread;
 ptid_t general_thread;
 ptid_t step_thread;
@@ -770,7 +772,7 @@ handle_query (char *own_buf, int packet_len, int *new_packet_len_p)
       n = (*the_target->qxfer_spu) (annex, spu_buf, NULL, ofs, len + 1);
       if (n < 0)
 	write_enn (own_buf);
-      else if (n > len)
+      else if (n > (int)len)
 	*new_packet_len_p = write_qxfer_response (own_buf, spu_buf, len, 1);
       else
 	*new_packet_len_p = write_qxfer_response (own_buf, spu_buf, n, 0);
@@ -843,7 +845,7 @@ handle_query (char *own_buf, int packet_len, int *new_packet_len_p)
       n = (*the_target->read_auxv) (ofs, data, len + 1);
       if (n < 0)
 	write_enn (own_buf);
-      else if (n > len)
+      else if (n > (int)len)
 	*new_packet_len_p = write_qxfer_response (own_buf, data, len, 1);
       else
 	*new_packet_len_p = write_qxfer_response (own_buf, data, n, 0);
@@ -985,7 +987,7 @@ handle_query (char *own_buf, int packet_len, int *new_packet_len_p)
       n = (*the_target->qxfer_osdata) (annex, workbuf, NULL, ofs, len + 1);
       if (n < 0)
 	write_enn (own_buf);
-      else if (n > len)
+      else if (n > (int)len)
 	*new_packet_len_p = write_qxfer_response (own_buf, workbuf, len, 1);
       else
 	*new_packet_len_p = write_qxfer_response (own_buf, workbuf, n, 0);
@@ -1023,7 +1025,7 @@ handle_query (char *own_buf, int packet_len, int *new_packet_len_p)
       n = (*the_target->qxfer_siginfo) (annex, data, NULL, ofs, len + 1);
       if (n < 0)
 	write_enn (own_buf);
-      else if (n > len)
+      else if (n > (int)len)
 	*new_packet_len_p = write_qxfer_response (own_buf, data, len, 1);
       else
 	*new_packet_len_p = write_qxfer_response (own_buf, data, n, 0);
@@ -1302,7 +1304,15 @@ handle_v_cont (char *own_buf)
   char *p, *q;
   int n = 0, i = 0;
   struct thread_resume *resume_info;
-  struct thread_resume default_action = {{0}};
+  struct thread_resume default_action = {
+	  .thread = {
+		  .pid = 0,
+		  .lwp = 0,
+		  .tid = 0,
+	  },
+	  .kind = resume_continue,
+	  .sig = 0,
+  };
 
   /* Count the number of semicolons in the packet.  There should be one
      for every action.  */
@@ -2537,7 +2547,7 @@ process_serial_event (void)
 /* Event-loop callback for serial events.  */
 
 void
-handle_serial_event (int err, gdb_client_data client_data)
+handle_serial_event (int err ATTR_UNUSED, gdb_client_data client_data ATTR_UNUSED)
 {
   if (debug_threads)
     fprintf (stderr, "handling possible serial event\n");
@@ -2553,7 +2563,7 @@ handle_serial_event (int err, gdb_client_data client_data)
 /* Event-loop callback for target events.  */
 
 void
-handle_target_event (int err, gdb_client_data client_data)
+handle_target_event (int err ATTR_UNUSED, gdb_client_data client_data ATTR_UNUSED)
 {
   if (debug_threads)
     fprintf (stderr, "handling possible target event\n");

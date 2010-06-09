@@ -43,6 +43,8 @@
 #include <sys/stat.h>
 #include <sys/vfs.h>
 
+#include <common/defs.h>
+
 #ifndef SPUFS_MAGIC
 #define SPUFS_MAGIC 0x23c9b64e
 #endif
@@ -294,7 +296,7 @@ handle_extended_wait (struct lwp_info *event_child, int wstat)
 
 	  if (ret == -1)
 	    perror_with_name ("waiting for new child");
-	  else if (ret != new_pid)
+	  else if (ret != (long)new_pid)
 	    warning ("wait returned unexpected PID %d", ret);
 	  else if (!WIFSTOPPED (status))
 	    warning ("wait returned unexpected status 0x%x", status);
@@ -1805,7 +1807,7 @@ linux_set_resume_request (struct inferior_list_entry *entry, void *arg)
   lwp = get_thread_lwp (thread);
   r = arg;
 
-  for (ndx = 0; ndx < r->n; ndx++)
+  for (ndx = 0; ndx < (int)r->n; ndx++)
     {
       ptid_t ptid = r->resume[ndx].thread;
       if (ptid_equal (ptid, minus_one_ptid)
@@ -2053,7 +2055,7 @@ fetch_register (int regno)
 	  char *err = strerror (errno);
 	  char *msg = alloca (strlen (err) + 128);
 	  sprintf (msg, "reading register %d: %s", regno, err);
-	  error (msg);
+	  error ("%s", msg);
 	  goto error_exit;
 	}
     }
@@ -2131,7 +2133,7 @@ usr_store_inferior_registers (int regno)
 		  char *msg = alloca (strlen (err) + 128);
 		  sprintf (msg, "writing register %d to (0x%x): %s",
 			   regno, *(unsigned *) (buf + i), err);
-		  error (msg);
+		  error ("%s", msg);
 		  return;
 		}
 	    }
@@ -2335,7 +2337,7 @@ linux_read_memory (CORE_ADDR memaddr, unsigned char *myaddr, int len)
   int pid = lwpid_of (get_thread_lwp (current_inferior));
 
   /* Try using /proc.  Don't bother for one word.  */
-  if (len >= 3 * sizeof (long))
+  if (len >= (int)(3 * sizeof (long)))
     {
       /* We could keep this file open and cache it - possibly one per
 	 thread.  That requires some juggling, but is even faster.  */
@@ -2447,7 +2449,7 @@ static int linux_supports_tracefork_flag;
 /* Helper functions for linux_test_for_tracefork, called via clone ().  */
 
 static int
-linux_tracefork_grandchild (void *arg)
+linux_tracefork_grandchild (void *arg ATTR_UNUSED)
 {
   _exit (0);
 }
@@ -2842,7 +2844,7 @@ linux_qxfer_osdata (const char *annex,
 		     if (len > 0)
 		       {
 			 int i;
-			 for (i = 0; i < len; i++)
+			 for (i = 0; i < (int)len; i++)
 			   if (cmd[i] == '\0')
 			     cmd[i] = ' ';
 			 cmd[len] = '\0';
@@ -2909,7 +2911,7 @@ siginfo_fixup (struct siginfo *siginfo, void *inf_siginfo, int direction)
 }
 
 static int
-linux_xfer_siginfo (const char *annex, unsigned char *readbuf,
+linux_xfer_siginfo (const char *annex ATTR_UNUSED, unsigned char *readbuf,
 		    unsigned const char *writebuf, CORE_ADDR offset, int len)
 {
   int pid;
@@ -2962,7 +2964,7 @@ linux_xfer_siginfo (const char *annex, unsigned char *readbuf,
    sigsuspend in my_waitpid.  */
 
 static void
-sigchld_handler (int signo)
+sigchld_handler (int signo ATTR_UNUSED)
 {
   int old_errno = errno;
 

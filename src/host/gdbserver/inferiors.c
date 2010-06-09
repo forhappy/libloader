@@ -19,6 +19,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <stdlib.h>
+#include <common/defs.h>
 
 #include "server.h"
 
@@ -453,7 +454,7 @@ find_process_pid (int pid)
    i.e. not attached to.  */
 
 static int
-started_inferior_callback (struct inferior_list_entry *entry, void *args)
+started_inferior_callback (struct inferior_list_entry *entry, void *args ATTR_UNUSED)
 {
   struct process_info *process = (struct process_info *) entry;
 
@@ -473,7 +474,7 @@ have_started_inferiors_p (void)
 /* Return non-zero if INF, a struct process_info, was attached to.  */
 
 static int
-attached_inferior_callback (struct inferior_list_entry *entry, void *args)
+attached_inferior_callback (struct inferior_list_entry *entry, void *args ATTR_UNUSED)
 {
   struct process_info *process = (struct process_info *) entry;
 

@@ -29,6 +29,8 @@
 
 #include "gdb_proc_service.h"
 
+#include <common/defs.h>
+
 typedef struct ps_prochandle *gdb_ps_prochandle_t;
 typedef void *gdb_ps_read_buf_t;
 typedef const void *gdb_ps_write_buf_t;
@@ -60,7 +62,7 @@ gregset_info(void)
    symbol is stored in SYM_ADDR.  */
 
 ps_err_e
-ps_pglobal_lookup (gdb_ps_prochandle_t ph, const char *obj,
+ps_pglobal_lookup (gdb_ps_prochandle_t ph ATTR_UNUSED, const char *obj ATTR_UNUSED,
 		   const char *name, psaddr_t *sym_addr)
 {
   CORE_ADDR addr;
@@ -76,7 +78,7 @@ ps_pglobal_lookup (gdb_ps_prochandle_t ph, const char *obj,
    them into BUF.  */
 
 ps_err_e
-ps_pdread (gdb_ps_prochandle_t ph, psaddr_t addr,
+ps_pdread (gdb_ps_prochandle_t ph ATTR_UNUSED, psaddr_t addr,
 	   gdb_ps_read_buf_t buf, gdb_ps_size_t size)
 {
   read_inferior_memory ((unsigned long) addr, buf, size);
@@ -86,7 +88,7 @@ ps_pdread (gdb_ps_prochandle_t ph, psaddr_t addr,
 /* Write SIZE bytes from BUF into the target process PH at address ADDR.  */
 
 ps_err_e
-ps_pdwrite (gdb_ps_prochandle_t ph, psaddr_t addr,
+ps_pdwrite (gdb_ps_prochandle_t ph ATTR_UNUSED, psaddr_t addr,
 	    gdb_ps_write_buf_t buf, gdb_ps_size_t size)
 {
   return write_inferior_memory ((unsigned long) addr, buf, size);
@@ -96,7 +98,7 @@ ps_pdwrite (gdb_ps_prochandle_t ph, psaddr_t addr,
    and store them in GREGSET.  */
 
 ps_err_e
-ps_lgetregs (gdb_ps_prochandle_t ph, lwpid_t lwpid, prgregset_t gregset)
+ps_lgetregs (gdb_ps_prochandle_t ph ATTR_UNUSED, lwpid_t lwpid, prgregset_t gregset)
 {
 #ifdef HAVE_REGSETS
   struct lwp_info *lwp;
@@ -124,7 +126,9 @@ ps_lgetregs (gdb_ps_prochandle_t ph, lwpid_t lwpid, prgregset_t gregset)
    from GREGSET.  */
 
 ps_err_e
-ps_lsetregs (gdb_ps_prochandle_t ph, lwpid_t lwpid, const prgregset_t gregset)
+ps_lsetregs (gdb_ps_prochandle_t ph ATTR_UNUSED,
+		lwpid_t lwpid ATTR_UNUSED,
+		const prgregset_t gregset ATTR_UNUSED)
 {
   /* Unneeded.  */
   return PS_ERR;
@@ -134,7 +138,9 @@ ps_lsetregs (gdb_ps_prochandle_t ph, lwpid_t lwpid, const prgregset_t gregset)
    process PH and store them in FPREGSET.  */
 
 ps_err_e
-ps_lgetfpregs (gdb_ps_prochandle_t ph, lwpid_t lwpid, void *fpregset)
+ps_lgetfpregs (gdb_ps_prochandle_t ph ATTR_UNUSED,
+		lwpid_t lwpid ATTR_UNUSED,
+		void *fpregset ATTR_UNUSED)
 {
   /* Unneeded.  */
   return PS_ERR;
@@ -144,7 +150,9 @@ ps_lgetfpregs (gdb_ps_prochandle_t ph, lwpid_t lwpid, void *fpregset)
    process PH from FPREGSET.  */
 
 ps_err_e
-ps_lsetfpregs (gdb_ps_prochandle_t ph, lwpid_t lwpid, void *fpregset)
+ps_lsetfpregs (gdb_ps_prochandle_t ph ATTR_UNUSED,
+		lwpid_t lwpid ATTR_UNUSED,
+		void *fpregset ATTR_UNUSED)
 {
   /* Unneeded.  */
   return PS_ERR;
@@ -154,7 +162,7 @@ ps_lsetfpregs (gdb_ps_prochandle_t ph, lwpid_t lwpid, void *fpregset)
    -- not used on Solaris.  */
 
 pid_t
-ps_getpid (gdb_ps_prochandle_t ph)
+ps_getpid (gdb_ps_prochandle_t ph ATTR_UNUSED)
 {
   return pid_of (get_thread_lwp (current_inferior));
 }

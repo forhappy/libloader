@@ -35,6 +35,8 @@ static int thread_db_use_events;
 
 #include <stdint.h>
 
+#include <common/defs.h>
+
 static int find_one_thread (ptid_t);
 static int find_new_threads_callback (const td_thrhandle_t *th_p, void *data);
 
@@ -125,7 +127,7 @@ thread_db_state_str (td_thr_state_e state)
 #endif
 
 static int
-thread_db_create_event (CORE_ADDR where)
+thread_db_create_event (CORE_ADDR where ATTR_UNUSED)
 {
   td_event_msg_t msg;
   td_err_e err;
@@ -318,7 +320,7 @@ maybe_attach_thread (const td_thrhandle_t *th_p, td_thrinfo_t *ti_p)
 }
 
 static int
-find_new_threads_callback (const td_thrhandle_t *th_p, void *data)
+find_new_threads_callback (const td_thrhandle_t *th_p, void *data ATTR_UNUSED)
 {
   td_thrinfo_t ti;
   td_err_e err;

@@ -27,6 +27,8 @@
 
 #include "gdb_proc_service.h"
 
+#include <common/defs.h>
+
 /* NOTE: gdb_proc_service.h may include linux/elf.h.
    We need Elf32_Phdr.  If we don't get linux/elf.h we could include
    elf.h like linux-ppc-low.c does.  */
@@ -127,7 +129,7 @@ static /*const*/ int i386_regmap[] =
 /* Called by libthread_db.  */
 
 ps_err_e
-ps_get_thread_area (const struct ps_prochandle *ph,
+ps_get_thread_area (const struct ps_prochandle *ph ATTR_UNUSED,
 		    lwpid_t lwpid, int idx, void **base)
 {
 #ifdef __x86_64__
@@ -167,13 +169,13 @@ ps_get_thread_area (const struct ps_prochandle *ph,
 static int
 i386_cannot_store_register (int regno)
 {
-  return regno >= I386_NUM_REGS;
+  return regno >= (int)I386_NUM_REGS;
 }
 
 static int
 i386_cannot_fetch_register (int regno)
 {
-  return regno >= I386_NUM_REGS;
+  return regno >= (int)I386_NUM_REGS;
 }
 
 static void
@@ -191,7 +193,7 @@ x86_fill_gregset (void *buf)
     }
 #endif
 
-  for (i = 0; i < I386_NUM_REGS; i++)
+  for (i = 0; i < (int)I386_NUM_REGS; i++)
     collect_register (i, ((char *) buf) + i386_regmap[i]);
 
   collect_register_by_name ("orig_eax", ((char *) buf) + ORIG_EAX * 4);
@@ -212,7 +214,7 @@ x86_store_gregset (const void *buf)
     }
 #endif
 
-  for (i = 0; i < I386_NUM_REGS; i++)
+  for (i = 0; i < (int)I386_NUM_REGS; i++)
     supply_register (i, ((char *) buf) + i386_regmap[i]);
 
   supply_register_by_name ("orig_eax", ((char *) buf) + ORIG_EAX * 4);
@@ -396,7 +398,7 @@ i386_dr_low_set_addr (const struct i386_debug_reg_state *state, int regnum)
 /* Update the inferior's DR7 debug control register from STATE.  */
 
 void
-i386_dr_low_set_control (const struct i386_debug_reg_state *state)
+i386_dr_low_set_control (const struct i386_debug_reg_state *state ATTR_UNUSED)
 {
   struct inferior_list_entry *lp;
   /* Only need to update the threads of this process.  */
@@ -753,7 +755,8 @@ siginfo_from_compat_siginfo (siginfo_t *to, compat_siginfo_t *from)
    INF.  */
 
 static int
-x86_siginfo_fixup (struct siginfo *native, void *inf, int direction)
+x86_siginfo_fixup (struct siginfo *native ATTR_UNUSED, void *inf ATTR_UNUSED,
+		int direction ATTR_UNUSED)
 {
 #ifdef __x86_64__
   /* Is the inferior 32-bit?  If so, then fixup the siginfo object.  */
