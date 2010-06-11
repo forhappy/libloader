@@ -16,7 +16,7 @@ const char *argp_program_bug_address = "<wangnan06@ict.ac.cn>";
 static char doc[] =
 	"snitchaser: replayer, load checkpoint and begin replay";
 static char args_doc[] =
-	"[TARGET OPTIONS]";
+	"TARGET [TARGET OPTIONS]";
 
 
 static struct argp_option options[] = {
@@ -29,6 +29,16 @@ static struct argp_option options[] = {
 		"set checkpoint file name", 0},
 	{"readckpt",	'r', NULL, 0,
 		"don't run target exec, only read and check ckpt", 0},
+
+	/* gdbserver options */
+
+	{"gdbserver-debug", -1, NULL, 0,
+		"gdbserver --debug", 0},
+	{"gdbserver-remote-debug", -2, NULL, 0,
+		"gdbserver --remote-debug", 0},
+	{"comm",	'm', "COMM", 0,
+		"gdbserver COMM, default is \":12345\"", 0},
+
 	{NULL, '\0', NULL, 0, NULL, 0},
 };
 
@@ -36,6 +46,9 @@ static struct opts opts = {
 	.pthread_so_fn	= "/lib/libpthread.so.0",
 	.ckpt_fn	= NULL,
 	.read_ckpt	= 0,
+	.gdbserver_debug 		= 0,
+	.gdbserver_remote_debug = 0,
+	.gdbserver_comm			= ":12345",
 };
 
 static error_t
@@ -53,6 +66,15 @@ parse_opt(int key, char *arg, struct argp_state *state ATTR(unused))
 		return 0;
 	case 'c':
 		opts.ckpt_fn = arg;
+		return 0;
+	case 'm':
+		opts.gdbserver_comm = arg;
+		return 0;
+	case -1:
+		opts.gdbserver_debug = 1;
+		return 0;
+	case -2:
+		opts.gdbserver_remote_debug = 1;
 		return 0;
 	case ARGP_KEY_END:
 		return 0;

@@ -13,8 +13,13 @@
 #include <asm/unistd.h>
 #include <common/defs.h>
 
+
+/* new_proc_prepare is a callback func, the newly created process
+ * will call it immediately after fork() */
 extern pid_t
-ptrace_execve(char ** argv, char ** environ, char * exec_fn, bool_t parent_execve);
+ptrace_execve(char ** argv, char ** environ, char * exec_fn,
+		bool_t parent_execve,
+		void (*new_proc_prepare)(void * arg), void * arg);
 
 extern void
 ptrace_dupmem(pid_t target, void * dst, uintptr_t addr, size_t len);

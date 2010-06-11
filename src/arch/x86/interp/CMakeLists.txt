@@ -17,6 +17,7 @@ SET(SRC
 	utils.c
 	kutils.c
 	scan_opcode.c
+	sockpair.c
 	x86_opcode.h
 	x86_opcode.c.h
 	asm_offsets.h

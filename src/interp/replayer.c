@@ -5,6 +5,7 @@
 
 #include <common/defs.h>
 #include <common/debug.h>
+#include <common/replay/socketpair.h>
 
 #include <xasm/utils.h>
 #include <xasm/processor.h>
@@ -396,6 +397,18 @@ replayer_main(volatile struct pusha_regs pusha_regs)
 	TRACE(REPLAYER, "target eip = %p\n", eip);
 
 	/* setup function pointers */
+	/* FIXME which function? */
+
+	/* registers have been set */
+
+	/* write marks to socket */
+
+	/* raise a SIGSTOP here */
+# warning lost a lot of things
+
+
+	/* try to communicate with gdbloader */
+	sock_send("12345", 6);
 
 #if 1
 	volatile int i = 0;

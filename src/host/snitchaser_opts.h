@@ -14,6 +14,9 @@ struct opts {
 	const char * pthread_so_full_name;	/* set according to pthread_so_fn */
 	int cmd_idx;
 	int read_ckpt;
+	int gdbserver_debug;
+	int gdbserver_remote_debug;
+	const char * gdbserver_comm;
 };
 
 struct opts *

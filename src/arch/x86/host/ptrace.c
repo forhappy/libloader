@@ -90,7 +90,8 @@ do_parent_execve(char ** argv, char ** env, char * exec_fn)
 
 pid_t
 ptrace_execve(char ** argv, char ** env, char * exec_fn,
-		bool_t parent_execve)
+		bool_t parent_execve,
+		void (*new_proc_prepare)(void * arg), void * arg)
 {
 	int err;
 
@@ -111,6 +112,9 @@ ptrace_execve(char ** argv, char ** env, char * exec_fn,
 		if (!parent_execve) {
 			if (child_pid == 0) {
 				/* child process */
+				/* prepare child process */
+				if (new_proc_prepare != NULL)
+					new_proc_prepare(arg);
 				do_execve(argv, env, exec_fn);
 			} else {
 				/* parent needn't do anything */
@@ -159,6 +163,8 @@ ptrace_execve(char ** argv, char ** env, char * exec_fn,
 			 * */
 			volatile int parent_execve_lock = 0;
 			if (child_pid != 0) {
+				if (new_proc_prepare != NULL)
+					new_proc_prepare(arg);
 				/* wait child finish */
 				waitpid(child_pid, NULL, 0);
 				/* iterate over parent_execve_lock */

@@ -7,6 +7,7 @@ SET(COMMONSRC
 SET(SN_SRC
 	main.c
 	opts.c
+	sockpair.c
 	ptrace.h
 	procmaps.h
 	mm.h

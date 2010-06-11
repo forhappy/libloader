@@ -8,6 +8,7 @@
 #include <common/defs.h>
 #include <common/debug.h>
 #include <common/assert.h>
+#include <common/replay/socketpair.h>
 
 #include <interp/checkpoint.h>
 #include <host/snitchaser_opts.h>
@@ -20,12 +21,17 @@
 #include <sys/stat.h>
 #include <sys/ptrace.h>
 #include <sys/mman.h>
+#include <sys/socket.h>
 
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+/* will be exported to gdbserver */
+/* target process uses [1] and host use [0] */
+int socket_pair_fds[2] = {-1, -1};
 
 static bool_t
 file_exist(const char * fn)
@@ -279,6 +285,36 @@ do_read_ckpt(struct opts * opts)
 	}
 }
 
+/* 
+ * this is the callback used in ptrace_execve and will be executed
+ * immediately after fork() in child process.
+ */
+static void
+dup_sockpair(void * unuse ATTR_UNUSED)
+{
+	assert(HOST_SOCKPAIR_FD != -1);
+	assert(TARGET_SOCKPAIR_FD_TEMP != -1);
+
+	/* close host socket because we don't need it */
+	close(HOST_SOCKPAIR_FD);
+
+	TRACE(REPLAYER, "dup2 fd %d to %d in target process\n",
+			TARGET_SOCKPAIR_FD_TEMP, TARGET_SOCKPAIR_FD);
+
+	/* dup TARGET_SOCKPAIR_FD_TEMP to TARGET_SOCKPAIR_FD */
+	if (TARGET_SOCKPAIR_FD_TEMP == TARGET_SOCKPAIR_FD)
+		return;
+	/* use dup2 to do it */
+	int err;
+	err = dup2(TARGET_SOCKPAIR_FD_TEMP, TARGET_SOCKPAIR_FD);
+	if (err != TARGET_SOCKPAIR_FD) {
+		FATAL(REPLAYER, "dup2(%d, %d) failed with errno %d, return value %d\n",
+				TARGET_SOCKPAIR_FD_TEMP, TARGET_SOCKPAIR_FD, errno, err);
+	}
+	/* close TARGET_SOCKPAIR_FD_TEMP because we don't need it anymore */
+	close(TARGET_SOCKPAIR_FD_TEMP);
+}
+
 static pid_t
 do_recover(struct opts * opts)
 {
@@ -355,7 +391,8 @@ do_recover(struct opts * opts)
 			assert(exec_full_fn_2 != NULL);
 		}
 
-		set_catched_var(target_pid, ptrace_execve(args, envs, exec_fn, TRUE));
+		set_catched_var(target_pid,
+				ptrace_execve(args, envs, exec_fn, TRUE, dup_sockpair, NULL));
 
 		xfree_null_catched(args);
 		xfree_null_catched(envs);
@@ -480,6 +517,8 @@ main(int argc, char * argv[])
 			"checkpoint file (-c) %s doesn't exist\n", opts->ckpt_fn);
 	CASSERT(REPLAYER, file_exist(opts->interp_so_fn),
 			"interp so file (-i) %s doesn't exist\n", opts->interp_so_fn);
+	CASSERT(REPLAYER, opts->gdbserver_comm != NULL,
+			"doesn't set gdbserver COMM using '-m'\n");
 
 	catch_var(const char *, interp_so_full_name, NULL);
 	catch_var(const char *, pthread_so_full_name, NULL);
@@ -500,6 +539,11 @@ main(int argc, char * argv[])
 			break;
 		}
 
+		/* build socketpair */
+		int err;
+		err = socketpair(PF_LOCAL, SOCK_DGRAM, 0, socket_pair_fds);
+		CASSERT(REPLAYER, err == 0, "unable to create sockerpair\n");
+
 		child_pid = do_recover(opts);
 
 	} FINALLY {
@@ -508,18 +552,17 @@ main(int argc, char * argv[])
 
 		xfree_null(interp_so_full_name);
 		xfree_null(pthread_so_full_name);
+
 	} CATCH(exp) {
 		RETHROW(exp);
 	}
 
-	/* wait for child so that it can recieve C-c */
-	/* we cannot include sys/wait.h because of type conflict */
-	/* needn't to do this: see ptrace_execve, we have uesd parent execve,
-	 * the frontend process is the parent and the recovered process. */
-#if 0
-	extern pid_t waitpid(pid_t, int *, int);
-	waitpid(child_pid, NULL, 0);
-#endif
+	/* start a gdbserver to do the attachment */
+	/* try to receive data from target */
+	char xxx[6];
+	sock_recv(xxx, 6);
+	WARNING(REPLAYER, "received data: %s\n", xxx);
+
 	return 0;
 }
 

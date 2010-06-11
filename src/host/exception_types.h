@@ -15,6 +15,7 @@ def_exp_type(EXP_PROC_MAPS_REGION_NOT_FOUND, "unable to find a region in /proc/x
 def_exp_type(EXP_PTRACE, "ptrace error")
 def_exp_type(EXP_ELF, "elf processing error")
 def_exp_type(EXP_ELF_SYMBOL_NOT_FOUND, "unable to find a symbol in a elf file")
+def_exp_type(EXP_SOCKPAIR_ERROR, "socketpair in gdbserver error")
 
 // vim:ts=4:sw=4:cino=l1,\:0
 
