@@ -31,6 +31,9 @@ extern int socket_pair_fds[2];
  * design decision can simplify the libinterp's code. */
 #define TARGET_SOCKPAIR_FD	(94)
 
+#define TARGET_START_MARK	"START"
+#define TARGET_START_MARK_SZ	sizeof(TARGET_START_MARK)
+
 extern void
 sock_send(void * data, size_t len);
 

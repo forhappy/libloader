@@ -101,10 +101,10 @@ check_header(void * ptr)
 	if (memcmp(phead->magic, CKPT_MAGIC, CKPT_MAGIC_SZ) != 0)
 		THROW_FATAL(EXP_WRONG_CKPT, "checkpoint magic error");
 
-	VERBOSE(REPLAYER, "ckpt magic ok\n");
-	VERBOSE(REPLAYER, "brk=0x%x\n", phead->brk);
-	VERBOSE(REPLAYER, "pid=%d\n", phead->pid);
-	VERBOSE(REPLAYER, "tid=%d\n", phead->tid);
+	VERBOSE(REPLAYER_HOST, "ckpt magic ok\n");
+	VERBOSE(REPLAYER_HOST, "brk=0x%x\n", phead->brk);
+	VERBOSE(REPLAYER_HOST, "pid=%d\n", phead->pid);
+	VERBOSE(REPLAYER_HOST, "tid=%d\n", phead->tid);
 
 	return phead;
 }
@@ -260,7 +260,7 @@ fix_pthread(const char * pthread_fn, void * regions,
 	} CATCH(exp) {
 		switch (exp.type) {
 		case EXP_CKPT_REGION_NOT_FOUND:
-			VERBOSE(REPLAYER,
+			VERBOSE(REPLAYER_HOST,
 					"there's no libpthread in ckpt, things are simpler\n");
 			break;
 		default:
@@ -298,7 +298,7 @@ dup_sockpair(void * unuse ATTR_UNUSED)
 	/* close host socket because we don't need it */
 	close(HOST_SOCKPAIR_FD);
 
-	TRACE(REPLAYER, "dup2 fd %d to %d in target process\n",
+	TRACE(REPLAYER_HOST, "dup2 fd %d to %d in target process\n",
 			TARGET_SOCKPAIR_FD_TEMP, TARGET_SOCKPAIR_FD);
 
 	/* dup TARGET_SOCKPAIR_FD_TEMP to TARGET_SOCKPAIR_FD */
@@ -308,7 +308,7 @@ dup_sockpair(void * unuse ATTR_UNUSED)
 	int err;
 	err = dup2(TARGET_SOCKPAIR_FD_TEMP, TARGET_SOCKPAIR_FD);
 	if (err != TARGET_SOCKPAIR_FD) {
-		FATAL(REPLAYER, "dup2(%d, %d) failed with errno %d, return value %d\n",
+		FATAL(REPLAYER_HOST, "dup2(%d, %d) failed with errno %d, return value %d\n",
 				TARGET_SOCKPAIR_FD_TEMP, TARGET_SOCKPAIR_FD, errno, err);
 	}
 	/* close TARGET_SOCKPAIR_FD_TEMP because we don't need it anymore */
@@ -380,7 +380,7 @@ do_recover(struct opts * opts)
 		/* if exec_full_fn same as interp_so_full_name, the real exec file
 		 * is from exec_fn_2. */
 		if (strcmp(exec_full_fn, opts->interp_so_full_name) == 0) {
-			TRACE(REPLAYER, "target program %s is started by libinterp.so\n",
+			TRACE(REPLAYER_HOST, "target program %s is started by libinterp.so\n",
 					exec_fn_2);
 			if (!file_exist(exec_fn_2))
 				THROW_FATAL(EXP_FILE_NOT_FOUND,
@@ -391,8 +391,9 @@ do_recover(struct opts * opts)
 			assert(exec_full_fn_2 != NULL);
 		}
 
+		/* don't use 'parent_execve': we have gdbserver */
 		set_catched_var(target_pid,
-				ptrace_execve(args, envs, exec_fn, TRUE, dup_sockpair, NULL));
+				ptrace_execve(args, envs, exec_fn, FALSE, dup_sockpair, NULL));
 
 		xfree_null_catched(args);
 		xfree_null_catched(envs);
@@ -420,13 +421,13 @@ do_recover(struct opts * opts)
 					"interp section's pretection bits inconsistent");
 		compare_section(proc_interp.start, proc_interp.end,
 				target_pid, region_data(interp_region));
-		TRACE(REPLAYER, "libinterp is consistent\n");
+		TRACE(REPLAYER_HOST, "libinterp is consistent\n");
 
 		/* find the debug symbol */
 		uintptr_t entry = elf_find_symbol(opts->interp_so_full_name,
 				proc_interp.start, REPLAYER_ENTRY_STR);
 
-		TRACE(REPLAYER, "debug entry at 0x%x\n", entry);
+		TRACE(REPLAYER_HOST, "debug entry at 0x%x\n", entry);
 
 		/* goto */
 		ptrace_goto(target_pid, entry);
@@ -505,19 +506,67 @@ do_recover(struct opts * opts)
 }
 
 
+static void
+start_gdbserver(struct opts * opts, pid_t child_pid)
+{
+	/* first, wait for child to start */
+	char start_mark[TARGET_START_MARK_SZ];
+	sock_recv(start_mark, TARGET_START_MARK_SZ);
+	if (strcmp(start_mark, TARGET_START_MARK) != 0)
+		THROW_FATAL(EXP_SOCKPAIR_UNSYNC, "start mark mismatch");
+
+	pid_t target_pid;
+	sock_recv(&target_pid, sizeof(target_pid));
+	if (target_pid != child_pid)
+		THROW_FATAL(EXP_SOCKPAIR_UNSYNC, "receive pid is %d, not %d",
+				target_pid, child_pid);
+
+	VERBOSE(REPLAYER_HOST, "host and target have been connected with each other\n");
+
+	/* the child should have stopped. do gdbserver attachment */
+	/* build arguments:
+	 *
+	 * gdbserver [--debug] [--remote-debug] COMM --attach pid
+	 *
+	 * at most 6 args
+	 * */
+
+	char * args[10];
+	memset(args, '\0', sizeof(args));
+	int n = 0;
+	args[n++] = "gdbserver";
+	if (opts->gdbserver_debug)
+		args[n++] = "--debug";
+	if (opts->gdbserver_remote_debug)
+		args[n++] = "--remote-debug";
+	args[n++] = (char*)opts->gdbserver_comm;
+	args[n++] = "--attach";
+
+	char pid_str[10];
+	snprintf(pid_str, 10, "%d", child_pid);
+	args[n++] = pid_str;
+
+	args[n] = NULL;
+
+	/* defined in gdbserver/server.c */
+	extern int gdbserver_main(int argc, char *argv[]);
+	int err = gdbserver_main(n, args);
+	THROW_VAL(EXP_GDBSERVER_EXIT, err, "gdbserver_main returns %d", err);
+}
+
 int
 main(int argc, char * argv[])
 {
 	struct opts * opts = parse_args(argc, argv);
 	/* check opts */
-	TRACE(REPLAYER, "target checkpoint: %s\n", opts->ckpt_fn);
-	TRACE(REPLAYER, "pthread_so_fn: %s\n", opts->pthread_so_fn);
+	TRACE(REPLAYER_HOST, "target checkpoint: %s\n", opts->ckpt_fn);
+	TRACE(REPLAYER_HOST, "pthread_so_fn: %s\n", opts->pthread_so_fn);
 
-	CASSERT(REPLAYER, file_exist(opts->ckpt_fn),
+	CASSERT(REPLAYER_HOST, file_exist(opts->ckpt_fn),
 			"checkpoint file (-c) %s doesn't exist\n", opts->ckpt_fn);
-	CASSERT(REPLAYER, file_exist(opts->interp_so_fn),
+	CASSERT(REPLAYER_HOST, file_exist(opts->interp_so_fn),
 			"interp so file (-i) %s doesn't exist\n", opts->interp_so_fn);
-	CASSERT(REPLAYER, opts->gdbserver_comm != NULL,
+	CASSERT(REPLAYER_HOST, opts->gdbserver_comm != NULL,
 			"doesn't set gdbserver COMM using '-m'\n");
 
 	catch_var(const char *, interp_so_full_name, NULL);
@@ -542,7 +591,7 @@ main(int argc, char * argv[])
 		/* build socketpair */
 		int err;
 		err = socketpair(PF_LOCAL, SOCK_DGRAM, 0, socket_pair_fds);
-		CASSERT(REPLAYER, err == 0, "unable to create sockerpair\n");
+		CASSERT(REPLAYER_HOST, err == 0, "unable to create sockerpair\n");
 
 		child_pid = do_recover(opts);
 
@@ -557,11 +606,21 @@ main(int argc, char * argv[])
 		RETHROW(exp);
 	}
 
-	/* start a gdbserver to do the attachment */
-	/* try to receive data from target */
-	char xxx[6];
-	sock_recv(xxx, 6);
-	WARNING(REPLAYER, "received data: %s\n", xxx);
+	define_exp(exp2);
+	TRY(exp2) {
+		start_gdbserver(opts, child_pid);
+	} FINALLY {}
+	CATCH(exp2) {
+		/* the quit of gdbserver may comes here, let myself exit gracefully */
+		switch (exp2.type) {
+		case EXP_GDBSERVER_EXIT:
+			/* value is the argument of _exit */
+			_exit(exp2.val.u.val);
+			break;
+		default:
+			RETHROW(exp2);
+		}
+	}
 
 	return 0;
 }

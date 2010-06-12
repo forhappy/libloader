@@ -24,7 +24,7 @@ read_from_file(int fd, void * buffer, size_t sz)
 {
 	int err;
 	err = INTERNAL_SYSCALL_int80(read, 3, fd, buffer, sz);
-	CASSERT(REPLAYER, err == (int)sz, "read error: %d\n", err);
+	CASSERT(REPLAYER_TARGET, err == (int)sz, "read error: %d\n", err);
 }
 
 static void
@@ -32,24 +32,24 @@ skip_nbytes(int fd, size_t n)
 {
 	int err;
 	unsigned long long cur_pos ATTR_UNUSED;
-	TRACE(REPLAYER, "skip %u bytes\n", n);
+	TRACE(REPLAYER_TARGET, "skip %u bytes\n", n);
 	err = INTERNAL_SYSCALL_int80(_llseek, 5, fd,
 			0, n, &cur_pos, SEEK_CUR);
-	TRACE(REPLAYER, "cur_pos = %llu, err=%d\n", cur_pos, err);
-	CASSERT(REPLAYER, err >= 0, "_llseek failed: %d\n", err);
+	TRACE(REPLAYER_TARGET, "cur_pos = %llu, err=%d\n", cur_pos, err);
+	CASSERT(REPLAYER_TARGET, err >= 0, "_llseek failed: %d\n", err);
 }
 
 static void
 read_head(struct checkpoint_head * head, int fd)
 {
-	TRACE(REPLAYER, "read ckpt head\n");
+	TRACE(REPLAYER_TARGET, "read ckpt head\n");
 	read_from_file(fd, head, sizeof(*head));
 
 	/* head checker */
 	if (memcmp(head->magic, CKPT_MAGIC, CKPT_MAGIC_SZ) != 0)
-		FATAL(REPLAYER, "checkpoint magic error\n");
-	TRACE(REPLAYER, "checkpoint head magic passed\n");
-	TRACE(REPLAYER, "pid=%d, tid=%d, tnr=%d\n", head->pid, head->tid, head->tnr);
+		FATAL(REPLAYER_TARGET, "checkpoint magic error\n");
+	TRACE(REPLAYER_TARGET, "checkpoint head magic passed\n");
+	TRACE(REPLAYER_TARGET, "pid=%d, tid=%d, tnr=%d\n", head->pid, head->tid, head->tnr);
 }
 
 static void
@@ -57,7 +57,7 @@ do_restore_tls_stack(void)
 {
 	int tnr = ckpt_head.tnr;
 
-	TRACE(REPLAYER, "tnr = %d\n", tnr);
+	TRACE(REPLAYER_TARGET, "tnr = %d\n", tnr);
 
 	replay_init_tls(tnr);
 
@@ -69,10 +69,10 @@ do_restore_tls_stack(void)
 		read_from_file(ckpt_fd, &region, sizeof(region));
 
 		if (region.start == MEM_REGIONS_END_MARK)
-			FATAL(REPLAYER, "unable to find tls stack in ckpt\n");
+			FATAL(REPLAYER_TARGET, "unable to find tls stack in ckpt\n");
 
 		skip_nbytes(ckpt_fd, region.fn_sz);
-		TRACE(REPLAYER, "compare: 0x%8x-0x%8x %8x-%8x\n", region.start,
+		TRACE(REPLAYER_TARGET, "compare: 0x%8x-0x%8x %8x-%8x\n", region.start,
 				region.end, (uintptr_t)stack_base, (uintptr_t)stack_end);
 		if ((region.start == (uintptr_t)stack_base) &&
 				(region.end == (uintptr_t)stack_end)) {
@@ -84,7 +84,7 @@ do_restore_tls_stack(void)
 		skip_nbytes(ckpt_fd, region_sz(&region));
 	}
 
-	TRACE(REPLAYER, "tls stack is restored\n");
+	TRACE(REPLAYER_TARGET, "tls stack is restored\n");
 }
 
 __attribute__((used, unused, visibility("hidden"))) void
@@ -97,27 +97,27 @@ restore_tls_stack(
 		void * pstack_used ATTR_UNUSED)
 {
 	relocate_interp();
-	VERBOSE(REPLAYER, "interp_fn: %s\n", interp_fn);
-	VERBOSE(REPLAYER, "exec_fn: %s\n", exec_fn);
-	VERBOSE(REPLAYER, "ckpt_fn: %s\n", ckpt_fn);
-	VERBOSE(REPLAYER, "pthread_fn: %s\n", pthread_fn);
-	VERBOSE(REPLAYER, "p__stack_user: %p\n", p__stack_user);
-	VERBOSE(REPLAYER, "pstack_used: %p\n", pstack_used);
+	VERBOSE(REPLAYER_TARGET, "interp_fn: %s\n", interp_fn);
+	VERBOSE(REPLAYER_TARGET, "exec_fn: %s\n", exec_fn);
+	VERBOSE(REPLAYER_TARGET, "ckpt_fn: %s\n", ckpt_fn);
+	VERBOSE(REPLAYER_TARGET, "pthread_fn: %s\n", pthread_fn);
+	VERBOSE(REPLAYER_TARGET, "p__stack_user: %p\n", p__stack_user);
+	VERBOSE(REPLAYER_TARGET, "pstack_used: %p\n", pstack_used);
 
 	ckpt_fd = INTERNAL_SYSCALL_int80(open, 2,
 			ckpt_fn, O_RDONLY);
-	CASSERT(REPLAYER, ckpt_fd > 0, "open %s failed: %d\n", ckpt_fn, ckpt_fd);
+	CASSERT(REPLAYER_TARGET, ckpt_fd > 0, "open %s failed: %d\n", ckpt_fn, ckpt_fd);
 
 	read_head(&ckpt_head, ckpt_fd);
 
 	/* restore tls */
 	int offset = INTERNAL_SYSCALL_int80(lseek, 3, ckpt_fd, 0, SEEK_CUR);
-	CASSERT(REPLAYER, offset >= 0, "lseek failed\n");
+	CASSERT(REPLAYER_TARGET, offset >= 0, "lseek failed\n");
 
 	do_restore_tls_stack();
 
 	int err = INTERNAL_SYSCALL_int80(lseek, 3, ckpt_fd, offset, SEEK_SET);
-	CASSERT(REPLAYER, err >= 0, "revert file pos failed\n");
+	CASSERT(REPLAYER_TARGET, err >= 0, "revert file pos failed\n");
 }
 
 /* make all exec section writable */
@@ -154,12 +154,12 @@ do_file_mapping(struct mem_region * region, const char * fn)
 	int map_type = MAP_FIXED | MAP_PRIVATE;
 
 	if (fd < 0) {
-		WARNING(REPLAYER, "open file %s failed: %d\n", fn, fd);
+		WARNING(REPLAYER_TARGET, "open file %s failed: %d\n", fn, fd);
 		/* do anon mapping */
 		map_type |= MAP_ANONYMOUS;
 	}
 
-	TRACE(REPLAYER, "doing file mapping: 0x%8x-0x%8x:%d\n",
+	TRACE(REPLAYER_TARGET, "doing file mapping: 0x%8x-0x%8x:%d\n",
 			region->start, region->end, prot);
 	void * addr = (void*)INTERNAL_SYSCALL_int80(mmap2, 6,
 			region->start, region_sz(region), prot,
@@ -191,7 +191,7 @@ do_reprotect(struct mem_region * region)
 		if (err == -ENOMEM)
 			return err;
 		else
-			FATAL(REPLAYER, "reprotect 0x%8x-0x%8x failed: %d\n",
+			FATAL(REPLAYER_TARGET, "reprotect 0x%8x-0x%8x failed: %d\n",
 				region->start, region->end, err);
 	}
 	return 0;
@@ -205,13 +205,13 @@ do_restore_mem_region(struct mem_region * region,
 	extern int _end[] ATTR_HIDDEN;
 	char * fn = alloca(region->fn_sz);
 	read_from_file(ckpt_fd, fn, region->fn_sz);
-	TRACE(REPLAYER, "restoring 0x%8x-0x%8x:%s\n", region->start, region->end,
+	TRACE(REPLAYER_TARGET, "restoring 0x%8x-0x%8x:%s\n", region->start, region->end,
 			fn);
 
 	struct thread_private_data * tpd = get_tpd();
 	if (region->start == (uintptr_t)(TNR_TO_STACK(tpd->tnr) +
 				GUARDER_LENGTH)) {
-		TRACE(REPLAYER, "this is tls stack\n");
+		TRACE(REPLAYER_TARGET, "this is tls stack\n");
 		assert(region->end == (uintptr_t)(TNR_TO_STACK(tpd->tnr) +
 					TLS_STACK_SIZE));
 		skip_nbytes(ckpt_fd, region_sz(region));
@@ -302,16 +302,16 @@ do_restore_mem_region(struct mem_region * region,
 
 	/* mapping */
 	if (file_mapping) {
-		TRACE(REPLAYER, "file mapping...\n");
+		TRACE(REPLAYER_TARGET, "file mapping...\n");
 		do_file_mapping(region, fn);
 	} else if (anon_mapping) {
-		TRACE(REPLAYER, "anon mapping...\n");
+		TRACE(REPLAYER_TARGET, "anon mapping...\n");
 		do_anon_mapping(region);
 	} else if (reprotect) {
-		TRACE(REPLAYER, "reprotecting...\n");
+		TRACE(REPLAYER_TARGET, "reprotecting...\n");
 		int err = do_reprotect(region);
 		if (err) {
-			TRACE(REPLAYER, "reprotect failed, use file mapping...\n");
+			TRACE(REPLAYER_TARGET, "reprotect failed, use file mapping...\n");
 			do_file_mapping(region, fn);
 		}
 	}
@@ -320,7 +320,7 @@ do_restore_mem_region(struct mem_region * region,
 		fix_unwritable_region(region, TRUE);
 		if ((region->start < (uintptr_t)_end) &&
 				(region->end >= (uintptr_t)_end)) {
-			TRACE(REPLAYER, "_end=%p\n", _end);
+			TRACE(REPLAYER_TARGET, "_end=%p\n", _end);
 
 			skip_nbytes(ckpt_fd,
 					region_sz(region) -
@@ -328,12 +328,47 @@ do_restore_mem_region(struct mem_region * region,
 			read_from_file(ckpt_fd, _end,
 					ptr_diff(region->end, _end));
 		} else {
-			TRACE(REPLAYER, "fill %d bytes\n", region_sz(region));
+			TRACE(REPLAYER_TARGET, "fill %d bytes\n", region_sz(region));
 			read_from_file(ckpt_fd, (void*)region->start,
 					region_sz(region));
 		}
 		fix_unwritable_region(region, FALSE);
 	}
+}
+
+static void
+wait_for_attach(void)
+{
+#if 0
+	volatile int i = 0;
+
+	pid_t self_pid = INTERNAL_SYSCALL_int80(getpid, 0);
+
+	VERBOSE(REPLAYER_TARGET, "state has been restored, run gdb:\n");
+	VERBOSE(REPLAYER_TARGET, "\t(gdb) attach %d\n", self_pid);
+	VERBOSE(REPLAYER_TARGET, "\t(gdb) p *(int*)(%p) = 1\n", &i);
+	while (i == 0) {
+		struct timespec {
+			long       ts_sec;
+			long       ts_nsec;
+		};
+		struct timespec tm = {1, 0};
+		INTERNAL_SYSCALL_int80(nanosleep, 2, &tm, NULL);
+	}
+#endif
+
+	/* kill myself using a sigstop */
+	pid_t self_pid = INTERNAL_SYSCALL_int80(getpid, 0);
+
+	/* send start mark before stop */
+	sock_send(TARGET_START_MARK, TARGET_START_MARK_SZ);
+	/* send pid */
+	sock_send(&self_pid, sizeof(self_pid));
+
+	INTERNAL_SYSCALL_int80(kill, 2, self_pid, SIGSTOP);
+
+	FATAL(REPLAYER_TARGET, "we shouldn't get here! we need gdb attach!!\n");
+
 }
 
 __attribute__((used, unused, visibility("hidden"))) void
@@ -350,12 +385,12 @@ replayer_main(volatile struct pusha_regs pusha_regs)
 	void * p__stack_user = args[4];
 	void * pstack_used = args[5];
 
-	VERBOSE(REPLAYER, "interp_fn: %s\n", interp_fn);
-	VERBOSE(REPLAYER, "exec_fn: %s\n", exec_fn);
-	VERBOSE(REPLAYER, "ckpt_fn: %s\n", ckpt_fn);
-	VERBOSE(REPLAYER, "pthread_fn: %s\n", pthread_fn);
-	VERBOSE(REPLAYER, "p__stack_user: %p\n", p__stack_user);
-	VERBOSE(REPLAYER, "pstack_used: %p\n", pstack_used);
+	VERBOSE(REPLAYER_TARGET, "interp_fn: %s\n", interp_fn);
+	VERBOSE(REPLAYER_TARGET, "exec_fn: %s\n", exec_fn);
+	VERBOSE(REPLAYER_TARGET, "ckpt_fn: %s\n", ckpt_fn);
+	VERBOSE(REPLAYER_TARGET, "pthread_fn: %s\n", pthread_fn);
+	VERBOSE(REPLAYER_TARGET, "p__stack_user: %p\n", p__stack_user);
+	VERBOSE(REPLAYER_TARGET, "pstack_used: %p\n", pstack_used);
 
 	/* restore brk */
 	/* it will expand the heap and maps the pages */
@@ -377,7 +412,7 @@ replayer_main(volatile struct pusha_regs pusha_regs)
 
 	/* restoring thread area */
 	/* thread areas */
-	TRACE(REPLAYER, "restoring thread area\n");
+	TRACE(REPLAYER_TARGET, "restoring thread area\n");
 	for (int i = 0; i < GDT_ENTRY_TLS_ENTRIES; i++) {
 		int err;
 		err = INTERNAL_SYSCALL_int80(set_thread_area,
@@ -394,39 +429,14 @@ replayer_main(volatile struct pusha_regs pusha_regs)
 	/* prepare replay: */
 	/* setup offset */
 	tpd->target = eip;
-	TRACE(REPLAYER, "target eip = %p\n", eip);
+	TRACE(REPLAYER_TARGET, "target eip = %p\n", eip);
 
 	/* setup function pointers */
 	/* FIXME which function? */
 
 	/* registers have been set */
 
-	/* write marks to socket */
-
-	/* raise a SIGSTOP here */
-# warning lost a lot of things
-
-
-	/* try to communicate with gdbloader */
-	sock_send("12345", 6);
-
-#if 1
-	volatile int i = 0;
-
-	pid_t self_pid = INTERNAL_SYSCALL_int80(getpid, 0);
-
-	VERBOSE(REPLAYER, "state has been restored, run gdb:\n");
-	VERBOSE(REPLAYER, "\t(gdb) attach %d\n", self_pid);
-	VERBOSE(REPLAYER, "\t(gdb) p *(int*)(%p) = 1\n", &i);
-	while (i == 0) {
-		struct timespec {
-			long       ts_sec;
-			long       ts_nsec;
-		};
-		struct timespec tm = {1, 0};
-		INTERNAL_SYSCALL_int80(nanosleep, 2, &tm, NULL);
-	}
-#endif
+	wait_for_attach();
 }
 
 // vim:ts=4:sw=4
