@@ -44,6 +44,16 @@
 #include <sys/vfs.h>
 
 #include <common/defs.h>
+#include <host/exception.h>
+
+#ifdef _exit
+# undef _exit
+#endif
+#ifdef exit
+# undef exit
+#endif
+#define _exit(x)	THROW_VAL(EXP_GDBSERVER__EXIT, (x), "call _exit("#x ")")
+#define exit(x)		THROW_VAL(EXP_GDBSERVER_EXIT, (x), "call _exit("#x ")")
 
 #ifndef SPUFS_MAGIC
 #define SPUFS_MAGIC 0x23c9b64e

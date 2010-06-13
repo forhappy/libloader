@@ -615,8 +615,16 @@ main(int argc, char * argv[])
 		switch (exp2.type) {
 		case EXP_GDBSERVER_EXIT:
 			/* value is the argument of _exit */
-			_exit(exp2.val.u.val);
+			VERBOSE(REPLAYER_HOST,
+					"gdbserver call exit (or return from main) with value %d\n",
+					exp2.u.val);
+			exit(exp2.u.val);
 			break;
+		case EXP_GDBSERVER__EXIT:
+			VERBOSE(REPLAYER_HOST,
+					"gdbserver call _exit with value 0%o\n",
+					exp2.u.val);
+			_exit(exp2.u.val);
 		default:
 			RETHROW(exp2);
 		}
