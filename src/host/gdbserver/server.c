@@ -34,6 +34,7 @@
 
 #include <common/defs.h>
 #include <host/exception.h>
+#include <host/gdbserver/snitchaser_patch.h>
 
 #ifdef _exit
 # undef _exit
@@ -1942,7 +1943,7 @@ join_inferiors_callback (struct inferior_list_entry *entry)
 
 int
 gdbserver_main (int argc, char *argv[],
-		pid_t ori_pid, pid_t ori_tnr,
+		pid_t ori_pid, pid_t ori_tid,
 		int tnr, void * stack_base)
 {
   int bad_attach;
@@ -1952,6 +1953,13 @@ gdbserver_main (int argc, char *argv[],
   int multi_mode = 0;
   int attach = 0;
   int was_running;
+
+  /* setup snitchaser specific vars */
+  target_original_tid = ori_tid;
+  target_original_pid = ori_pid;
+  target_tnr = tnr;
+  target_stack_base = stack_base;
+
 
   while (*next_arg != NULL && **next_arg == '-')
     {

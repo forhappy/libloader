@@ -18,6 +18,10 @@ SET(SRC
 	linux-low.c
 	version.c
 	reg-i386-linux.c
+
+	snitchaser_patch.h
+	snitchaser_patch.c
+
 	)
 
 IF (HAVE_THREAD_DB)
