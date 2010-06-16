@@ -22,9 +22,6 @@ static char args_doc[] =
 static struct argp_option options[] = {
 	{"libinterpso",	'i', "libinterpso", 0,
 		"the file of desired libinterp.so", 0},
-	{"pthreadso",	't', "pthreadso", 0,
-		"desired libpthread.so file name, \'/lib/libpthread.so.0\' by default",
-		0},
 	{"ckptfn",		'c', "checkpoint filename", 0,
 		"set checkpoint file name", 0},
 	{"readckpt",	'r', NULL, 0,
@@ -43,7 +40,6 @@ static struct argp_option options[] = {
 };
 
 static struct opts opts = {
-	.pthread_so_fn	= "/lib/libpthread.so.0",
 	.ckpt_fn	= NULL,
 	.read_ckpt	= 0,
 	.gdbserver_debug 		= 0,
@@ -60,9 +56,6 @@ parse_opt(int key, char *arg, struct argp_state *state ATTR(unused))
 		return 0;
 	case 'i':
 		opts.interp_so_fn = arg;
-		return 0;
-	case 't':
-		opts.pthread_so_fn = arg;
 		return 0;
 	case 'c':
 		opts.ckpt_fn = arg;

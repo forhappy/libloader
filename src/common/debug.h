@@ -41,6 +41,7 @@ enum __debug_component {
 	PROCMAPS,
 	ELF,
 	LOG_SYSCALL,
+	XGDBSERVER,
 	NR_DEBUG_COMPONENTS,
 };
 
@@ -76,6 +77,7 @@ __debug_component_names[NR_DEBUG_COMPONENTS] = {
 	[PROCMAPS]	= "MAP",
 	[ELF]		= "ELF",
 	[LOG_SYSCALL]	= "LCA",
+	[XGDBSERVER]	= "GDB"
 };
 #endif
 
@@ -98,6 +100,7 @@ __debug_component_levels[NR_DEBUG_COMPONENTS] = {
 	[PROCMAPS]	= DBG_LV_VERBOSE,
 	[ELF]		= DBG_LV_VERBOSE,
 	[LOG_SYSCALL] = DBG_LV_TRACE,
+	[XGDBSERVER]	= DBG_LV_TRACE,
 };
 
 #endif

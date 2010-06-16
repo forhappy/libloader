@@ -34,6 +34,7 @@
 
 #include <common/defs.h>
 #include <host/exception.h>
+
 #ifdef _exit
 # undef _exit
 #endif
@@ -1940,7 +1941,9 @@ join_inferiors_callback (struct inferior_list_entry *entry)
 }
 
 int
-gdbserver_main (int argc, char *argv[])
+gdbserver_main (int argc, char *argv[],
+		pid_t ori_pid, pid_t ori_tnr,
+		int tnr, void * stack_base)
 {
   int bad_attach;
   int pid;
@@ -1957,32 +1960,8 @@ gdbserver_main (int argc, char *argv[])
 	  gdbserver_version ();
 	  exit (0);
 	}
-      else if (strcmp (*next_arg, "--help") == 0)
-	{
-	  gdbserver_usage (stdout);
-	  exit (0);
-	}
       else if (strcmp (*next_arg, "--attach") == 0)
 	attach = 1;
-      else if (strcmp (*next_arg, "--multi") == 0)
-	multi_mode = 1;
-      else if (strcmp (*next_arg, "--wrapper") == 0)
-	{
-	  next_arg++;
-
-	  wrapper_argv = next_arg;
-	  while (*next_arg != NULL && strcmp (*next_arg, "--") != 0)
-	    next_arg++;
-
-	  if (next_arg == wrapper_argv || *next_arg == NULL)
-	    {
-	      gdbserver_usage (stderr);
-	      exit (1);
-	    }
-
-	  /* Consume the "--".  */
-	  *next_arg = NULL;
-	}
       else if (strcmp (*next_arg, "--debug") == 0)
 	debug_threads = 1;
       else if (strcmp (*next_arg, "--remote-debug") == 0)
@@ -2085,20 +2064,7 @@ gdbserver_main (int argc, char *argv[])
 
   if (pid == 0 && *next_arg != NULL)
     {
-      int i, n;
-
-      n = argc - (next_arg - argv);
-      program_argv = xmalloc (sizeof (char *) * (n + 1));
-      for (i = 0; i < n; i++)
-	program_argv[i] = xstrdup (next_arg[i]);
-      program_argv[i] = NULL;
-
-      /* Wait till we are at first instruction in program.  */
-      start_inferior (program_argv);
-
-      /* We are now (hopefully) stopped at the first instruction of
-	 the target process.  This assumes that the target process was
-	 successfully created.  */
+      FATAL(XGDBSERVER, "we shouldn't get here!!!\n");
     }
   else if (pid != 0)
     {

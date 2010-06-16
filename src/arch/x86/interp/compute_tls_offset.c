@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include <xasm/tls.h>
+#include <xasm/processor.h>
 
 #define PRINT(element, name)	\
 	do {						\
@@ -16,6 +17,13 @@
 static void
 compute(void)
 {
+
+	printf("#define OFFSET_PUSHA_REGS (0x%x)\n",
+			TLS_STACK_SIZE -
+			sizeof(struct thread_private_data) - 
+			sizeof(struct pusha_regs));
+	printf("#define OFFSET_TLS_HEAD (0x%x)\n",
+			TLS_STACK_SIZE - sizeof(struct thread_private_data));
 	PRINT(old_stack_top, OLD_STACK_TOP);
 	PRINT(target, TARGET);
 	PRINT(reg_saver1, REG_SAVER1);
@@ -44,7 +52,7 @@ compute(void)
 	PRINT(tls_base, TLS_BASE);
 
 	PRINT(current_syscall_nr, CURRENT_SYSCALL_NR);
-	PRINT(next_tpd, next_tpd);
+	PRINT(next_tpd, NEXT_TPD);
 }
 
 int main()

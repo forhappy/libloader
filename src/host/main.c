@@ -236,40 +236,6 @@ compare_section(uintptr_t start, uintptr_t end, pid_t pid, void * ref)
 }
 
 static void
-fix_pthread(const char * pthread_fn, void * regions,
-		uintptr_t * pp__stack_user, uintptr_t * ppstack_used)
-{
-	assert(pthread_fn != NULL);
-	assert(regions != NULL);
-	assert(pp__stack_user != NULL);
-	assert(ppstack_used != NULL);
-	define_exp(exp);
-	TRY(exp) {
-		struct mem_region * region = find_region(regions, pthread_fn);
-		assert(region != NULL);
-
-		uintptr_t load_bias = region->start;
-		uintptr_t p__stack_user = elf_find_symbol(pthread_fn,
-				load_bias, "__stack_user");
-		uintptr_t pstack_used = elf_find_symbol(pthread_fn,
-				load_bias, "stack_used");
-		*pp__stack_user = p__stack_user;
-		*ppstack_used = pstack_used;
-	} FINALLY {
-
-	} CATCH(exp) {
-		switch (exp.type) {
-		case EXP_CKPT_REGION_NOT_FOUND:
-			VERBOSE(REPLAYER_HOST,
-					"there's no libpthread in ckpt, things are simpler\n");
-			break;
-		default:
-			RETHROW(exp);
-		}
-	}
-}
-
-static void
 do_read_ckpt(struct opts * opts)
 {
 	struct checkpoint_head * phead = map_ckpt(opts->ckpt_fn);
@@ -438,23 +404,13 @@ do_recover(struct opts * opts)
 		 * 			uintptr_t p__stack_user,
 		 * 			uintptr_t pstack_used)
 		 */
-		uintptr_t p__stack_user = 0;
-		uintptr_t pstack_used = 0;
-		fix_pthread(opts->pthread_so_full_name, ckpt_regions,
-				&p__stack_user, &pstack_used);
 
 		/* adjust stack */
 		/* arguments transfer to replayer:
 		 * full filename of libinterp.so;
 		 * full filename of executable;
 		 * full filename of checkpoint;
-		 * full filename of libpthread.so
-		 * address of __stack_user
-		 * address of stack_used
 		 * */
-		uintptr_t pos_pthread_fn = ptrace_push(target_pid,
-				opts->pthread_so_full_name,
-				strlen(opts->pthread_so_full_name) + 1);
 		uintptr_t pos_ckpt_fn = ptrace_push(target_pid,
 				opts->ckpt_fn, strlen(opts->ckpt_fn) + 1);
 		uintptr_t pos_exec_fn;
@@ -469,9 +425,6 @@ do_recover(struct opts * opts)
 				opts->interp_so_full_name,
 				strlen(opts->interp_so_full_name) + 1);
 
-		ptrace_push(target_pid, &pstack_used, sizeof(pstack_used));
-		ptrace_push(target_pid, &p__stack_user, sizeof(p__stack_user));
-		ptrace_push(target_pid, &pos_pthread_fn, sizeof(pos_pthread_fn));
 		ptrace_push(target_pid, &pos_ckpt_fn, sizeof(pos_ckpt_fn));
 		ptrace_push(target_pid, &pos_exec_fn, sizeof(pos_exec_fn));
 		ptrace_push(target_pid, &pos_interp_fn, sizeof(pos_interp_fn));
@@ -523,6 +476,21 @@ start_gdbserver(struct opts * opts, pid_t child_pid)
 
 	VERBOSE(REPLAYER_HOST, "host and target have been connected with each other\n");
 
+	/* retrive ori pid, tid, tnr and stack_base */
+	pid_t ori_pid, ori_tid;
+	int ori_tnr;
+	void * stack_base;
+	sock_recv(&ori_pid, sizeof(ori_pid));
+	sock_recv(&ori_tid, sizeof(ori_tid));
+	sock_recv(&ori_tnr, sizeof(ori_tnr));
+	sock_recv(&stack_base, sizeof(stack_base));
+
+	VERBOSE(REPLAYER_HOST, "ori_pid: %d\n", ori_pid);
+	VERBOSE(REPLAYER_HOST, "ori_tid: %d\n", ori_tid);
+	VERBOSE(REPLAYER_HOST, "ori_tnr: %d\n", ori_tnr);
+	VERBOSE(REPLAYER_HOST, "stack_base: %p\n", stack_base);
+
+
 	/* the child should have stopped. do gdbserver attachment */
 	/* build arguments:
 	 *
@@ -549,8 +517,10 @@ start_gdbserver(struct opts * opts, pid_t child_pid)
 	args[n] = NULL;
 
 	/* defined in gdbserver/server.c */
-	extern int gdbserver_main(int argc, char *argv[]);
-	int err = gdbserver_main(n, args);
+	extern int gdbserver_main(int argc, char *argv[],
+			pid_t ori_pid, pid_t ori_tid,
+			int tnr, void * stack_base);
+	int err = gdbserver_main(n, args, ori_pid, ori_tid, ori_tnr, stack_base);
 	THROW_VAL(EXP_GDBSERVER_EXIT, err, "gdbserver_main returns %d", err);
 }
 
@@ -560,7 +530,6 @@ main(int argc, char * argv[])
 	struct opts * opts = parse_args(argc, argv);
 	/* check opts */
 	TRACE(REPLAYER_HOST, "target checkpoint: %s\n", opts->ckpt_fn);
-	TRACE(REPLAYER_HOST, "pthread_so_fn: %s\n", opts->pthread_so_fn);
 
 	CASSERT(REPLAYER_HOST, file_exist(opts->ckpt_fn),
 			"checkpoint file (-c) %s doesn't exist\n", opts->ckpt_fn);
@@ -570,7 +539,6 @@ main(int argc, char * argv[])
 			"doesn't set gdbserver COMM using '-m'\n");
 
 	catch_var(const char *, interp_so_full_name, NULL);
-	catch_var(const char *, pthread_so_full_name, NULL);
 	define_exp(exp);
 
 	pid_t child_pid;
@@ -578,10 +546,7 @@ main(int argc, char * argv[])
 	TRY(exp) {
 		set_catched_var(interp_so_full_name,
 				get_full_name(opts->interp_so_fn));
-		set_catched_var(pthread_so_full_name,
-				get_full_name(opts->pthread_so_fn));
 		opts->interp_so_full_name = interp_so_full_name;
-		opts->pthread_so_full_name = pthread_so_full_name;
 
 		if (opts->read_ckpt) {
 			do_read_ckpt(opts);
@@ -597,10 +562,8 @@ main(int argc, char * argv[])
 
 	} FINALLY {
 		get_catched_var(interp_so_full_name);
-		get_catched_var(pthread_so_full_name);
 
 		xfree_null(interp_so_full_name);
-		xfree_null(pthread_so_full_name);
 
 	} CATCH(exp) {
 		RETHROW(exp);

@@ -8,10 +8,8 @@
 
 struct opts {
 	char * interp_so_fn;
-	char * pthread_so_fn;	/* libpthread.so, for gdbloader only */
 	char * ckpt_fn;
 	const char * interp_so_full_name;		/* set according to interp_so_fn */
-	const char * pthread_so_full_name;	/* set according to pthread_so_fn */
 	int cmd_idx;
 	int read_ckpt;
 	int gdbserver_debug;

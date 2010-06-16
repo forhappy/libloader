@@ -18,6 +18,8 @@
 
 static int ckpt_fd = 0;
 static struct checkpoint_head ckpt_head;
+static void * stack_base = NULL;
+static void * stack_end = NULL;
 
 static void
 read_from_file(int fd, void * buffer, size_t sz)
@@ -61,8 +63,8 @@ do_restore_tls_stack(void)
 
 	replay_init_tls(tnr);
 
-	void * stack_base = TNR_TO_STACK(tnr) + GUARDER_LENGTH;
-	void * stack_end = stack_base + TLS_STACK_SIZE - GUARDER_LENGTH;
+	stack_base = TNR_TO_STACK(tnr) + GUARDER_LENGTH;
+	stack_end = stack_base + TLS_STACK_SIZE - GUARDER_LENGTH;
 
 	while (TRUE) {
 		struct mem_region region;
@@ -91,18 +93,12 @@ __attribute__((used, unused, visibility("hidden"))) void
 restore_tls_stack(
 		const char * interp_fn ATTR_UNUSED,
 		const char * exec_fn ATTR_UNUSED,
-		const char * ckpt_fn ATTR_UNUSED,
-		const char * pthread_fn ATTR_UNUSED,
-		void * p__stack_user ATTR_UNUSED,
-		void * pstack_used ATTR_UNUSED)
+		const char * ckpt_fn ATTR_UNUSED)
 {
 	relocate_interp();
 	VERBOSE(REPLAYER_TARGET, "interp_fn: %s\n", interp_fn);
 	VERBOSE(REPLAYER_TARGET, "exec_fn: %s\n", exec_fn);
 	VERBOSE(REPLAYER_TARGET, "ckpt_fn: %s\n", ckpt_fn);
-	VERBOSE(REPLAYER_TARGET, "pthread_fn: %s\n", pthread_fn);
-	VERBOSE(REPLAYER_TARGET, "p__stack_user: %p\n", p__stack_user);
-	VERBOSE(REPLAYER_TARGET, "pstack_used: %p\n", pstack_used);
 
 	ckpt_fd = INTERNAL_SYSCALL_int80(open, 2,
 			ckpt_fn, O_RDONLY);
@@ -199,8 +195,7 @@ do_reprotect(struct mem_region * region)
 
 static void
 do_restore_mem_region(struct mem_region * region,
-		const char * interp_fn, const char * exec_fn,
-		const char * pthread_fn)
+		const char * interp_fn, const char * exec_fn)
 {
 	extern int _end[] ATTR_HIDDEN;
 	char * fn = alloca(region->fn_sz);
@@ -233,7 +228,6 @@ do_restore_mem_region(struct mem_region * region,
 	 *     if it is mapped from exec_fn, then it should have been mapped,
 	 *        we issue 'reprotect'. I've tried force-remap, it cause the lost
 	 *        of /proc/xxx/exec.
-	 *     if it is mapped from pthread_fn, use anon mapping,
 	 *     if it is mapped from normal file, do the file mapping
 	 *   if it is anon mapping, then
 	 *     if it is interp's own data section, don't fill data before _end;
@@ -263,11 +257,6 @@ do_restore_mem_region(struct mem_region * region,
 			anon_mapping = FALSE;
 			/* see the previous discussing of reprotect */
 			reprotect = TRUE;
-		} else if (strcmp(pthread_fn, fn) == 0) {
-			do_fill = TRUE;
-			file_mapping = FALSE;
-			anon_mapping = TRUE;
-			reprotect = FALSE;
 		} else {
 			do_fill = TRUE;
 			file_mapping = TRUE;
@@ -365,7 +354,26 @@ wait_for_attach(void)
 	/* send pid */
 	sock_send(&self_pid, sizeof(self_pid));
 
+	/* send original ori_pid, ori_tid and stack_base */
+	sock_send(&ckpt_head.pid, sizeof(ckpt_head.pid));
+	sock_send(&ckpt_head.tid, sizeof(ckpt_head.tid));
+	sock_send(&ckpt_head.tnr, sizeof(ckpt_head.tnr));
+	sock_send(&stack_base, sizeof(stack_base));
+
+	
+#if 0
+	/* don't use sigstop, use loop can simplify gdb */
 	INTERNAL_SYSCALL_int80(kill, 2, self_pid, SIGSTOP);
+#endif
+
+	while(1) {
+		struct timespec {
+			long       ts_sec;
+			long       ts_nsec;
+		};
+		struct timespec tm = {1, 0};
+		INTERNAL_SYSCALL_int80(nanosleep, 2, &tm, NULL);
+	}
 
 	FATAL(REPLAYER_TARGET, "we shouldn't get here! we need gdb attach!!\n");
 
@@ -374,23 +382,16 @@ wait_for_attach(void)
 __attribute__((used, unused, visibility("hidden"))) void
 replayer_main(volatile struct pusha_regs pusha_regs)
 {
-
 	struct thread_private_data * tpd = get_tpd();
 
 	void ** args = tpd->old_stack_top;
 	const char * interp_fn = args[0];
 	const char * exec_fn = args[1];
 	const char * ckpt_fn = args[2];
-	const char * pthread_fn = args[3];
-	void * p__stack_user = args[4];
-	void * pstack_used = args[5];
 
 	VERBOSE(REPLAYER_TARGET, "interp_fn: %s\n", interp_fn);
 	VERBOSE(REPLAYER_TARGET, "exec_fn: %s\n", exec_fn);
 	VERBOSE(REPLAYER_TARGET, "ckpt_fn: %s\n", ckpt_fn);
-	VERBOSE(REPLAYER_TARGET, "pthread_fn: %s\n", pthread_fn);
-	VERBOSE(REPLAYER_TARGET, "p__stack_user: %p\n", p__stack_user);
-	VERBOSE(REPLAYER_TARGET, "pstack_used: %p\n", pstack_used);
 
 	/* restore brk */
 	/* it will expand the heap and maps the pages */
@@ -403,8 +404,7 @@ replayer_main(volatile struct pusha_regs pusha_regs)
 
 		read_from_file(ckpt_fd, &region, sizeof(region));
 		if (region.start != MEM_REGIONS_END_MARK) {
-			do_restore_mem_region(&region, interp_fn, exec_fn,
-					pthread_fn);
+			do_restore_mem_region(&region, interp_fn, exec_fn);
 		}
 	} while (region.start != MEM_REGIONS_END_MARK);
 
@@ -435,7 +435,6 @@ replayer_main(volatile struct pusha_regs pusha_regs)
 	/* FIXME which function? */
 
 	/* registers have been set */
-
 	wait_for_attach();
 }
 
