@@ -7,6 +7,7 @@
 #include <host/exception.h>
 
 #include <host/gdbserver/snitchaser_patch.h>
+#include <host/arch_replayer_helper.h>
 #include <asm_offsets.h>
 #include <xasm/processor.h>
 
@@ -52,7 +53,10 @@ SN_reset_registers(void)
 {
 	/* first: retrieve registers from tls stack */
 	struct pusha_regs regs;
+
+	/* the esp in regs is adjusted by replayer */
 	target_read_memory((void*)pusha_regs_addr, &regs, sizeof(regs));
+
 	TRACE(XGDBSERVER, "got registers:\n");
 	TRACE(XGDBSERVER, "\teax=0x%x\n", regs.eax);
 	TRACE(XGDBSERVER, "\tebx=0x%x\n", regs.ebx);
@@ -62,7 +66,14 @@ SN_reset_registers(void)
 	TRACE(XGDBSERVER, "\tedi=0x%x\n", regs.edi);
 	TRACE(XGDBSERVER, "\tesp=0x%x\n", regs.esp);
 	TRACE(XGDBSERVER, "\tebp=0x%x\n", regs.ebp);
-	THROW_VAL(EXP_GDBSERVER_EXIT, 1, "xxxx");
+
+	void * eip;
+	target_read_memory(SN_target_stack_base + OFFSET_TARGET,
+			&eip, sizeof(eip));
+	TRACE(XGDBSERVER, "\teip=%p\n", eip);
+
+	/* restore registers */
+	arch_restore_registers(SN_target_pid, &regs, eip);
 }
 
 // vim:ts=4:sw=4

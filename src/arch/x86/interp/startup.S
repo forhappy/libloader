@@ -76,6 +76,16 @@ REPLAYER_ENTRY:
 	/* open checkpoint file, restore tls stack */
 	/* gs and fs should have been restored in restore_tls_stack */
 	call restore_tls_stack
+
+	/* we must save fs:OFFSET_OLD_STACK_TOP, this is because that,
+	 * when making checkpoint, the esp saved using "pusha" is incorrect,
+	 * it points to tls stack, and the real esp is saved in old_stack_top.
+	 * But things is easier than normal case: when replay start, all register
+	 * is free.
+	 */
+	movl %fs:OFFSET_OLD_STACK_TOP, %eax
+
+	/* then we can destroy old_stack_top safely */
 	movl %esp, %fs:OFFSET_OLD_STACK_TOP
 	movl %fs:OFFSET_STACK_TOP, %esp
 	pushl $0x0202
@@ -87,6 +97,10 @@ REPLAYER_ENTRY:
 	/* the registers should be fixed in replayer_main */
 	pusha
 	pushf
+
+	/* this is saved real esp */
+	pushl %eax
+
 	call replayer_main
 	popf
 	popa

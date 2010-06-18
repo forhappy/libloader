@@ -382,7 +382,7 @@ wait_for_attach(void)
 }
 
 __attribute__((used, unused, visibility("hidden"))) void
-replayer_main(volatile struct pusha_regs pusha_regs)
+replayer_main(void * real_esp, volatile struct pusha_regs pusha_regs)
 {
 	struct thread_private_data * tpd = get_tpd();
 
@@ -426,6 +426,7 @@ replayer_main(volatile struct pusha_regs pusha_regs)
 	void * eip;
 	struct pusha_regs * pregs = (struct pusha_regs *)(&pusha_regs);
 	restore_reg_state(&ckpt_head.reg_state, pregs, &eip);
+	pregs->esp = (uintptr_t)real_esp;
 
 	TRACE(REPLAYER_TARGET, "registers:\n");
 	TRACE(REPLAYER_TARGET, "\teax=0x%x\n", pregs->eax);
