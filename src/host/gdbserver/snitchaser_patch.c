@@ -23,8 +23,9 @@ void * SN_target_stack_base;
 static struct pusha_regs * pusha_regs_addr;
 
 static void
-target_read_memory(void * memaddr, void * myaddr, int len)
+target_read_memory(void * memaddr, void * myaddr, size_t len)
 {
+	TRACE(XGDBSERVER, "read memory: %p %d\n", memaddr, len);
 	assert(the_target->read_memory);
 	assert(myaddr != NULL);
 	int err = read_inferior_memory((CORE_ADDR)(uintptr_t)memaddr, myaddr, len);
@@ -43,7 +44,7 @@ SN_init(pid_t ori_pid, pid_t ori_tid,
 	SN_target_tnr = tnr;
 	SN_target_stack_base = stack_base;
 
-	pusha_regs_addr = SN_target_stack_base - sizeof(struct pusha_regs);
+	pusha_regs_addr = SN_target_stack_base + OFFSET_PUSHA_REGS;
 }
 
 void
@@ -57,6 +58,8 @@ SN_reset_registers(void)
 	TRACE(XGDBSERVER, "\tebx=0x%x\n", regs.ebx);
 	TRACE(XGDBSERVER, "\tecx=0x%x\n", regs.ecx);
 	TRACE(XGDBSERVER, "\tedx=0x%x\n", regs.edx);
+	TRACE(XGDBSERVER, "\tesi=0x%x\n", regs.esi);
+	TRACE(XGDBSERVER, "\tedi=0x%x\n", regs.edi);
 	TRACE(XGDBSERVER, "\tesp=0x%x\n", regs.esp);
 	TRACE(XGDBSERVER, "\tebp=0x%x\n", regs.ebp);
 	THROW_VAL(EXP_GDBSERVER_EXIT, 1, "xxxx");

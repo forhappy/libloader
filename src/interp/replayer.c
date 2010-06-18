@@ -63,8 +63,9 @@ do_restore_tls_stack(void)
 
 	replay_init_tls(tnr);
 
-	stack_base = TNR_TO_STACK(tnr) + GUARDER_LENGTH;
-	stack_end = stack_base + TLS_STACK_SIZE - GUARDER_LENGTH;
+	stack_base = TNR_TO_STACK(tnr);
+	stack_end = stack_base + TLS_STACK_SIZE;
+	void * real_stack_base = stack_base + GUARDER_LENGTH;
 
 	while (TRUE) {
 		struct mem_region region;
@@ -75,11 +76,12 @@ do_restore_tls_stack(void)
 
 		skip_nbytes(ckpt_fd, region.fn_sz);
 		TRACE(REPLAYER_TARGET, "compare: 0x%8x-0x%8x %8x-%8x\n", region.start,
-				region.end, (uintptr_t)stack_base, (uintptr_t)stack_end);
-		if ((region.start == (uintptr_t)stack_base) &&
+				region.end, (uintptr_t)real_stack_base,
+				(uintptr_t)stack_end);
+		if ((region.start == (uintptr_t)real_stack_base) &&
 				(region.end == (uintptr_t)stack_end)) {
 			/* we find it! */
-			read_from_file(ckpt_fd, stack_base, TLS_STACK_SIZE -
+			read_from_file(ckpt_fd, real_stack_base, TLS_STACK_SIZE -
 					GUARDER_LENGTH);
 			break;
 		}
@@ -425,11 +427,20 @@ replayer_main(volatile struct pusha_regs pusha_regs)
 	struct pusha_regs * pregs = (struct pusha_regs *)(&pusha_regs);
 	restore_reg_state(&ckpt_head.reg_state, pregs, &eip);
 
+	TRACE(REPLAYER_TARGET, "registers:\n");
+	TRACE(REPLAYER_TARGET, "\teax=0x%x\n", pregs->eax);
+	TRACE(REPLAYER_TARGET, "\tebx=0x%x\n", pregs->ebx);
+	TRACE(REPLAYER_TARGET, "\tecx=0x%x\n", pregs->ecx);
+	TRACE(REPLAYER_TARGET, "\tedx=0x%x\n", pregs->edx);
+	TRACE(REPLAYER_TARGET, "\tesp=0x%x\n", pregs->esp);
+	TRACE(REPLAYER_TARGET, "\tebp=0x%x\n", pregs->ebp);
+
 
 	/* prepare replay: */
 	/* setup offset */
 	tpd->target = eip;
 	TRACE(REPLAYER_TARGET, "target eip = %p\n", eip);
+	TRACE(REPLAYER_TARGET, "pusha_regs at %p\n", &pusha_regs);
 
 	/* setup function pointers */
 	/* FIXME which function? */
