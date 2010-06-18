@@ -9,7 +9,6 @@
 #include <config.h>
 #include <stdint.h>
 #include <interp/logger.h>
-#include <xasm/types_helper.h>
 #include <xasm/processor.h>
 
 #define CKPT_MAGIC	"SNITCHASER CKPT"

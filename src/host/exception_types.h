@@ -19,8 +19,9 @@ def_exp_type(EXP_ELF_SYMBOL_NOT_FOUND, "unable to find a symbol in a elf file")
 def_exp_type(EXP_SOCKPAIR_ERROR, "socketpair in gdbserver error")
 def_exp_type(EXP_SOCKPAIR_UNSYNC, "sockpair communication protoal broken")
 
-def_exp_type(EXP_GDBSERVER_EXIT, "gdbserver call exit() or gdbserver_main return")
-def_exp_type(EXP_GDBSERVER__EXIT, "gdbserver call _exit()")
+def_exp_type(EXP_GDBSERVER_EXIT, "gdbserver calls exit() or gdbserver_main return")
+def_exp_type(EXP_GDBSERVER__EXIT, "gdbserver calls _exit()")
+def_exp_type(EXP_GDBSERVER_ERROR, "gdbserver encounters an error")
 
 // vim:ts=4:sw=4:cino=l1,\:0
 

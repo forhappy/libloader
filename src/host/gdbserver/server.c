@@ -1942,8 +1942,8 @@ join_inferiors_callback (struct inferior_list_entry *entry)
 }
 
 int
-gdbserver_main (int argc, char *argv[],
-		pid_t ori_pid, pid_t ori_tid,
+gdbserver_main (int argc ATTR_UNUSED, char *argv[],
+		pid_t ori_pid, pid_t ori_tid, pid_t cur_pid,
 		int tnr, void * stack_base)
 {
   int bad_attach;
@@ -1955,10 +1955,7 @@ gdbserver_main (int argc, char *argv[],
   int was_running;
 
   /* setup snitchaser specific vars */
-  target_original_tid = ori_tid;
-  target_original_pid = ori_pid;
-  target_tnr = tnr;
-  target_stack_base = stack_base;
+  SN_init(ori_pid, ori_tid, cur_pid, tnr, stack_base);
 
 
   while (*next_arg != NULL && **next_arg == '-')
@@ -2080,6 +2077,7 @@ gdbserver_main (int argc, char *argv[],
 	error ("Attaching not supported on this target");
 
       /* Otherwise succeeded.  */
+      SN_reset_registers();
     }
   else
     {

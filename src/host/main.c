@@ -22,7 +22,9 @@
 #include <sys/ptrace.h>
 #include <sys/mman.h>
 #include <sys/socket.h>
+#include <sys/wait.h>
 
+#include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
@@ -518,10 +520,32 @@ start_gdbserver(struct opts * opts, pid_t child_pid)
 
 	/* defined in gdbserver/server.c */
 	extern int gdbserver_main(int argc, char *argv[],
-			pid_t ori_pid, pid_t ori_tid,
+			pid_t ori_pid, pid_t ori_tid, pid_t pid,
 			int tnr, void * stack_base);
-	int err = gdbserver_main(n, args, ori_pid, ori_tid, ori_tnr, stack_base);
+	int err = gdbserver_main(n, args, ori_pid, ori_tid,
+			child_pid, ori_tnr, stack_base);
 	THROW_VAL(EXP_GDBSERVER_EXIT, err, "gdbserver_main returns %d", err);
+}
+
+static void
+kill_child(pid_t child_pid)
+{
+	int err;
+	TRACE(XGDBSERVER, "kill %d before exit\n", child_pid);
+
+	do {
+		errno = 0;
+		err = waitpid(child_pid, NULL, WNOHANG);
+	} while (errno == EINTR);
+
+	if (err == ECHILD) {
+		TRACE(XGDBSERVER, "%d has nolonger be a child of snitchaser\n",
+				child_pid);
+		return;
+	}
+
+	/* ptrace kill child_pid */
+	ptrace_kill(child_pid);
 }
 
 int
@@ -572,10 +596,12 @@ main(int argc, char * argv[])
 	define_exp(exp2);
 	TRY(exp2) {
 		start_gdbserver(opts, child_pid);
-	} FINALLY {}
-	CATCH(exp2) {
+	} FINALLY {
+		kill_child(child_pid);
+	} CATCH(exp2) {
 		/* the quit of gdbserver may comes here, let myself exit gracefully */
 		switch (exp2.type) {
+			/* kill child_pid, nomatter whether we have detached */
 		case EXP_GDBSERVER_EXIT:
 			/* value is the argument of _exit */
 			VERBOSE(REPLAYER_HOST,
