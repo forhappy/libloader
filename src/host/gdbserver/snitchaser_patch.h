@@ -13,6 +13,7 @@
 #include <xasm/processor.h>
 #include <stdint.h>
 #include <unistd.h>	/* pid_t */
+#include <sys/ptrace.h>
 
 extern pid_t SN_target_original_pid;
 extern pid_t SN_target_original_tid;
@@ -26,6 +27,11 @@ SN_init(pid_t ori_pid, pid_t ori_tid,
 
 void
 SN_reset_registers(void);
+
+int
+SN_ptrace_cont(enum __ptrace_request req, pid_t pid,
+		uintptr_t addr, uintptr_t data);
+
 
 #endif
 

@@ -45,6 +45,7 @@
 
 #include <common/defs.h>
 #include <host/exception.h>
+#include <host/gdbserver/snitchaser_patch.h>
 
 #ifdef _exit
 # undef _exit
@@ -1773,7 +1774,8 @@ linux_resume_one_lwp (struct lwp_info *lwp,
   errno = 0;
   lwp->stopped = 0;
   lwp->stepping = step;
-  ptrace (step ? PTRACE_SINGLESTEP : PTRACE_CONT, lwpid_of (lwp), 0, signal);
+  SN_ptrace_cont(step ? PTRACE_SINGLESTEP : PTRACE_CONT,
+		  lwpid_of (lwp), 0, signal);
 
   current_inferior = saved_inferior;
   if (errno)
@@ -2608,7 +2610,7 @@ linux_test_for_tracefork (void)
       return;
     }
 
-  ret = ptrace (PTRACE_CONT, child_pid, 0, 0);
+  ret = SN_ptrace_cont(PTRACE_CONT, child_pid, 0, 0);
   if (ret != 0)
     warning ("linux_test_for_tracefork: failed to resume child");
 

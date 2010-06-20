@@ -11,6 +11,8 @@
 #include <asm_offsets.h>
 #include <xasm/processor.h>
 
+#include <sys/ptrace.h>
+
 /* target.h depends on server.h */
 #include "server.h"
 #include "target.h"
@@ -74,6 +76,16 @@ SN_reset_registers(void)
 
 	/* restore registers */
 	arch_restore_registers(SN_target_pid, &regs, eip);
+}
+
+
+int
+SN_ptrace_cont(enum __ptrace_request req, pid_t pid,
+		uintptr_t addr, uintptr_t data)
+{
+	if (pid != SN_target_pid)
+		return ptrace(req, pid, addr, data);
+	return ptrace(req, pid, addr, data);
 }
 
 // vim:ts=4:sw=4
