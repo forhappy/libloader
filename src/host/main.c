@@ -17,6 +17,7 @@
 #include <host/exception.h>
 #include <host/mm.h>
 #include <host/elf.h>
+#include <host/gdbserver/snitchaser_patch.h>
 
 #include <sys/stat.h>
 #include <sys/ptrace.h>
@@ -478,19 +479,17 @@ start_gdbserver(struct opts * opts, pid_t child_pid)
 
 	VERBOSE(REPLAYER_HOST, "host and target have been connected with each other\n");
 
-	/* retrive ori pid, tid, tnr and stack_base */
-	pid_t ori_pid, ori_tid;
-	int ori_tnr;
-	void * stack_base;
-	sock_recv(&ori_pid, sizeof(ori_pid));
-	sock_recv(&ori_tid, sizeof(ori_tid));
-	sock_recv(&ori_tnr, sizeof(ori_tnr));
-	sock_recv(&stack_base, sizeof(stack_base));
+	/* retrive snitchaser info */
 
-	VERBOSE(REPLAYER_HOST, "ori_pid: %d\n", ori_pid);
-	VERBOSE(REPLAYER_HOST, "ori_tid: %d\n", ori_tid);
-	VERBOSE(REPLAYER_HOST, "ori_tnr: %d\n", ori_tnr);
-	VERBOSE(REPLAYER_HOST, "stack_base: %p\n", stack_base);
+	sock_recv(&SN_info, sizeof(SN_info));
+
+	VERBOSE(REPLAYER_HOST, "ori_pid: %d\n", SN_info.ori_pid);
+	VERBOSE(REPLAYER_HOST, "ori_tid: %d\n", SN_info.ori_tid);
+	VERBOSE(REPLAYER_HOST, "ori_tnr: %d\n", SN_info.ori_tnr);
+	VERBOSE(REPLAYER_HOST, "pid: %d\n", SN_info.pid);
+	VERBOSE(REPLAYER_HOST, "stack_base: %p\n", SN_info.stack_base);
+	VERBOSE(REPLAYER_HOST, "patch_block: %p\n", SN_info.patch_block_func);
+	VERBOSE(REPLAYER_HOST, "unpatch_block: %p\n", SN_info.unpatch_block_func);
 
 
 	/* the child should have stopped. do gdbserver attachment */
@@ -518,12 +517,7 @@ start_gdbserver(struct opts * opts, pid_t child_pid)
 
 	args[n] = NULL;
 
-	/* defined in gdbserver/server.c */
-	extern int gdbserver_main(int argc, char *argv[],
-			pid_t ori_pid, pid_t ori_tid, pid_t pid,
-			int tnr, void * stack_base);
-	int err = gdbserver_main(n, args, ori_pid, ori_tid,
-			child_pid, ori_tnr, stack_base);
+	int err = gdbserver_main(n, args);
 	THROW_VAL(EXP_GDBSERVER_EXIT, err, "gdbserver_main returns %d", err);
 }
 

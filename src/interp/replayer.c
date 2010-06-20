@@ -13,8 +13,12 @@
 #include <xasm/string.h>
 #include <xasm/types_helper.h>
 #include <xasm/tls.h>
+#include <xasm/compiler.h>
 
 #include <interp/checkpoint.h>
+/* for struct SN_info */
+#include <host/gdbserver/snitchaser_patch.h>
+
 
 static int ckpt_fd = 0;
 static struct checkpoint_head ckpt_head;
@@ -356,12 +360,18 @@ wait_for_attach(void)
 	/* send pid */
 	sock_send(&self_pid, sizeof(self_pid));
 
-	/* send original ori_pid, ori_tid and stack_base */
-	sock_send(&ckpt_head.pid, sizeof(ckpt_head.pid));
-	sock_send(&ckpt_head.tid, sizeof(ckpt_head.tid));
-	sock_send(&ckpt_head.tnr, sizeof(ckpt_head.tnr));
-	sock_send(&stack_base, sizeof(stack_base));
 
+	/* build and send SN_info */
+	struct SN_info info;
+	info.ori_pid = ckpt_head.pid;
+	info.ori_tid = ckpt_head.tid;
+	info.ori_tnr = ckpt_head.tnr;
+	info.pid = self_pid;
+	info.stack_base = stack_base;
+	info.patch_block_func = &replay_patch_block;
+	info.unpatch_block_func = &replay_unpatch_block;
+
+	sock_send(&info, sizeof(info));
 	
 #if 0
 	/* don't use sigstop, use loop can simplify gdb */

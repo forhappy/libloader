@@ -686,5 +686,21 @@ do_real_branch(void)
 	return;
 }
 
+/* 
+ * entries for gdbserver
+ */
+
+void
+do_replay_patch_block(void)
+{
+	FATAL(COMPILER, "in do_replay_patch_block\n");
+}
+
+void
+do_replay_unpatch_block(void)
+{
+	FATAL(COMPILER, "in do_replay_unpatch_block\n");
+}
+
 // vim:ts=4:sw=4
 

@@ -1942,9 +1942,7 @@ join_inferiors_callback (struct inferior_list_entry *entry)
 }
 
 int
-gdbserver_main (int argc ATTR_UNUSED, char *argv[],
-		pid_t ori_pid, pid_t ori_tid, pid_t cur_pid,
-		int tnr, void * stack_base)
+gdbserver_main (int argc ATTR_UNUSED, char *argv[])
 {
   int bad_attach;
   int pid;
@@ -1955,7 +1953,7 @@ gdbserver_main (int argc ATTR_UNUSED, char *argv[],
   int was_running;
 
   /* setup snitchaser specific vars */
-  SN_init(ori_pid, ori_tid, cur_pid, tnr, stack_base);
+  SN_init();
 
 
   while (*next_arg != NULL && **next_arg == '-')

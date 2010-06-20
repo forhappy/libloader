@@ -15,23 +15,32 @@
 #include <unistd.h>	/* pid_t */
 #include <sys/ptrace.h>
 
-extern pid_t SN_target_original_pid;
-extern pid_t SN_target_original_tid;
-extern pid_t SN_target_pid;
-extern int SN_target_tnr;
-extern void * SN_target_stack_base;
 
-void
-SN_init(pid_t ori_pid, pid_t ori_tid,
-		pid_t pid, int tnr, void * stack_base);
+struct SN_info {
+	pid_t ori_pid;
+	pid_t ori_tid;
+	pid_t pid;
+	int ori_tnr;
+	void * stack_base;
+	void * patch_block_func;
+	void * unpatch_block_func;
+};
 
-void
+extern struct SN_info SN_info;
+
+extern void
+SN_init(void);
+
+extern void
 SN_reset_registers(void);
 
-int
+extern int
 SN_ptrace_cont(enum __ptrace_request req, pid_t pid,
 		uintptr_t addr, uintptr_t data);
 
+/* defined in server.c */
+extern int
+gdbserver_main(int argc ATTR_UNUSED, char *argv[]);
 
 #endif
 

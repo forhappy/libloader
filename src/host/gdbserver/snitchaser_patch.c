@@ -17,13 +17,10 @@
 #include "server.h"
 #include "target.h"
 
-pid_t SN_target_original_pid;
-pid_t SN_target_original_tid;
-pid_t SN_target_pid;
-int SN_target_tnr;
-void * SN_target_stack_base;
+struct SN_info SN_info;
 
 static struct pusha_regs * pusha_regs_addr;
+
 
 static void
 target_read_memory(void * memaddr, void * myaddr, size_t len)
@@ -38,16 +35,9 @@ target_read_memory(void * memaddr, void * myaddr, size_t len)
 }
 
 void
-SN_init(pid_t ori_pid, pid_t ori_tid,
-		pid_t pid, int tnr, void * stack_base)
+SN_init(void)
 {
-	SN_target_original_pid = ori_pid;
-	SN_target_original_tid = ori_tid;
-	SN_target_pid = pid;
-	SN_target_tnr = tnr;
-	SN_target_stack_base = stack_base;
-
-	pusha_regs_addr = SN_target_stack_base + OFFSET_PUSHA_REGS;
+	pusha_regs_addr = SN_info.stack_base + OFFSET_PUSHA_REGS;
 }
 
 void
@@ -70,12 +60,12 @@ SN_reset_registers(void)
 	TRACE(XGDBSERVER, "\tebp=0x%x\n", regs.ebp);
 
 	void * eip;
-	target_read_memory(SN_target_stack_base + OFFSET_TARGET,
+	target_read_memory(SN_info.stack_base + OFFSET_TARGET,
 			&eip, sizeof(eip));
 	TRACE(XGDBSERVER, "\teip=%p\n", eip);
 
 	/* restore registers */
-	arch_restore_registers(SN_target_pid, &regs, eip);
+	arch_restore_registers(SN_info.pid, &regs, eip);
 }
 
 
@@ -83,8 +73,12 @@ int
 SN_ptrace_cont(enum __ptrace_request req, pid_t pid,
 		uintptr_t addr, uintptr_t data)
 {
-	if (pid != SN_target_pid)
+	if (pid != SN_info.pid)
 		return ptrace(req, pid, addr, data);
+
+	/* get current eip, put it into OFFSET_TARGET, then redirect
+	 * code into SN_info.patch_block_func */
+
 	return ptrace(req, pid, addr, data);
 }
 

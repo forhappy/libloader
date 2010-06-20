@@ -15,5 +15,12 @@ scan_insts(void * stream);
 extern ATTR_HIDDEN void
 real_branch(void);
 
+extern void
+replay_patch_block(void);
+
+extern void
+replay_unpatch_block(void);
+
+
 #endif
 
