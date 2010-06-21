@@ -40,7 +40,7 @@ write_to_file(FILE * fp, void * data, size_t sz)
 {
 	int err = fwrite(data, sz, 1, fp);
 	if (err != 1)
-		THROW_FATAL(EXP_FILE_READ_ERROR, "read input file error");
+		THROW_FATAL(EXP_FILE_WRITE_ERROR, "write output file error");
 }
 
 /* if return TRUE, the file is end. */

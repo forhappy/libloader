@@ -18,6 +18,7 @@
 #include <host/mm.h>
 #include <host/elf.h>
 #include <host/gdbserver/snitchaser_patch.h>
+#include <host/replay_log.h>
 
 #include <sys/stat.h>
 #include <sys/ptrace.h>
@@ -546,6 +547,14 @@ int
 main(int argc, char * argv[])
 {
 	struct opts * opts = parse_args(argc, argv);
+
+	CASSERT(REPLAYER_HOST, file_exist(opts->log_fn),
+			"log file (-l) %s doesn't exist\n", opts->log_fn);
+	if (opts->uncompress_log) {
+		uncompress_log(opts->log_fn, opts->out_log_fn);
+		return 0;
+	}
+
 	/* check opts */
 	TRACE(REPLAYER_HOST, "target checkpoint: %s\n", opts->ckpt_fn);
 

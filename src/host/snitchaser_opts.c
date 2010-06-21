@@ -1,5 +1,5 @@
 /* 
- * snitchaser_args.c
+ * snitchaser_opts.c
  * by WN @ Apr. 16, 2010
  */
 
@@ -23,10 +23,13 @@ static struct argp_option options[] = {
 	{"libinterpso",	'i', "libinterpso", 0,
 		"the file of desired libinterp.so", 0},
 	{"ckptfn",		'c', "checkpoint filename", 0,
-		"set checkpoint file name", 0},
+		"set name of checkpoint file", 0},
 	{"readckpt",	'r', NULL, 0,
 		"don't run target exec, only read and check ckpt", 0},
-
+	{"logfn",		'l', "log filename", 0,
+		"set name of log file", 0},
+	{"outlogfn",	'o', "output log filename", 0,
+		"set name of output log file", 0},
 	/* gdbserver options */
 
 	{"gdbserver-debug", -1, NULL, 0,
@@ -35,6 +38,10 @@ static struct argp_option options[] = {
 		"gdbserver --remote-debug", 0},
 	{"comm",	'm', "COMM", 0,
 		"gdbserver COMM, default is \":12345\"", 0},
+
+	/* uncompress log */
+	{"uncompress-log", 'u', NULL, 0,
+		"uncompress log in '-l'", 0},
 
 	{NULL, '\0', NULL, 0, NULL, 0},
 };
@@ -45,6 +52,7 @@ static struct opts opts = {
 	.gdbserver_debug 		= 0,
 	.gdbserver_remote_debug = 0,
 	.gdbserver_comm			= ":12345",
+	.uncompress_log 		= FALSE,
 };
 
 static error_t
@@ -62,6 +70,15 @@ parse_opt(int key, char *arg, struct argp_state *state ATTR(unused))
 		return 0;
 	case 'm':
 		opts.gdbserver_comm = arg;
+		return 0;
+	case 'l':
+		opts.log_fn = arg;
+		return 0;
+	case 'o':
+		opts.out_log_fn = arg;
+		return 0;
+	case 'u':
+		opts.uncompress_log = TRUE;
 		return 0;
 	case -1:
 		opts.gdbserver_debug = 1;

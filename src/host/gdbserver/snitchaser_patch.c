@@ -73,11 +73,14 @@ int
 SN_ptrace_cont(enum __ptrace_request req, pid_t pid,
 		uintptr_t addr, uintptr_t data)
 {
+	assert((req == PTRACE_CONT) || (req == PTRACE_SINGLESTEP));
 	if (pid != SN_info.pid)
 		return ptrace(req, pid, addr, data);
 
 	/* get current eip, put it into OFFSET_TARGET, then redirect
 	 * code into SN_info.patch_block_func */
+
+#warning stop here, working on uncompression of logging
 
 	return ptrace(req, pid, addr, data);
 }
