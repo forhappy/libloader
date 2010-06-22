@@ -23,9 +23,16 @@ static size_t uncomp_data_buffer_sz = 0;
 static void * uncomp_data_buffer = NULL;
 static void * uncomp_data_buffer_ptr = NULL;
 
+#define uncomp_end	((void*)(uncomp_data_buffer + uncomp_data_buffer_sz))
+
 static void
 read_from_file(void * data, size_t sz)
 {
+	assert(log_fp != NULL);
+	assert(data != NULL);
+	if (sz == 0)
+		return;
+
 	int err = fread(data, sz, 1, log_fp);
 	if (err != 1) {
 		if (err != 0)
@@ -69,33 +76,9 @@ close_log(void)
 		fclose(log_fp);
 }
 
-size_t
-read_log(void * buffer, size_t size)
+static void
+next_region(void)
 {
-	assert(buffer != NULL);
-	if (size == 0)
-		return 0;
-
-	if (uncomp_data_buffer_ptr + size <=
-			uncomp_data_buffer + uncomp_data_buffer_sz) {
-		memcpy(buffer, uncomp_data_buffer_ptr, size);
-		uncomp_data_buffer_ptr += size;
-		return size;
-	}
-
-	/* read the last bytes */
-	size_t last_sz = uncomp_data_buffer +
-		uncomp_data_buffer_sz -
-		uncomp_data_buffer_ptr;
-	if (last_sz != 0) {
-		assert(size > last_sz);
-		memcpy(buffer, uncomp_data_buffer_ptr, last_sz);
-		buffer += last_sz;
-		uncomp_data_buffer_ptr += last_sz;
-		size -= last_sz;
-		return last_sz;
-	}
-
 	free_buffers();
 
 	/* read mark */
@@ -151,10 +134,48 @@ read_log(void * buffer, size_t size)
 		uncomp_data_buffer = xmalloc(size);
 		assert(uncomp_data_buffer != NULL);
 
-		read_from_file(uncomp_data_buffer, size);
+		define_exp(exp);
+		TRY(exp) {
+			read_from_file(uncomp_data_buffer, size);
+		} NO_FINALLY
+		CATCH(exp) {
+			xfree_null(uncomp_data_buffer);
+			RETHROW(exp);
+		}
+
 		uncomp_data_buffer_ptr = uncomp_data_buffer;
 		uncomp_data_buffer_sz = size;
 	}
+
+}
+
+
+size_t
+read_log(void * buffer, size_t size)
+{
+	assert(buffer != NULL);
+	if (size == 0)
+		return 0;
+
+	if (uncomp_data_buffer_ptr + size <= uncomp_end) {
+		memcpy(buffer, uncomp_data_buffer_ptr, size);
+		uncomp_data_buffer_ptr += size;
+		return size;
+	}
+
+	/* read the last bytes */
+	size_t last_sz = uncomp_end -
+		uncomp_data_buffer_ptr;
+	if (last_sz != 0) {
+		assert(size > last_sz);
+		memcpy(buffer, uncomp_data_buffer_ptr, last_sz);
+		buffer += last_sz;
+		uncomp_data_buffer_ptr += last_sz;
+		size -= last_sz;
+		return last_sz;
+	}
+
+	next_region();
 
 	return 0;
 }
@@ -178,6 +199,40 @@ read_log_full(void * buf, size_t size)
 		buf += read_sz;
 		size -= read_sz;
 	}
+}
+
+uintptr_t
+readahead_log_ptr(void)
+{
+	assert(log_fp != NULL);
+	if (uncomp_data_buffer_ptr + sizeof(uintptr_t) <= uncomp_end)
+		return *((uintptr_t *)(uncomp_data_buffer_ptr));
+
+	if (uncomp_data_buffer_ptr != uncomp_end)
+		THROW_FATAL(EXP_LOG_CORRUPTED,
+				"unable to readahead a full uintptr_t: %d bytes left",
+				uncomp_end - uncomp_data_buffer_ptr);
+
+	uintptr_t res = 0xffffffff;
+	define_exp(exp);
+	TRY(exp) {
+		next_region();
+		assert(uncomp_data_buffer_ptr != NULL);
+		if (uncomp_data_buffer_sz < sizeof(res))
+			THROW_FATAL(EXP_LOG_CORRUPTED, "unaligned readahead");
+		res = *((uintptr_t *)(uncomp_data_buffer_ptr));
+	} NO_FINALLY
+	CATCH(exp) {
+		switch (exp.type) {
+		case EXP_LOG_END:
+			VERBOSE(REPLAYER_HOST, "log has end when readahead\n");
+			res = 0xffffffff;
+			break;
+		default:
+			RETHROW(exp);
+		}
+	}
+	return res;
 }
 
 #define BUFFER_SZ	(1024 * 1024)

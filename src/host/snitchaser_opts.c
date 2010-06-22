@@ -16,7 +16,7 @@ const char *argp_program_bug_address = "<wangnan06@ict.ac.cn>";
 static char doc[] =
 	"snitchaser: replayer, load checkpoint and begin replay";
 static char args_doc[] =
-	"TARGET [TARGET OPTIONS]";
+	"[OPTIONS]";
 
 
 static struct argp_option options[] = {

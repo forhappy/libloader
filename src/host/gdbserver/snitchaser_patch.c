@@ -8,6 +8,7 @@
 
 #include <host/gdbserver/snitchaser_patch.h>
 #include <host/arch_replayer_helper.h>
+#include <host/replay_log.h>
 #include <asm_offsets.h>
 #include <xasm/processor.h>
 
@@ -20,7 +21,6 @@
 struct SN_info SN_info;
 
 static struct pusha_regs * pusha_regs_addr;
-
 
 static void
 target_read_memory(void * memaddr, void * myaddr, size_t len)
@@ -69,6 +69,18 @@ SN_reset_registers(void)
 }
 
 
+static void
+ptrace_cont(struct user_regs_struct * saved_regs)
+{
+	TRACE(XGDBSERVER, "ptrace_cont\n");
+}
+
+static void
+ptrace_single_step(struct user_regs_struct * saved_regs)
+{
+	TRACE(XGDBSERVER, "ptrace_singlestep\n");
+}
+
 int
 SN_ptrace_cont(enum __ptrace_request req, pid_t pid,
 		uintptr_t addr, uintptr_t data)
@@ -77,11 +89,35 @@ SN_ptrace_cont(enum __ptrace_request req, pid_t pid,
 	if (pid != SN_info.pid)
 		return ptrace(req, pid, addr, data);
 
+	uintptr_t ptr = read_ptr_from_log();
+
+	struct user_regs_struct saved_urs;
+	if (req == PTRACE_SINGLESTEP)
+		ptrace_single_step(&saved_urs);
+	else
+		ptrace_cont(&saved_urs);
+
+#if 0
 	/* get current eip, put it into OFFSET_TARGET, then redirect
 	 * code into SN_info.patch_block_func */
 
-#warning stop here, working on uncompression of logging
+	uintptr_t ptr = read_ptr_from_log();
+	if (ptr < 0x1000) {
+		/* this is system call */
+		THROW_FATAL(EXP_UNIMPLEMENTED, "system call %d\n", ptr);
+	}
 
+	if (ptr > 0xc0000000) {
+		/* this is mark */
+		THROW_FATAL(EXP_UNIMPLEMENTED, "mark 0x%x\n", ptr);
+	}
+
+	TRACE(XGDBSERVER, "next branch target is 0x%x\n", ptr);
+
+	redirect_
+
+#endif
+	THROW_FATAL(EXP_UNIMPLEMENTED, "xxxxx");
 	return ptrace(req, pid, addr, data);
 }
 

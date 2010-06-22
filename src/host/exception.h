@@ -16,7 +16,7 @@
 #include <common/debug.h>
 #include <stdint.h>
 #include <setjmp.h>
-
+#include <errno.h>
 
 __BEGIN_DECLS
 

@@ -12,17 +12,50 @@
 #include <sys/ptrace.h>
 
 void
+ptrace_get_regset(pid_t pid, struct user_regs_struct * urs)
+{
+	errno = 0;
+	int err = ptrace(PTRACE_GETREGS, pid, 0, &urs);
+	ETHROW_FATAL(EXP_PTRACE, "PTRACE_GETREGS failed: returns %d", err);
+}
+
+void
+ptrace_set_regset(pid_t pid, struct user_regs_struct * urs)
+{
+	errno = 0;
+	int err = ptrace(PTRACE_SETREGS, pid, 0, &urs);
+	ETHROW_FATAL(EXP_PTRACE, "PTRACE_SETREGS failed: returns %d", err);
+}
+
+uintptr_t
+ptrace_get_eip(pid_t pid)
+{
+	errno = 0;
+	uintptr_t eip = ptrace(PTRACE_PEEKUSER, pid,
+			(void*)(offsetof(struct user_regs_struct, eip)),
+			NULL);
+	ETHROW_FATAL(EXP_PTRACE, "PTRACE_PEEKUSER failed");
+	return eip;
+}
+
+void
+ptrace_set_eip(pid_t pid, uintptr_t eip)
+{
+	errno = 0 ;
+	int err = ptrace(PTRACE_POKEUSER, pid,
+			(void*)(offsetof(struct user_regs_struct, eip)),
+			eip);
+	ETHROW_FATAL(EXP_PTRACE, "PTRACE_PEEKUSER failes: returns %d", err);
+}
+
+void
 arch_restore_registers(pid_t pid, struct pusha_regs * regs,
 		void * eip)
 {
 	TRACE(REPLAYER_HOST, "arch_restore_registers: new eip is %p\n", eip);
 	struct user_regs_struct urs;
-	int err;
 
-	err = ptrace(PTRACE_GETREGS, pid, 0, &urs);
-	if (err != 0)
-		THROW_FATAL(EXP_PTRACE,
-				"PTRACE_GETREGS failed: returns %d", err);
+	ptrace_get_regset(pid, &urs);
 
 #define set_reg(x)	urs.x = regs->x
 
@@ -40,9 +73,7 @@ arch_restore_registers(pid_t pid, struct pusha_regs * regs,
 	if (eip != NULL)
 		urs.eip = (uintptr_t)eip;
 
-	err = ptrace(PTRACE_SETREGS, pid, 0, &urs);
-	if (err != 0)
-		THROW_FATAL(EXP_PTRACE, "PTRACE_SETREGS failes: returns %d", err);
+	ptrace_set_regset(pid, &urs);
 }
 
 // vim:ts=4:sw=4

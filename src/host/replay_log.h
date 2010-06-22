@@ -10,6 +10,7 @@
 #define REPLAY_LOG_H
 
 #include <common/defs.h>
+#include <stdint.h>
 
 void
 open_log(const char * fn);
@@ -25,6 +26,18 @@ read_log(void * buf, size_t size);
 
 void
 uncompress_log(const char * log_fn, const char * out_fn);
+
+inline static uintptr_t
+read_ptr_from_log(void)
+{
+	uintptr_t r;
+	read_log_full(&r, sizeof(r));
+	return r;
+}
+
+uintptr_t
+readahead_log_ptr(void);
+
 
 #endif
 

@@ -555,6 +555,9 @@ main(int argc, char * argv[])
 		return 0;
 	}
 
+	open_log(opts->log_fn);
+
+
 	/* check opts */
 	TRACE(REPLAYER_HOST, "target checkpoint: %s\n", opts->ckpt_fn);
 
@@ -601,6 +604,7 @@ main(int argc, char * argv[])
 		start_gdbserver(opts, child_pid);
 	} FINALLY {
 		kill_child(child_pid);
+		close_log();
 	} CATCH(exp2) {
 		/* the quit of gdbserver may comes here, let myself exit gracefully */
 		switch (exp2.type) {
