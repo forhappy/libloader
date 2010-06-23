@@ -12,18 +12,18 @@
 #include <sys/ptrace.h>
 
 void
-ptrace_get_regset(pid_t pid, struct user_regs_struct * urs)
+ptrace_get_regset(pid_t pid, struct user_regs_struct * purs)
 {
 	errno = 0;
-	int err = ptrace(PTRACE_GETREGS, pid, 0, &urs);
+	int err = ptrace(PTRACE_GETREGS, pid, 0, purs);
 	ETHROW_FATAL(EXP_PTRACE, "PTRACE_GETREGS failed: returns %d", err);
 }
 
 void
-ptrace_set_regset(pid_t pid, struct user_regs_struct * urs)
+ptrace_set_regset(pid_t pid, struct user_regs_struct * purs)
 {
 	errno = 0;
-	int err = ptrace(PTRACE_SETREGS, pid, 0, &urs);
+	int err = ptrace(PTRACE_SETREGS, pid, 0, purs);
 	ETHROW_FATAL(EXP_PTRACE, "PTRACE_SETREGS failed: returns %d", err);
 }
 
