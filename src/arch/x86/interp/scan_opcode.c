@@ -269,5 +269,13 @@ scan_insts(void * stream)
 	return stream;
 }
 
+bool_t
+is_branch_inst(void * ptr)
+{
+	if (next_inst(ptr) == NULL)
+		return TRUE;
+	return FALSE;
+}
+
 // vim:ts=4:sw=4
 

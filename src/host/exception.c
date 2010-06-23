@@ -153,7 +153,8 @@ print_exception(volatile struct exception_t * __exp)
 #endif
 	WARNING(SYSTEM, "\tmessage: %s\n", exp->msg);
 	WARNING(SYSTEM, "\twith value: %d(%p)\n", exp->u.val, exp->u.ptr);
-	WARNING(SYSTEM, "\twith errno: %d(%s)\n", errno, strerror(errno));
+	WARNING(SYSTEM, "\twith errno: %d(%s)\n", exp->throw_time_errno,
+			strerror(exp->throw_time_errno));
 	errno = 0;
 }
 
@@ -172,6 +173,7 @@ __throw_exception(enum exception_type type,
 	struct exception_t exp;
 
 	exp.type = type;
+	exp.throw_time_errno = errno;
 
 	vsnprintf(exp.msg, sizeof(exp.msg), fmt, ap);
 

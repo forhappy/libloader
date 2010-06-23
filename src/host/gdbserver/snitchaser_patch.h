@@ -22,8 +22,10 @@ struct SN_info {
 	pid_t pid;
 	int ori_tnr;
 	void * stack_base;
+	/* function pointers */
 	void * patch_block_func;
 	void * unpatch_block_func;
+	void * is_branch_inst;
 };
 
 extern struct SN_info SN_info;

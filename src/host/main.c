@@ -491,6 +491,7 @@ start_gdbserver(struct opts * opts, pid_t child_pid)
 	VERBOSE(REPLAYER_HOST, "stack_base: %p\n", SN_info.stack_base);
 	VERBOSE(REPLAYER_HOST, "patch_block: %p\n", SN_info.patch_block_func);
 	VERBOSE(REPLAYER_HOST, "unpatch_block: %p\n", SN_info.unpatch_block_func);
+	VERBOSE(REPLAYER_HOST, "is_branch_inst: %p\n", SN_info.is_branch_inst);
 
 
 	/* the child should have stopped. do gdbserver attachment */

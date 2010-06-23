@@ -702,5 +702,11 @@ do_replay_unpatch_block(void)
 	FATAL(COMPILER, "in do_replay_unpatch_block\n");
 }
 
+void
+do_replay_is_branch_inst(void)
+{
+	FATAL(COMPILER, "in do_replay_is_branch_inst\n");
+}
+
 // vim:ts=4:sw=4
 

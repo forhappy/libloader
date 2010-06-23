@@ -79,6 +79,7 @@ static void
 ptrace_single_step(struct user_regs_struct * saved_regs)
 {
 	TRACE(XGDBSERVER, "ptrace_singlestep\n");
+	/* fetch original eip */
 }
 
 int
@@ -88,8 +89,6 @@ SN_ptrace_cont(enum __ptrace_request req, pid_t pid,
 	assert((req == PTRACE_CONT) || (req == PTRACE_SINGLESTEP));
 	if (pid != SN_info.pid)
 		return ptrace(req, pid, addr, data);
-
-	uintptr_t ptr = read_ptr_from_log();
 
 	struct user_regs_struct saved_urs;
 	if (req == PTRACE_SINGLESTEP)

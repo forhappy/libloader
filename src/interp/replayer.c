@@ -370,6 +370,7 @@ wait_for_attach(void)
 	info.stack_base = stack_base;
 	info.patch_block_func = &replay_patch_block;
 	info.unpatch_block_func = &replay_unpatch_block;
+	info.is_branch_inst = &replay_is_branch_inst;
 
 	sock_send(&info, sizeof(info));
 	

@@ -71,6 +71,20 @@ replay_unpatch_block:
 	movl %fs:OFFSET_OLD_STACK_TOP, %esp
 	jmpl *%fs:OFFSET_REAL_BRANCH
 
+.globl replay_is_branch_inst
+replay_is_branch_inst:
+	movl %esp, %fs:OFFSET_OLD_STACK_TOP
+	movl %fs:OFFSET_STACK_TOP, %esp
+	pusha
+	pushf
+	pushl $0x0202
+	popfl
+	call do_replay_is_branch_inst
+	/* never comes here */
+	int3
+
+
+
 /* don't generate executable stack */
 .section        .note.GNU-stack,"",@progbits
 

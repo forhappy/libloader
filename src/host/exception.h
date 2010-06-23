@@ -65,6 +65,7 @@ struct exception_t {
 		void * ptr;
 		uintptr_t xval;
 	} u;
+	int throw_time_errno;
 	uint32_t timestamp;
 	enum exception_level level;
 #ifdef SNITCHASER_DEBUG
@@ -244,11 +245,17 @@ ATTR(format(printf, 4, 5))
 
 
 #ifdef SNITCHASER_DEBUG
-# define RETHROW(e) throw_exception((e).type, (e).u.xval, (e).level, \
-		(e).file, (e).func, (e).line, "%s", (char*)&((e).msg))
+# define RETHROW(e) do {	\
+	errno = (e).throw_time_errno;	\
+	throw_exception((e).type, (e).u.xval, (e).level, \
+		(e).file, (e).func, (e).line, "%s", (char*)&((e).msg));	\
+} while(0)
 #else
-# define RETHROW(e) throw_exception((e).type, (e).u.xval, (e).level, \
-		"%s", (char*)&((e).msg))
+# define RETHROW(e) do {	\
+	errno = (e).throw_time_errno;	\
+	throw_exception((e).type, (e).u.xval, (e).level, \
+		"%s", (char*)&((e).msg));	\
+} while(0)
 #endif
 
 #define THROWS(...)
