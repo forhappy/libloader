@@ -61,16 +61,10 @@ wait_for_replayer_sync(void)
 
 	ETHROW_FATAL(EXP_GDBSERVER_ERROR, "waitid failed with %d", err);
 
-
-	TRACE(XGDBSERVER, "waitid: si.si_code=%d\n",
-			si.si_code);
-
-	TRACE(XGDBSERVER, "waitid: si.si_status=%d\n",
-			si.si_status);
-
-	/* target should be signaled by GDBSERVER_NOTIFICATION */
-	THROW_FATAL(EXP_GDBSERVER_ERROR, "waitid: si.si_code=%d",
-			si.si_code);
+	CTHROW_FATAL(si.si_code == CLD_TRAPPED, EXP_GDBSERVER_ERROR,
+			"waitid error: si.si_code=%d", si.si_code);
+	CTHROW_FATAL(si.si_status == GDBSERVER_NOTIFICATION, EXP_GDBSERVER_ERROR,
+			"waitid error: si.si_status=%d", si.si_status);
 }
 
 void
@@ -108,14 +102,16 @@ SN_reset_registers(void)
 }
 
 
-static void
+static int
 ptrace_cont(struct user_regs_struct * saved_regs)
 {
 	TRACE(XGDBSERVER, "ptrace_cont\n");
+	THROW_FATAL(EXP_UNIMPLEMENTED, "ptrace_cont is not implemented");
+	return 0;
 }
 
-static void
-ptrace_single_step(struct user_regs_struct * saved_regs)
+static int
+ptrace_single_step(struct user_regs_struct * psaved_regs)
 {
 	TRACE(XGDBSERVER, "ptrace_singlestep\n");
 
@@ -130,6 +126,14 @@ ptrace_single_step(struct user_regs_struct * saved_regs)
 	bool_t res;
 	sock_recv(&res, sizeof(res));
 	wait_for_replayer_sync();
+
+	if (!res) {
+		/* reset regs then continue */
+		ptrace_set_regset(SN_info.pid, psaved_regs);
+		return ptrace(PTRACE_SINGLESTEP, SN_info.pid, 0, 0);	
+	}
+
+	THROW_FATAL(EXP_UNIMPLEMENTED, "ptrace_single_step is not implemented");
 }
 
 int
@@ -144,9 +148,9 @@ SN_ptrace_cont(enum __ptrace_request req, pid_t pid,
 	ptrace_get_regset(SN_info.pid, &saved_urs);
 
 	if (req == PTRACE_SINGLESTEP)
-		ptrace_single_step(&saved_urs);
+		return ptrace_single_step(&saved_urs);
 	else
-		ptrace_cont(&saved_urs);
+		return ptrace_cont(&saved_urs);
 
 #if 0
 	/* get current eip, put it into OFFSET_TARGET, then redirect
