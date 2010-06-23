@@ -83,8 +83,6 @@ replay_is_branch_inst:
 	/* never comes here */
 	int3
 
-
-
 /* don't generate executable stack */
 .section        .note.GNU-stack,"",@progbits
 

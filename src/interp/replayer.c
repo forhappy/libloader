@@ -16,6 +16,7 @@
 #include <xasm/compiler.h>
 
 #include <interp/checkpoint.h>
+#include <interp/replayer.h>
 /* for struct SN_info */
 #include <host/gdbserver/snitchaser_patch.h>
 
@@ -390,6 +391,13 @@ wait_for_attach(void)
 
 	FATAL(REPLAYER_TARGET, "we shouldn't get here! we need gdb attach!!\n");
 
+}
+
+void
+notify_gdbserver(void)
+{
+	pid_t self_pid = INTERNAL_SYSCALL_int80(getpid, 0);
+	INTERNAL_SYSCALL_int80(kill, 2, self_pid, GDBSERVER_NOTIFICATION);
 }
 
 __attribute__((used, unused, visibility("hidden"))) void

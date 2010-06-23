@@ -7,15 +7,20 @@
 #include <common/defs.h>
 #include <common/debug.h>
 #include <common/assert.h>
+#include <common/replay/socketpair.h>
+
 #include <interp/mm.h>
 #include <interp/dict.h>
 #include <interp/code_cache.h>
 #include <interp/auxv.h>
+#include <interp/replayer.h>
+
 #include <xasm/compiler.h>
 #include <xasm/tls.h>
 #include <xasm/debug.h>
 #include <xasm/string.h>
 #include <asm_offsets.h>
+
 
 #define MAX_PATCH_SIZE	(256)
 
@@ -705,7 +710,18 @@ do_replay_unpatch_block(void)
 void
 do_replay_is_branch_inst(void)
 {
-	FATAL(COMPILER, "in do_replay_is_branch_inst\n");
+	TRACE(COMPILER, "in do_replay_is_branch_inst\n");
+	void * eip;
+	sock_recv(&eip, sizeof(eip));
+
+	bool_t res = FALSE;
+	if (is_branch_inst(eip))
+		res = TRUE;
+	sock_send(&res, sizeof(res));
+
+	notify_gdbserver();
+
+	FATAL(REPLAYER_TARGET, "shouldn't come here\n");
 }
 
 // vim:ts=4:sw=4

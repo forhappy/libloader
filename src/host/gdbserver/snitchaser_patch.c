@@ -9,11 +9,16 @@
 #include <host/gdbserver/snitchaser_patch.h>
 #include <host/arch_replayer_helper.h>
 #include <host/replay_log.h>
+#include <common/replay/socketpair.h>
+
 #include <asm_offsets.h>
 #include <xasm/processor.h>
 
 #include <sys/ptrace.h>
+#include <sys/wait.h>
+#include <signal.h>
 
+#include <xasm/signal_numbers.h>
 /* target.h depends on server.h */
 #include "server.h"
 #include "target.h"
@@ -32,6 +37,40 @@ target_read_memory(void * memaddr, void * myaddr, size_t len)
 	if (err != 0)
 		THROW_FATAL(EXP_GDBSERVER_ERROR,
 				"read inferior memory error: %d", err);
+}
+
+static void
+target_continue(void)
+{
+	int err;
+	errno = 0;
+	err = ptrace(PTRACE_CONT, SN_info.pid, 0, 0);
+	ETHROW_FATAL(EXP_GDBSERVER_ERROR, "unable to continue");
+}
+
+static void
+wait_for_replayer_sync(void)
+{
+	int err;
+	siginfo_t si;
+
+	signal(SIGINT, SIG_IGN);
+	errno = 0;
+	err = waitid(P_PID, SN_info.pid, &si, WEXITED | WSTOPPED);
+	signal(SIGINT, SIG_DFL);
+
+	ETHROW_FATAL(EXP_GDBSERVER_ERROR, "waitid failed with %d", err);
+
+
+	TRACE(XGDBSERVER, "waitid: si.si_code=%d\n",
+			si.si_code);
+
+	TRACE(XGDBSERVER, "waitid: si.si_status=%d\n",
+			si.si_status);
+
+	/* target should be signaled by GDBSERVER_NOTIFICATION */
+	THROW_FATAL(EXP_GDBSERVER_ERROR, "waitid: si.si_code=%d",
+			si.si_code);
 }
 
 void
@@ -79,7 +118,18 @@ static void
 ptrace_single_step(struct user_regs_struct * saved_regs)
 {
 	TRACE(XGDBSERVER, "ptrace_singlestep\n");
+
 	/* fetch original eip */
+	uintptr_t eip = ptrace_get_eip(SN_info.pid);
+
+	ptrace_set_eip(SN_info.pid, (uintptr_t)SN_info.is_branch_inst);
+	target_continue();
+
+	sock_send(&eip, sizeof(eip));
+
+	bool_t res;
+	sock_recv(&res, sizeof(res));
+	wait_for_replayer_sync();
 }
 
 int
@@ -91,6 +141,8 @@ SN_ptrace_cont(enum __ptrace_request req, pid_t pid,
 		return ptrace(req, pid, addr, data);
 
 	struct user_regs_struct saved_urs;
+	ptrace_get_regset(SN_info.pid, &saved_urs);
+
 	if (req == PTRACE_SINGLESTEP)
 		ptrace_single_step(&saved_urs);
 	else
