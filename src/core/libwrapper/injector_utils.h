@@ -6,10 +6,10 @@
 #ifndef WRAPPER_UTILS_H
 #define WRAPPER_UTILS_H
 #include "injector.h"
-#include "string_32.h"
-#include "vsprintf.h"
+//#include "string_32.h"
+//#include "vsprintf.h"
 #include <stdarg.h>
-
+#include <stdio.h>
 #define BUFFER_SIZE	(16384)
 
 extern SCOPE char buffer[];

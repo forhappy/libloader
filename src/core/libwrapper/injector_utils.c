@@ -8,8 +8,9 @@
 #include "injector.h"
 #include "injector_debug.h"
 #include "injector_utils.h"
-#include "vsprintf.h"
-#include "string_32.h"
+#include <stdio.h>
+//#include "vsprintf.h"
+//#include "string_32.h"
  
 SCOPE char buffer[BUFFER_SIZE];
 

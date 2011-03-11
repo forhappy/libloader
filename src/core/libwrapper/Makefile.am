@@ -1,5 +1,5 @@
 lib_LTLIBRARIES = libwrapper.la
-libwrapper_la_SOURCES = entry.S wrapper.c signal.c injector.h vsprintf.c string_32.c __ctype.c \
+libwrapper_la_SOURCES = entry.S wrapper.c signal.c injector.h __ctype.c \
 						injector_utils.c injector_utils.h injector_debug.c \
 						injector_debug.h
 libwrapper_la_LIBADD = ../checkpoint/libcheckpoint.a
