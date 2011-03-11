@@ -1,1 +1,2 @@
-SUBDIRS=core third-party
+SUBDIRS = core
+

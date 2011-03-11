@@ -51,10 +51,5 @@ AC_CHECK_FUNCS([atexit inet_ntoa memchr memmove memset munmap select socket strc
 
 AC_CONFIG_FILES([Makefile
 				 src/Makefile
-				 src/core/Makefile
-				 src/core/checkpoint/Makefile
-				 src/core/libwrapper/Makefile
-				 src/third-party/Makefile
-                 src/third-party/gdbserver/Makefile
-                 src/third-party/lzo/Makefile])
+				 src/core/Makefile])
 AC_OUTPUT
