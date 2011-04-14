@@ -20,7 +20,7 @@ struct timezone {
 	int	tz_dsttime;	/* type of dst correction */
 };
 
-#if 1 
+#if 1
 struct timeval {
 	long tv_sec;		/* seconds */
 	long tv_usec;	/* microseconds */

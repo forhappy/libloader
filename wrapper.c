@@ -18,8 +18,8 @@
 #include "defs.h"
 #include "interp_main.h"
 #include "debug.h"
-#include "syscall_tbl.h"
-#include "log_and_ckpt.h"
+#include "syscall/syscall_tbl.h"
+#include "syscall/log_and_ckpt.h"
 extern int logger_fd;
 void syscall_pre_handler(const struct syscall_regs reg);
 void syscall_post_handler(const struct syscall_regs reg);
