@@ -1,0 +1,99 @@
+/*
+ * startup.S
+ * by WN @ Oct. 13, 2010
+ */
+/*
+#include "xconfig.h"
+#include "processor.h"
+*/
+#define INTERP_RET_UNSELECTED	(0)
+#define INTERP_RET_SNITCHASER		(1)
+
+#ifndef __ASSEMBLY__
+
+
+/* this file can be used as a header */
+
+
+/*
+ *#include "defs.h"
+ */
+
+#ifdef INTERP_START_ENTRY
+extern int interp_start[] ATTR_HIDDEN;
+extern int _start[] ATTR_HIDDEN;
+
+asm (".globl _start\n"
+	"_start:\n"
+	"jmp interp_start\n");
+
+/* use volatile to prevent optmization */
+struct interp_startup_stack {
+	volatile struct pusha_regs saved_regs;
+	void * volatile stack_top;
+};
+#define SET_INTERP_RETADDR(stktop, addr)	\
+	(*((void**)((uintptr_t)(stktop) - 4)) = (addr))
+#endif
+
+/*
+ *struct snitchaser_startup_stack {
+ *	volatile struct pusha_regs saved_regs;
+ *	void * volatile retaddr;
+ *};
+ *
+ */
+
+#else
+
+.text
+.globl interp_start
+/* hidden symbol can be relocated when linking */
+.hidden interp_start
+interp_start:
+	/* this is 'retaddr' */
+	push $0
+	/* this is 'stack_top' */
+	push %esp
+	addl $4, (%esp)
+	
+	/* this is saved_regs */
+	PUSH_ALL
+
+	/* this is interp_startup_stack */
+	pushl %esp
+	call xmain
+	/* pop interp_startup_stack */
+	addl $4, %esp
+	cmpl $INTERP_RET_SNITCHASER, %eax
+	je snitchaser_start
+	cmpl $INTERP_RET_UNSELECTED, %eax
+	je unselect_start
+
+	int3
+
+unselect_start:
+	POP_ALL
+	movl (%esp), %esp
+	addl $-4, %esp
+	ret
+
+snitchaser_start:
+	POP_ALL
+	movl (%esp), %esp
+	addl $-4, %esp
+	/* this is stack_top */
+	PUSH_ALL
+	push %esp
+	call snitchaser_main
+	addl $4, %esp
+	POP_ALL
+	ret
+
+/* don't generate executable stack */
+.section        .note.GNU-stack,"",@progbits
+
+#endif
+
+// vim:ts=4:sw=4
+
