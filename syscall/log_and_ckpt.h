@@ -19,7 +19,7 @@
 #ifndef __LOG_AND_CKPT_H
 #define __LOG_AND_CKPT_H
 
-#include "../string_32.h"
+#include <linux/string.h>
 #include "../syscall.h"
 #include "../processor.h"
 #include "../debug.h"

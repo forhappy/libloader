@@ -2,7 +2,7 @@
  * This file is used to control configure options in environment
  * variables.
  */
-#include "string_32.h"
+#include <linux/string.h>
 
 #ifndef __REBRANCH_ENV_CONF_ENTRIES_H
 # error Never include <common/config_entries.h> directly

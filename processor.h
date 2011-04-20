@@ -29,66 +29,6 @@ struct pusha_regs {
 #define is_valid_page(p)	(((uintptr_t)(p) & (PAGE_SIZE - 1)) == 0)
 #define is_valid_ptr(p)	((uintptr_t)(p) > (0x1000))
 
-typedef unsigned char u8;
-typedef unsigned short u16;
-typedef unsigned int u32;
-typedef unsigned long long u64;
-
-struct i387_fxsave_struct {
-	u16			cwd; /* Control Word			*/
-	u16			swd; /* Status Word			*/
-	u16			twd; /* Tag Word			*/
-	u16			fop; /* Last Instruction Opcode		*/
-	union {
-		struct {
-			u64	rip; /* Instruction Pointer		*/
-			u64	rdp; /* Data Pointer			*/
-		};
-		struct {
-			u32	fip; /* FPU IP Offset			*/
-			u32	fcs; /* FPU IP Selector			*/
-			u32	foo; /* FPU Operand Offset		*/
-			u32	fos; /* FPU Operand Selector		*/
-		};
-	};
-	u32			mxcsr;		/* MXCSR Register State */
-	u32			mxcsr_mask;	/* MXCSR Mask		*/
-
-	/* 8*16 bytes for each FP-reg = 128 bytes:			*/
-	u32			st_space[32];
-
-	/* 16*16 bytes for each XMM-reg = 256 bytes:			*/
-	u32			xmm_space[64];
-
-	u32			padding[12];
-
-	union {
-		u32		padding1[12];
-		u32		sw_reserved[12];
-	};
-
-} __attribute__((aligned(16)));
-
-struct user_regs_struct {
-	unsigned long	bx;
-	unsigned long	cx;
-	unsigned long	dx;
-	unsigned long	si;
-	unsigned long	di;
-	unsigned long	bp;
-	unsigned long	ax;
-	unsigned long	ds;
-	unsigned long	es;
-	unsigned long	fs;
-	unsigned long	gs;
-	unsigned long	orig_ax;
-	unsigned long	ip;
-	unsigned long	cs;
-	unsigned long	flags;
-	unsigned long	sp;
-	unsigned long	ss;
-};
-
 static inline uint64_t
 random64(void)
 {

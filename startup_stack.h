@@ -9,7 +9,7 @@
 #include "defs.h"
 #include <linux/elf.h>
 #include "elf.h"
-#include "string_32.h"
+#include <linux/string.h>
 extern void
 scan_startup_stack(void * startup_stack_top);
 

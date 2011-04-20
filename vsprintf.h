@@ -8,7 +8,7 @@
 
 #include <stdarg.h>
 //#include "injector.h"
-#include "string_32.h"
+#include <linux/string.h>
 #define SCOPE __attribute__((visibility ("hidden")))
 extern SCOPE long
 simple_strtol(const char *cp,char **endp,unsigned int base);

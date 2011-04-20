@@ -14,7 +14,8 @@
 //#include <config.h>
 #include "defs.h"
 #include "debug.h"
-#include <stdint.h>
+#include <linux/types.h>
+//#include <stdint.h>
 #include <setjmp.h>
 #include <errno.h>
 

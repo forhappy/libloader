@@ -10,10 +10,12 @@
  * */
 
 //#include <asm/user.h>
+#include <linux/types.h>
 #include "processor.h"
 #include "defs.h"
 #include "debug.h"
-
+#include <asm/processor.h>
+#include <asm/user_32.h>
 #if 0
 struct user_regs_struct
 get_current_regs()

@@ -10,7 +10,7 @@
 #include "syscall.h"
 #include <linux/elf.h>
 
-#include "string_32.h"
+#include <linux/string.h>
 #if defined(ELFCLASS32)
 
 extern Elf32_Dyn _DYNAMIC[];
@@ -93,7 +93,6 @@ extern Elf64_Dyn _DYNAMIC [];
 					   offset for the symbol.  */
 #define R_386_IRELATIVE	   42		/* Adjust indirectly by program base */
 /* Keep this the last entry.  */
-#define R_386_NUM	   43
 
 /* SUN SPARC specific definitions.  */
 

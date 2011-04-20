@@ -6,26 +6,27 @@
 #ifndef __SYSCALL_H
 #define __SYSCALL_H
 #include "defs.h"
-//#include <linux/resource.h>
+#include <linux/resource.h>
 #include <linux/types.h>
-//#include <linux/time.h>
+#include <linux/time.h>
 #include <linux/stat.h>
 #include <asm/ldt.h>
 //#include <signal.h>
-#include <unistd.h>
+//#include <unistd.h>
 //#include <sys/types.h>
-
+#if 0
 struct timezone {
 	int	tz_minuteswest;	/* minutes west of Greenwich */
 	int	tz_dsttime;	/* type of dst correction */
 };
-
-#if 1
+#endif
+#if 0
 struct timeval {
 	long tv_sec;		/* seconds */
 	long tv_usec;	/* microseconds */
 };
-#endif 
+#endif
+#if 0
 struct	rusage {
 	struct timeval ru_utime;	/* user time used */
 	struct timeval ru_stime;	/* system time used */
@@ -44,7 +45,8 @@ struct	rusage {
 	long	ru_nvcsw;		/* voluntary context switches */
 	long	ru_nivcsw;		/* involuntary " */
 };
-#if 1 
+#endif
+#if 0
 struct stat64 {
 	unsigned long long	st_dev;
 	unsigned char	__pad0[4];
