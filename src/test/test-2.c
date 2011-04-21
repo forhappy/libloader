@@ -15,8 +15,9 @@
  *
  * =====================================================================================
  */
+#include <stdio.h>
 #include <sys/mman.h>
-void main()
+int main()
 {
 	char *p = mmap(0, 4096, 1 | 2, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
 	for (int i = 0; i < 4095; i ++){
@@ -30,4 +31,5 @@ void main()
 
 	p[4095] = '\0';
 	printf("%s\n", p);
+	return 0;
 }

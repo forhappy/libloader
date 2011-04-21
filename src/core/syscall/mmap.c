@@ -1,8 +1,6 @@
 
 #include "syscall_tbl.h"
 #include "log_and_ckpt.h"
-#define PAGE_MASK	(~(PAGE_SIZE-1))
-#define TASK_SIZE	(0xC0000000UL)
 
 int SCOPE
 post_mmap(const struct syscall_regs * regs)

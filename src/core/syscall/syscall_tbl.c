@@ -17,7 +17,7 @@
  */
 #include "syscall_tbl.h"
 #include "syscall_nr.h"
-struct syscall_tabent syscall_table[] = {
+struct syscall_tabent syscall_table[NR_SYSCALLS + 1] = {
 	def_syscall_entry(brk, NULL),
 	def_syscall_entry(mmap, NULL),
 	def_syscall_entry(mmap2, NULL),

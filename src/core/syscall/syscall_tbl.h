@@ -41,9 +41,9 @@ struct syscall_tabent {
 	syscall_handler_t post_handler;
 };
 
-extern SCOPE struct syscall_tabent syscall_table[];
-
 #define NR_SYSCALLS	(327)
+extern SCOPE struct syscall_tabent syscall_table[NR_SYSCALLS + 1];
+
 
 #define mkstr(x)	#x
 

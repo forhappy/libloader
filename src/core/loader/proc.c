@@ -1,10 +1,10 @@
 /* proc.c derived frome rebranch/commmon/procmap.c
  * by HP.Fu @ Apr.6, 2011
  * */
-#include <loader/proc.h>
 #include <debug.h>
 #include <syscall.h>
 #include <linux/string.h>
+#include <loader/proc.h>
 #define O_ACCMODE	   0003
 #define O_RDONLY	     00
 #define O_WRONLY	     01
@@ -231,12 +231,10 @@ read_pid_procmap(int pid, struct proc_mem_handler_t * handler, void * ptr)
 	char maps_name[64];
 	snprintf(maps_name, 64, "/proc/%d/maps", pid);
 	int fd = sys_open(maps_name, O_RDONLY, 0);
-	if (fd < 0)
-		THROW_FATAL(CKPT, "fail to open maps %s", maps_name);
+	CASSERT(fd > 0, CKPT, "fail to open maps %s", maps_name);
 
 	int err = sys_read(fd, ptr, MAX_PROC_MAPS_FILE_SIZE);
-	if ((err < 0) || (err >= MAX_PROC_MAPS_FILE_SIZE))
-		THROW_FATAL(CKPT, "read %s returns %d", maps_name, err);
+	CASSERT((err > 0) && (err < MAX_PROC_MAPS_FILE_SIZE), CKPT, "read %s returns %d", maps_name, err);
 
 	sys_close(fd);
 	init_map_handler(handler, ptr, (size_t)err);

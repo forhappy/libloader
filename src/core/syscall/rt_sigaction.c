@@ -6,22 +6,6 @@
  * in the injector, those 2 vars are defined in wrapper.c;
  */
 
-#define SIG_DFL	((void*)(0))	/* default signal handling */
-#define SIG_IGN	((void*)(1))	/* ignore signal */
-#define SIG_ERR	((void*)(-1))	/* error return from signal */
-
-#define SA_NOCLDSTOP	0x00000001u
-#define SA_NOCLDWAIT	0x00000002u
-#define SA_SIGINFO	0x00000004u
-#define SA_ONSTACK	0x08000000u
-#define SA_RESTART	0x10000000u
-#define SA_NODEFER	0x40000000u
-#define SA_RESETHAND	0x80000000u
-
-#define SA_NOMASK	SA_NODEFER
-#define SA_ONESHOT	SA_RESETHAND
-
-#define SA_RESTORER	0x04000000
 int SCOPE
 post_rt_sigaction(const struct syscall_regs * regs)
 {
@@ -68,5 +52,6 @@ post_rt_sigaction(const struct syscall_regs * regs)
 	}
 	return 0;
 #endif
+	return 0;
 }
 

@@ -53,5 +53,6 @@ post_rt_sigprocmask(const struct syscall_regs * regs)
 	}
 	return 0;
 #endif
+	return 0;
 }
 

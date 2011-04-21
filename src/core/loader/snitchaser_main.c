@@ -8,6 +8,8 @@
 #include <loader/startup_stack.h>
 #include <loader/env_conf.h>
 #include <loader/processor.h>
+#include <loader/proc.h>
+#include <loader/snitchaser_main.h>
 
 #define R_386_NONE	   0		/* No reloc */
 #define R_386_32	   1		/* Direct 32 bit  */

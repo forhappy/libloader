@@ -2,7 +2,8 @@
  * main.c
  * by WN @ Oct. 14, 2010
  *
- * the entry of libinterp.so
+ * modified by HP.Fu @ Mar. 16, 2011
+ * the entry of libloader.so
  */
 
 #include <config.h>
@@ -18,13 +19,6 @@
 #include <loader/processor.h>
 #include <loader/interp_main.h>
 #include <loader/elf.h>
-/* interp/startup.S use a trick to refer '_start' symbol.
- * we do this to hide asm in platform independent code */
-/* see startup.S. define INTERP_START_ENTRY to add '_start' entry */
-
-//#define INTERP_START_ENTRY
-//#include "startup.S"
-//
 
 #ifndef __ASSEMBLY__
 
@@ -94,6 +88,7 @@ typedef struct
 #define AT_SYSINFO_EHDR	33
 
 #ifdef INTERP_START_ENTRY
+
 extern int interp_start[] ATTR_HIDDEN;
 extern int _start[] ATTR_HIDDEN;
 
@@ -109,20 +104,10 @@ asm (".globl _start\n"
 	"_start:\n"
 	"jmp interp_start\n");
 
-/* use volatile to prevent optmization */
-struct interp_startup_stack {
-	volatile struct pusha_regs saved_regs;
-	void * volatile stack_top;
-};
 
 #define SET_INTERP_RETADDR(stktop, addr)	\
 	(*((void**)((uintptr_t)(stktop) - 4)) = (addr))
 #endif
-
-struct snitchaser_startup_stack {
-	volatile struct pusha_regs saved_regs;
-	void * volatile retaddr;
-};
 
 asm (
 		".text\n\

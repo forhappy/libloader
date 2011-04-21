@@ -1,5 +1,5 @@
-#ifndef _INTER_PROC_H
-#define _INTERP_PROC_H
+#ifndef __PROC_H
+#define __PROC_H
 #include <defs.h>
 struct proc_maps_entry_t{
 	bool_t valid;
@@ -44,5 +44,5 @@ read_pid_procmaps(int pid, struct proc_mem_handler_t *handler, void *ptr);
 extern void 
 read_self_procmaps(struct proc_mem_handler_t *handler, void *ptr);
 extern void
-flush_mem_to_log(int ckptfd);
+flush_mem_to_ckpt(int ckptfd);
 #endif

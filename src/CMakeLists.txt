@@ -8,8 +8,8 @@ SET(LOADER_COMPILE_FLAGS "-fvisibility=hidden -fPIC -fno-builtin-printf -fno-bui
 SET(LOADER_LINK_FLAGS "-nostartfiles -nodefaultlibs -nostdlib")
 
 #ADD_SUBDIRECTORY(common)
+#ADD_SUBDIRECTORY(third-party)
 ADD_SUBDIRECTORY(core)
 ADD_SUBDIRECTORY(lib)
-#ADD_SUBDIRECTORY(test)
-#ADD_SUBDIRECTORY(third-party)
+ADD_SUBDIRECTORY(test)
 

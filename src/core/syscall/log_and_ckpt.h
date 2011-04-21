@@ -33,7 +33,7 @@ extern uint32_t SCOPE logger_sz;
 # define __write_logger(__addr, __sz) do {	\
 	int err;				\
 	logger_sz += (__sz);			\
-	err = sys_write(logger_fd, (__addr), (__sz)); \
+	err = sys_write(logger_fd, (const void *)(__addr), (__sz)); \
 	CASSERT(err == (__sz), LOG_SYSCALL, "write logger failed: %d != %d\n", err, (__sz));\
 } while(0)
 

@@ -105,7 +105,8 @@ void syscall_pre_handler(const struct syscall_regs reg)
 	//VERBOSE(LOADER, "syscall number: %d\n", reg.eax);
 	write_syscall_nr(reg.orig_eax);
 	if (syscall_table[reg.orig_eax].pre_handler != NULL)
-		return syscall_table[reg.orig_eax].pre_handler(&reg);
+		syscall_table[reg.orig_eax].pre_handler(&reg);
+	return;
 }
 
 void syscall_post_handler(const struct syscall_regs reg)
@@ -114,7 +115,7 @@ void syscall_post_handler(const struct syscall_regs reg)
 
 	CASSERT(syscall_table[reg.orig_eax].post_handler != NULL, LOG_SYSCALL, 
 			"no such syscall post-handler: %d\n", reg.orig_eax);
-
-	return syscall_table[reg.orig_eax].post_handler(&reg);
+	syscall_table[reg.orig_eax].post_handler(&reg);
+	return;
 }
 
