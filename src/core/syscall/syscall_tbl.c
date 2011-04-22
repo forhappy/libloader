@@ -41,6 +41,7 @@ struct syscall_tabent syscall_table[NR_SYSCALLS + 1] = {
 	def_syscall_entry(futex, NULL),
 	def_syscall_entry(ugetrlimit, NULL),
 	def_syscall_entry(uname, NULL),
+	def_syscall_entry(statfs64, NULL),
 	[NR_SYSCALLS]	= {NULL, NULL, NULL},
 };
 

@@ -84,6 +84,7 @@ define_post_handler(set_thread_area);
 define_post_handler(futex);
 define_post_handler(ugetrlimit);
 define_post_handler(uname);
+define_post_handler(statfs64);
 __END_DECLS
 #endif
 

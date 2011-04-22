@@ -93,8 +93,6 @@ extern int interp_start[] ATTR_HIDDEN;
 extern int _start[] ATTR_HIDDEN;
 
 
-extern void
-wrapped_syscall();
 
 extern void 
 wrapped_syscall_entry();

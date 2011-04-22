@@ -1,6 +1,7 @@
 
 #include "syscall_tbl.h"
 #include "log_and_ckpt.h"
+#include <asm/statfs.h>
 
 
 int SCOPE
