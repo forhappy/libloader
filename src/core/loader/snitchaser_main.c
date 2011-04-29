@@ -266,6 +266,7 @@ xmemckpt_init(pid_t pid)
 	}
 	return fd;
 }
+
 int SCOPE ckpt_fd = 0;
 int SCOPE logger_fd = 0;
 uint32_t SCOPE logger_sz = 0;

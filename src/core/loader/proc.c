@@ -265,5 +265,6 @@ flush_mem_to_ckpt(int ckptfd)
 		sys_write(ckptfd, (void *)entry.start,(int)(entry.end - entry.start));
 		entry = read_maps_line(&h);
 	}
+	sys_close(fd);
 	return;
 }
