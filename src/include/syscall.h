@@ -89,22 +89,21 @@ sys_get_thread_area(struct user_desc * u_info);
 
 extern int
 sys_set_thread_area(struct user_desc * u_info);
-/*
+
 extern int
 sys_rt_sigprocmask(int how, sigset_t * set, sigset_t * oset,
 		size_t sigsetsize);
-*/
 
 extern int
 sys_fstat64(unsigned long fd, struct stat64 * statbuf);
 
 extern pid_t
 sys_fork(void);
-/*
+
 extern int
 sys_rt_sigaction(int sig, const struct sigaction * act,
 		struct sigaction * oact, size_t sigsetsize);
-*/
+
 extern int
 sys_tgkill(int tgid, int pid, int sig);
 
@@ -112,11 +111,11 @@ extern int
 sys_kill(int pid, int sig);
 
 /* use sysnr 142, named _newselect */
-/*
+
 extern int
 sys_select(int n, fd_set * inp, fd_set * outp, fd_set * exp,
 		struct timeval * tvp);
-*/
+
 extern int
 sys_send(int fd, const void * buf, size_t len, unsigned flags);
 

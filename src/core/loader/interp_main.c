@@ -332,11 +332,16 @@ xmain(struct interp_startup_stack * startup_stack)
 
 	scan_startup_stack(startup_stack->stack_top);
 
+	VERBOSE(LOADER, "VDSO ENTRY:%p\n", (unsigned int *)*STACK_AUXV_INFO(p_sysinfo));
+	VERBOSE(LOADER, "VDSO PAGE ENTRY:%p\n", (unsigned int *)*STACK_AUXV_INFO(pp_sysinfo_ehdr));
 	vsyscall_entry = get_vsyscall_entry(STACK_INFO(p_envs));
 //set_vsyscall_entry(STACK_INFO(p_envs),(unsigned long)&wrapped_syscall);
 
 	set_vsyscall_entry(STACK_INFO(p_envs),(unsigned long)&wrapped_syscall_entry);
-	VERBOSE(LOADER, "VDSO ENTRY:0x%x\n",(int)(int *)*STACK_AUXV_INFO(p_sysinfo));
+
+	VERBOSE(LOADER, "wrapped_syscall_entry:%p\n", &wrapped_syscall_entry);
+	VERBOSE(LOADER, "VDSO ENTRY:%p\n", (unsigned int *)*STACK_AUXV_INFO(p_sysinfo));
+	VERBOSE(LOADER, "VDSO PAGE ENTRY:%p\n", (unsigned int *)*STACK_AUXV_INFO(pp_sysinfo_ehdr));
 	/* checks personality and re-exec */
 	reexec();
 
