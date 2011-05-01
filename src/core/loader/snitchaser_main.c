@@ -9,7 +9,9 @@
 #include <loader/env_conf.h>
 #include <loader/processor.h>
 #include <loader/proc.h>
+#include <loader/tls.h>
 #include <loader/snitchaser_main.h>
+#include <loader/bigbuffer.h>
 
 #define R_386_NONE	   0		/* No reloc */
 #define R_386_32	   1		/* Direct 32 bit  */
@@ -274,7 +276,21 @@ uint32_t SCOPE logger_sz = 0;
 __attribute__((used, unused, visibility("hidden"))) void
 snitchaser_main(struct snitchaser_startup_stack * stack)
 {
+	DEBUG(SYSTEM, "rebranch start\n");
+	struct tls_desc * td = alloc_tls_area();
+	active_tls(td);
 
+	struct thread_private_data * tpd = setup_self_tpd();	
+#if 0
+	pid_t pid = sys_getpid();
+	pid_t tid = sys_gettid();
+	tpd->pid = pid;
+	tpd->tid = tid;
+
+	init_self_mm_obj(TRUE);
+	init_self_bigbuffer();	
+	patch_user_entry();
+#endif
 	logger_fd = xlogger_init(sys_getpid());
 	ckpt_fd = xmemckpt_init(sys_getpid());
 	flush_mem_to_ckpt(ckpt_fd);

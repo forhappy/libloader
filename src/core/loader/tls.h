@@ -13,6 +13,7 @@
 #include <asm/page.h>
 #include <linux/stddef.h>
 
+#include <loader/bigbuffer.h>
 #define NR_TLS_PAGES	((BIGBUFFER_PAGES) + (BIGBUFFER_EXTRA_PAGES) + 4)
 #define TLS_AREA_SIZE	(NR_TLS_PAGES * PAGE_SIZE)
 

@@ -32,9 +32,6 @@ typedef int bool_t;
 # define FALSE	(!TRUE)
 #endif
 #define defined_BOOL_T
-
-
-/* Copy code from list.h */
 #ifndef offsetof
 
 #if (__GNUC__ == 4)
@@ -168,6 +165,9 @@ _strtok(const char * str, char tok)
 #define SCOPE ATTR(visibility ("hidden"))
 __END_DECLS
 
+#define MAX_OUTPUT_FN_LEN	(128)
+#define BIGBUFFER_SZ	((2048) * (1024))
+#define MAX_PROC_MAPS_FILE_SIZE	((1024) * 1024)/* Copy code from list.h */
 #endif
 
 // vim:tabstop=4:shiftwidth=4

@@ -7,9 +7,9 @@
 #define __LOGGER_TPD_H
 
 #include <config.h>
-#include <common/defs.h>
-#include <interp/bigbuffer.h>
-#include <xasm/mutex.h>
+#include <defs.h>
+#include <loader/bigbuffer.h>
+#include <mutex.h>
 
 struct logger_tpd_stub {
 	char log_fn[MAX_OUTPUT_FN_LEN];

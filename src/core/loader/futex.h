@@ -8,7 +8,7 @@
 #ifndef __X86_FUTEX_H
 #define __X86_FUTEX_H
 
-#include <common/defs.h>
+#include <defs.h>
 
 extern int
 futex_wait(void * addr, int val);

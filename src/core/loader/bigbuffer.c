@@ -3,13 +3,13 @@
  * by WN @ Nov. 08, 2010
  */
 
-#include <interp/bigbuffer.h>
-#include <interp/compression.h>
-#include <common/debug.h>
-#include <xasm/syscall.h>
+#include <loader/bigbuffer.h>
+#include <loader/compression.h>
+#include <debug.h>
+#include <syscall.h>
 #include <linux/kernel.h>
 
-#include <interp/rebranch_tpd.h>
+#include <loader/snitchaser_tpd.h>
 
 static struct bigbuffer *
 get_self_bb(void)

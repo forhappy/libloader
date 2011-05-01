@@ -42,6 +42,9 @@
 
 #define is_block_sigkill_replace(s) (((s)->sig[1]) & 0x1)
 
+extern struct xmutex user_sigactions_mutex;
+extern struct sigaction user_sigactions[];
+
 extern sigset_t
 block_signals(void);
 

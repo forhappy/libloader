@@ -6,7 +6,7 @@
 #ifndef INTERP_SYSCALL_NR
 #define INTERP_SYSCALL_NR
 
-#include <processor.h>
+#include <loader/processor.h>
 
 struct syscall_tpd_stub {
 	int curr_syscall_nr;

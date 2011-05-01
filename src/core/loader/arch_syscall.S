@@ -35,9 +35,9 @@ extern int after_syscall_inst[] ATTR_HIDDEN;
 
 #else
 
-#include <interp/rebranch_asm_offset.h>
-#include <interp/asm_helper.S.h>
-#include <xasm/unistd.h>
+#include <snitchaser_asm_offset.h>
+#include <loader/asm_helper.S.h>
+#include <unistd_32.h>
 
 
 #define SIG_BLOCK          0	/* for blocking signals */

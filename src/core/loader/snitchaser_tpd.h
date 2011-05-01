@@ -15,10 +15,9 @@
 #include <loader/tls.h>
 #include <loader/mm.h>
 
-#include <logger_tpd.h>
-#include <signal_tpd.h>
-#include <bigbuffer.h>
-#include <syscall_tpd.h>
+#include <loader/logger_tpd.h>
+#include <loader/bigbuffer.h>
+#include <loader/syscall_tpd.h>
 #include <mutex.h>
 
 struct thread_private_data {

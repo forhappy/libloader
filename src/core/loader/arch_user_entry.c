@@ -24,7 +24,7 @@ static uint8_t saved_patch_bytes[PATCH_SZ];
 
 /* patch the user entry: */
 /* jmp user_branch */
-/* NOTICS xxx xxx xxx xxx is difference of ptrs */
+/* NOTICE: xxx xxx xxx xxx is difference of ptrs */
 /* 0xe9 0xxx 0xxx 0xxx 0xxx */
 
 static void

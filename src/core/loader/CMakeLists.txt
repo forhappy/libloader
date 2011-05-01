@@ -16,6 +16,10 @@ SET(SOURCE
 	processor.c
 	proc.c
 	interp_main.c
+	tls.c
+	mm.c
+	mutex.c
+	bigbuffer.c
 	)
 ADD_LIBRARY(loader SHARED ${SOURCE})
 

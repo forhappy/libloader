@@ -4,12 +4,12 @@
  */
 
 #include <asm/atomic.h>
-#include <xasm/mutex.h>
-#include <xasm/futex.h>
-#include <xasm/signal.h>
-#include <xasm/syscall.h>
+#include <mutex.h>
+#include <loader/futex.h>
+#include <signal.h>
+#include <syscall.h>
 
-#include <common/debug.h>
+#include <debug.h>
 
 sigset_t
 xmutex_lock(struct xmutex * lock)
