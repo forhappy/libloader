@@ -25,6 +25,10 @@ SET(SOURCE
 	snitchaser_tpd.c
 	user_entry.c
 	arch_user_entry.c
+	checkpoint.c
+	arch_checkpoint.c
+	logger.c
+	compression.c
 	)
 
 SET(ASMSOURCE

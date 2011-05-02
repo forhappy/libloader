@@ -1,10 +1,10 @@
 /* 
  * checkpoint.h
- * by HP.Fu @ Apr. 18, 2011
+ * by WN @ Nov. 02, 2010
  */
 
-#ifndef __CHECKPOINT_H
-#define __CHECKPOINT_H
+#ifndef __INTERP_CHECKPOINT_H
+#define __INTERP_CHECKPOINT_H
 
 #include <config.h>
 
@@ -23,11 +23,10 @@
 # include <sys/time.h>
 # include <unistd.h>
 #endif
-
 #include <defs.h>
 #include <loader/processor.h>
 
-#define CKPT_VERSION_STRING	"SNITCHASER-CKPT00"
+#define CKPT_VERSION_STRING	"SNITCHASER-CKPT87"
 
 enum ckpt_mark {
 	CKPT_SECT_END_MARK	= 0,
@@ -47,7 +46,8 @@ struct checkpoint_head {
 	char magic[sizeof(CKPT_VERSION_STRING)];
 	uint32_t pid;
 	uint32_t tid;
-	int tnr;
+	uintptr_t tls_start;
+	size_t tls_size;
 	uintptr_t brk;
 	uintptr_t stack_top;
 };

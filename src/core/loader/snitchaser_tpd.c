@@ -34,6 +34,7 @@ setup_self_tpd(void)
 void
 free_aux_mem(struct thread_private_data * tpd)
 {
+	VERBOSE(LOADER,"free_aux_mem()\n");
 	clean_mm_obj(&tpd->mm_stub);
 }
 

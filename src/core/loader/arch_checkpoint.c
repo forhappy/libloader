@@ -6,11 +6,11 @@
 #include <asm/user.h>
 #include <asm/processor.h>
 #include <asm/ldt.h>
-#include <xasm/processor.h>
-#include <xasm/syscall.h>
-#include <common/defs.h>
-#include <common/debug.h>
-#include <interp/arch_checkpoint.h>
+#include <loader/processor.h>
+#include <syscall.h>
+#include <defs.h>
+#include <debug.h>
+#include <loader/arch_checkpoint.h>
 
 struct arch_cpuinfo_s {
 	enum arch_ckpt_mark umark;

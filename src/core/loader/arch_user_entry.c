@@ -1,6 +1,7 @@
 /* 
  * arch_user_entry.c
  * by WN @ Nov. 08, 2010
+ * modified by HP.Fu @ Apr. 30, 2011
  */
 
 
@@ -11,7 +12,6 @@
 #include <syscall.h>
 #include <loader/processor.h>
 #include <loader/mm.h>
-
 #include <loader/user_entry.h>
 #include <loader/startup_stack.h>
 
@@ -39,6 +39,9 @@ do_patch(void * inst, void * target)
 static void
 unpatch_user_entry(void)
 {
+
+	VERBOSE(LOADER, "comes to unpatch user entry\n");
+
 	assert(patch_begin != NULL);
 	assert(reprotect_addr_start != NULL);
 
@@ -59,6 +62,8 @@ void
 arch_patch_user_entry(void * uentry, void * rep_start,
 		        size_t rep_sz, uint32_t prot)
 {
+
+	VERBOSE(LOADER, "comes to arch_patch_user_entry\n");
 	patch_begin = uentry;
 	memcpy(saved_patch_bytes, patch_begin, PATCH_SZ);
 	reprotect_addr_start = rep_start;
@@ -70,7 +75,7 @@ arch_patch_user_entry(void * uentry, void * rep_start,
 void
 arch_user_entry(struct pusha_regs * regs)
 {
-	DEBUG(LOADER, "comes to user entry\n");
+	VERBOSE(LOADER, "comes to user entry\n");
 	/* unpatching */
 	unpatch_user_entry();
 	enter_user_entry(regs, patch_begin);

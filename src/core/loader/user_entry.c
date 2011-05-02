@@ -20,6 +20,8 @@
 void
 enter_user_entry(struct pusha_regs * regs, void * pc)
 {
+
+	VERBOSE(LOADER, "comes to enter_user_entry\n");
 	assert(regs != NULL);
 	struct thread_private_data * tpd = get_self_tpd();
 
@@ -35,8 +37,8 @@ enter_user_entry(struct pusha_regs * regs, void * pc)
 	tpd->resume_addr = pc;
 #else
 	/* begin instrumentation */
-	tpd->resume_addr = (void *)(tpd->cc_stub.f_cc_compile);
 #endif
+
 }
 
 void

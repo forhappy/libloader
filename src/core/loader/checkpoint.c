@@ -12,25 +12,23 @@
 
 #include <defs.h>
 #include <debug.h>
-#include <proc.h>
+#include <loader/proc.h>
 #include <loader/checkpoint.h>
-#include <loader/rebranch_tpd.h>
+#include <loader/snitchaser_tpd.h>
 #include <loader/tls.h>
 #include <loader/mm.h>
 #include <loader/startup_stack.h>
 #include <loader/arch_checkpoint.h>
 #include <loader/bigbuffer.h>
-
+#include <loader/proc.h>
 #ifdef COMPRESS_CKPT
 # include <loader/compression.h>
 #endif
 
-#include <xasm/syscall.h>
-#include <xasm/asm_syscall.h>
+#include <syscall.h>
+#include <asm_syscall.h>
 #include <alloca.h>
-#include <interp/rebranch_asm_offset.h>
-
-#include <xasm/stat64_fix.h>
+#include <loader/snitchaser_asm_offset.h>
 
 static size_t
 get_aval_size(const char * fn, uint64_t offset, size_t desire_size)
@@ -130,6 +128,7 @@ write_section(int fd, enum ckpt_mark mark, const void * ptr, size_t length)
 static void
 clear_all_thread_mem(void)
 {
+	VERBOSE(LOADER, "clear all thread private data\n");
 	struct tls_desc * td;
 	list_for_each_entry(td, &tls_list, list) {
 		free_aux_mem(td->start_addr + OFFSET_TPD);
@@ -139,7 +138,7 @@ clear_all_thread_mem(void)
 static void
 ckpt_baseinfo(int fd)
 {
-	TRACE(CKPT, "writing base info\n");
+	VERBOSE(CKPT, "writing base info\n");
 
 	/* first, the execuable path (maybe the interp itself) */
 	assert(STACK_INFO(bottom_exec_fn) != NULL);
@@ -169,25 +168,25 @@ static void
 ckpt_archinfo(int fd, struct pusha_regs * regs, void * pc)
 {
 	uint8_t buffer[1024];
-	TRACE(CKPT, "ckpt cpuinfo\n");
+	VERBOSE(CKPT, "ckpt cpuinfo\n");
 	size_t sz = get_ckpt_cpuinfo(buffer, 1024, regs, pc);
-	TRACE(CKPT, "ckpt cpuinfo: size %ld\n", (long int)sz);
+	VERBOSE(CKPT, "ckpt cpuinfo: size %ld\n", (long int)sz);
 	write_section(fd, CKPT_SECT_CPU_MARK, buffer, sz);
 
 	sz = get_tls_info(buffer, 1024);
-	TRACE(CKPT, "ckpt tlsinfo: size %ld\n", (long int)sz);
+	VERBOSE(CKPT, "ckpt tlsinfo: size %ld\n", (long int)sz);
 	write_section(fd, CKPT_SECT_TLS_MARK, buffer, sz);
 }
 
 static void
-ckpt_memseg(int fd, struct proc_mem_region r)
+ckpt_memseg(int fd, struct proc_maps_entry_t r)
 {
 	assert(r.valid);
 	char * fn_buffer = alloca(r.fn_len + 1);
 	memset(fn_buffer, '\0', r.fn_len + 1);
-	if (r.fn_start != NULL)
-		memcpy(fn_buffer, r.fn_start, r.fn_len);
-	TRACE(CKPT, "ckpting |%s|\n", fn_buffer);
+	if (r.fn != NULL)
+		memcpy(fn_buffer, r.fn, r.fn_len);
+	VERBOSE(CKPT, "ckpting |%s|\n", fn_buffer);
 
 	/* format of memset:
 	 *
@@ -210,8 +209,8 @@ ckpt_memseg(int fd, struct proc_mem_region r)
 	setup_sglist(&list[1], TRUE, CKPT_SUBSECT_FINFO_MARK,
 			&finfo, sizeof(finfo));
 	/* for special file */
-	if ((r.fn_start != NULL) && (memcmp(r.fn_start, "/dev", 4) == 0)) {
-		TRACE(CKPT, "this is dev file, don't ckpt it\n");
+	if ((r.fn != NULL) && (memcmp(r.fn, "/dev", 4) == 0)) {
+		VERBOSE(CKPT, "this is dev file, don't ckpt it\n");
 		setup_sglist(&list[2], TRUE, CKPT_SUBSECT_FDATA_MARK,
 				NULL, 0);
 		/* ckpt then exit */
@@ -223,13 +222,13 @@ ckpt_memseg(int fd, struct proc_mem_region r)
 	/* make target space readable */
 	if (!(r.prot & PROT_READ)) {
 		size_t len = r.end - r.start;
-		TRACE(CKPT, "unprotect %lx to %lx\n", r.start, r.end);
+		VERBOSE(CKPT, "unprotect %lx to %lx\n", r.start, r.end);
 		int err = sys_mprotect((void*)r.start, len, r.prot | PROT_READ);
 		assert(err == 0);
 	}
 
 	/* for internal mapping */
-	if ((r.fn_start == NULL) || (r.fn_start[0] == '[')) {
+	if ((r.fn == NULL) || (r.fn[0] == '[')) {
 		TRACE(CKPT, "%lx to %lx is internal mapping\n", r.start, r.end);
 		finfo.ckpt_sz = finfo.space_sz;
 		setup_sglist(&list[2], TRUE, CKPT_SUBSECT_FDATA_MARK,
@@ -262,33 +261,33 @@ ckpt_meminfo(int fd)
 {
 	/* we alloc 3M cont pages, then unmap 1st 1M and last 1M to ensure
 	 * the procmap pages is disjoint with other mempry sections */
-	void * g1 = xalloc_pages(MAX_PROC_MAPS_FILE_SZ +
+	void * g1 = xalloc_pages(MAX_PROC_MAPS_FILE_SIZE +
 			2 * PROCMAP_GUARD, FALSE);
 	assert(g1 != NULL);
 	void * procmap_ptr = g1 + PROCMAP_GUARD;
-	void * g2 = procmap_ptr + MAX_PROC_MAPS_FILE_SZ;
+	void * g2 = procmap_ptr + MAX_PROC_MAPS_FILE_SIZE;
 
 	xdealloc_pages(g1, PROCMAP_GUARD);
 	xdealloc_pages(g2, PROCMAP_GUARD);
 
-	memset(procmap_ptr, '\0', MAX_PROC_MAPS_FILE_SZ);
+	memset(procmap_ptr, '\0', MAX_PROC_MAPS_FILE_SIZE);
 
 	/* read proc file */
-	struct proc_mem_handler h;
+	struct proc_mem_handler_t h;
 	read_self_procmap(&h, procmap_ptr);
 	TRACE(CKPT, "proc map from %p to %p\n", h.map_data, h.map_end);
 
-	struct proc_mem_region r = read_maps_line(&h);
+	struct proc_maps_entry_t r = read_maps_line(&h);
 	while (r.valid) {
 		if (r.start == (uintptr_t)procmap_ptr) {
-			r = read_map_line(&h);
+			r = read_maps_line(&h);
 			continue;
 		}
 		TRACE(CKPT, "checkpointing 0x%lx-0x%lx\n", r.start, r.end);
 		ckpt_memseg(fd, r);
-		r = read_map_line(&h);
+		r = read_maps_line(&h);
 	}
-	xdealloc_pages(procmap_ptr, MAX_PROC_MAPS_FILE_SZ);
+	xdealloc_pages(procmap_ptr, MAX_PROC_MAPS_FILE_SIZE);
 
 	enum ckpt_mark end_mark = CKPT_SECT_END_MARK;
 	size_t tmp = 0;
@@ -300,7 +299,7 @@ static void
 do_checkpoint(struct pusha_regs * regs, void * pc, void * stack_top,
 		char * fn, pid_t pid, pid_t tid)
 {
-	DEBUG(CKPT, "%d:%d do checkpoint\n", pid, tid);
+	VERBOSE(CKPT, "%d:%d do checkpoint\n", pid, tid);
 
 	init_self_bigbuffer();
 
@@ -308,7 +307,7 @@ do_checkpoint(struct pusha_regs * regs, void * pc, void * stack_top,
 	int fd = sys_open(fn, O_WRONLY|O_CREAT|O_TRUNC, 0664);
 	CASSERT(fd >= 0, CKPT, "open ckpt file %s failed: %d\n", fn, fd);
 
-	TRACE(CKPT, "ckptfile: %d\n", fd);
+	VERBOSE(CKPT, "ckptfile: %d\n", fd);
 #ifdef COMPRESS_CKPT
 	write_comp_file_head(fd);
 #endif
@@ -324,13 +323,10 @@ do_checkpoint(struct pusha_regs * regs, void * pc, void * stack_top,
 	assert(td != NULL);
 	head.tls_start = (uintptr_t)(td->start_addr);
 	head.tls_size = td->size;
-#if defined ARCH_X86_32
-	head.tnr = td->nr;
-#endif
 	head.stack_top = (uintptr_t)(stack_top);
 
 	writeto(fd, &head, sizeof(head));
-	TRACE(CKPT, "ckpt head is written\n");
+	VERBOSE(CKPT, "ckpt head is written\n");
 
 	/* code cache and mm should have been destoried */
 
@@ -362,6 +358,7 @@ fork_checkpoint(struct pusha_regs * regs, void * pc,
 			0, 0, NULL, NULL, NULL);
 	assert(tmppid >= 0);
 	if (tmppid == 0) {
+		VERBOSE(LOADER,"coming to the child process!\n");
 		tmppid = SYSCALL_MACRO(clone, 5,
 				0, 0, NULL, NULL, NULL);
 		assert(tmppid >= 0);

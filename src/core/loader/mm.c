@@ -65,6 +65,7 @@ alloc_obj_buk(bool_t executable)
 static void
 free_obj_buk(struct obj_buk_head * buk)
 {
+	VERBOSE(MEM, "free_obj_buk()\n");
 	assert(buk != NULL);
 	assert(buk->buk_addr != NULL);
 	xdealloc_pages(buk->buk_addr, OBJ_BUCKET_SIZE);
@@ -91,7 +92,7 @@ void
 clean_mm_obj(struct obj_mm_tpd_stub * objmm)
 {
 	assert(objmm != NULL);
-	TRACE(MEM, "cleanning objmm %p\n", objmm);
+	VERBOSE(MEM, "cleanning objmm %p\n", objmm);
 
 	struct obj_buk_head * buk, * n;
 	list_for_each_entry_safe(buk, n, &objmm->buk_list, list) {

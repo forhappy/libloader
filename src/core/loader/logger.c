@@ -12,8 +12,8 @@
 #include <linux/kernel.h>
 #include <linux/fcntl.h>
 #include <mutex.h>
-#include <loadertls.h>
-#include <asm_offset.h>
+#include <loader/tls.h>
+#include <snitchaser_asm_offset.h>
 
 #define ASM_BASE	(tpd_offset(bb.buffer[0]))
 

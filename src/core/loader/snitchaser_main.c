@@ -228,7 +228,7 @@ void *xmemset(void *s, int c, size_t count)
 }
 
 
-#define LOGGER_DIRECTORY "/tmp/snitchaser/"
+#define LOG_DIR "/tmp/snitchaser/"
 int
 xlogger_init(pid_t pid)
 {
@@ -239,7 +239,7 @@ xlogger_init(pid_t pid)
 	int err = sys_gettimeofday(&tv, NULL);
 	CASSERT(err == 0, LOGGER, "sys_gettimeofday failed\n");
 	size_t fn_sz = snprintf(filename, 128 - 1, \
-			LOGGER_DIRECTORY"%d-%d-%010u-%010u.log", sys_getpid(), sys_gettid(), \
+			LOG_DIR"%d-%d-%010u-%010u.log", sys_getpid(), sys_gettid(), \
 			(uint32_t)(tv.tv_sec), (uint32_t)(tv.tv_usec));
 	CASSERT(fn_sz < 128 - 1, LOGGER, "fn_sz <> 128\n");
 	fd = sys_open(filename, O_WRONLY | O_CREAT | O_APPEND, 0644);
@@ -260,7 +260,7 @@ xmemckpt_init(pid_t pid)
 	int err = sys_gettimeofday(&tv, NULL);
 	CASSERT(err == 0, LOGGER, "sys_gettimeofday failed\n");
 	size_t fn_sz = snprintf(filename, 128 - 1, \
-			LOGGER_DIRECTORY"%d-%d-%010u-%010u.ckpt", sys_getpid(), sys_gettid(), \
+			LOG_DIR"%d-%d-%010u-%010u.ckpt", sys_getpid(), sys_gettid(), \
 			(uint32_t)(tv.tv_sec), (uint32_t)(tv.tv_usec));
 	CASSERT(fn_sz < 128 - 1, LOGGER, "fn_sz > 128 bytes\n");
 	fd = sys_open(filename, O_WRONLY | O_CREAT | O_APPEND, 0644);
@@ -293,10 +293,10 @@ snitchaser_main(struct snitchaser_startup_stack * stack)
 	init_self_bigbuffer();	
 
 	logger_fd = xlogger_init(sys_getpid());
-	ckpt_fd = xmemckpt_init(sys_getpid());
-	flush_mem_to_ckpt(ckpt_fd);
+//	ckpt_fd = xmemckpt_init(sys_getpid());
+//	flush_mem_to_ckpt(ckpt_fd);
 
-#if 0 
+#if 1 
 	patch_user_entry();
 #endif
 }

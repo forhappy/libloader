@@ -8,8 +8,8 @@
 #ifndef ARCH_CHECKPOINT_H
 #define ARCH_CHECKPOINT_H
 
-#include <common/defs.h>
-#include <xasm/processor.h>
+#include <defs.h>
+#include <loader/processor.h>
 
 enum arch_ckpt_mark {
 	ARCH_CKPT_SECT_UREGS_MARK = 0xffff,
