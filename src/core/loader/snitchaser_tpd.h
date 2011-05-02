@@ -31,7 +31,6 @@ struct thread_private_data {
 	struct obj_mm_tpd_stub mm_stub;
 	struct logger_tpd_stub logger_stub;
 	struct syscall_tpd_stub syscall_stub;
-
 	struct xmutex thread_mutex;
 	sigset_t saved_sigset;
 };

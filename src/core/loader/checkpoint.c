@@ -278,7 +278,7 @@ ckpt_meminfo(int fd)
 	read_self_procmap(&h, procmap_ptr);
 	TRACE(CKPT, "proc map from %p to %p\n", h.map_data, h.map_end);
 
-	struct proc_mem_region r = read_map_line(&h);
+	struct proc_mem_region r = read_maps_line(&h);
 	while (r.valid) {
 		if (r.start == (uintptr_t)procmap_ptr) {
 			r = read_map_line(&h);

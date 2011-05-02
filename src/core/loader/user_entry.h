@@ -6,9 +6,9 @@
 #ifndef INTERP_USER_ENTRY_H
 #define INTERP_USER_ENTRY_H
 
-#include <common/defs.h>
-#include <xasm/processor.h>
-#include <interp/arch_user_entry.h>
+#include <defs.h>
+#include <loader/processor.h>
+#include <loader/arch_user_entry.h>
 
 extern void
 patch_user_entry(void);

@@ -5,15 +5,15 @@
 
 
 #include <linux/mman.h>
-#include <common/defs.h>
-#include <common/debug.h>
-#include <common/procmap.h>
-#include <xasm/syscall.h>
-#include <xasm/processor.h>
-#include <interp/mm.h>
+#include <defs.h>
+#include <debug.h>
+#include <loader/proc.h>
+#include <syscall.h>
+#include <loader/processor.h>
+#include <loader/mm.h>
 
-#include <interp/user_entry.h>
-#include <interp/startup_stack.h>
+#include <loader/user_entry.h>
+#include <loader/startup_stack.h>
 
 
 static void * reprotect_addr_start = NULL;

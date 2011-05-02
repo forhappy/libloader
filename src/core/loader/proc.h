@@ -32,17 +32,17 @@ extern struct proc_maps_entry_t
 read_maps_line(struct proc_mem_handler_t *handler);
 
 extern struct proc_maps_entry_t
-find_in_maps_by_fn(struct proc_mem_handler_t *handler,
+find_in_map_by_fn(struct proc_mem_handler_t *handler,
 		const char * file_name, bool_t reset);
 
 extern struct proc_maps_entry_t
-find_in_maps_by_addr(struct proc_mem_handler_t *handler,
+find_in_map_by_addr(struct proc_mem_handler_t *handler,
 		const void * ptr);
 extern void 
-read_pid_procmaps(int pid, struct proc_mem_handler_t *handler, void *ptr);
+read_pid_procmap(int pid, struct proc_mem_handler_t *handler, void *ptr);
 
 extern void 
-read_self_procmaps(struct proc_mem_handler_t *handler, void *ptr);
+read_self_procmap(struct proc_mem_handler_t *handler, void *ptr);
 extern void
 flush_mem_to_ckpt(int ckptfd);
 #endif

@@ -25,7 +25,7 @@
 #endif
 
 #include <defs.h>
-#include <processor.h>
+#include <loader/processor.h>
 
 #define CKPT_VERSION_STRING	"SNITCHASER-CKPT00"
 

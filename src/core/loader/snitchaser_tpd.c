@@ -35,7 +35,6 @@ void
 free_aux_mem(struct thread_private_data * tpd)
 {
 	clean_mm_obj(&tpd->mm_stub);
-	destroy_code_cache(&tpd->cc_stub);
 }
 
 // vim:ts=4:sw=4

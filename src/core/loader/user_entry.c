@@ -1,6 +1,7 @@
 /* 
  * user_entry.c
  * by WN @ Nov. 09, 2010
+ * modified by HP.Fu @ Apr 28, 2011
  */
 
 #include <defs.h>

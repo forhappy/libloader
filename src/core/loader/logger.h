@@ -7,9 +7,9 @@
 #define __LOGGER_H
 
 #include <config.h>
-#include <interp/logger_tpd.h>
-#include <interp/rebranch_tpd.h>
-#include <interp/tls.h>
+#include <loader/logger_tpd.h>
+#include <loader/snitchaser_tpd.h>
+#include <loader/tls.h>
 
 #ifdef __KERNEL__
 # include <linux/time.h>

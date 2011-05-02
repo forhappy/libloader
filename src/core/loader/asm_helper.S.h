@@ -6,7 +6,7 @@
 #ifndef __ASM_HELPER_S_H
 #define __ASM_HELPER_S_H
 
-#include <interp/rebranch_asm_offset.h>
+#include <loader/snitchaser_asm_offset.h>
 
 #define ENTER_ENTRY	\
 		movl %esp, %fs:OFFSET_TPD_OLD_STACK_TOP; \

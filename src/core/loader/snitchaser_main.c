@@ -12,7 +12,9 @@
 #include <loader/tls.h>
 #include <loader/snitchaser_main.h>
 #include <loader/bigbuffer.h>
-
+#include <loader/snitchaser_tpd.h>
+#include <loader/user_entry.h>
+#include <loader/mm.h>
 #define R_386_NONE	   0		/* No reloc */
 #define R_386_32	   1		/* Direct 32 bit  */
 #define R_386_PC32	   2		/* PC relative 32 bit */
@@ -281,18 +283,20 @@ snitchaser_main(struct snitchaser_startup_stack * stack)
 	active_tls(td);
 
 	struct thread_private_data * tpd = setup_self_tpd();	
-#if 0
 	pid_t pid = sys_getpid();
 	pid_t tid = sys_gettid();
 	tpd->pid = pid;
 	tpd->tid = tid;
 
 	init_self_mm_obj(TRUE);
+
 	init_self_bigbuffer();	
-	patch_user_entry();
-#endif
+
 	logger_fd = xlogger_init(sys_getpid());
 	ckpt_fd = xmemckpt_init(sys_getpid());
 	flush_mem_to_ckpt(ckpt_fd);
-	return;
+
+#if 0 
+	patch_user_entry();
+#endif
 }
