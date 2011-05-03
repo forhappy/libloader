@@ -74,7 +74,6 @@ decompress(const unsigned char *src, size_t src_len,
 void
 write_comp_file_head(int fd)
 {
-	VERBOSE(COMPRESS,"write_comp_file_head()\n");
 	assert(fd >= 0);
 	int err = sys_write(fd, COMP_FILE_HEADER, COMP_FILE_HEADER_SZ);
 	assert(err == COMP_FILE_HEADER_SZ);

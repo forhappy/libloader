@@ -24,7 +24,6 @@
 #define MAP_TYPE	0x0f		/* Mask for type of mapping */
 #define MAP_FIXED	0x10		/* Interpret addr exactly */
 #define MAP_ANONYMOUS	0x20		/* don't use a file */
-#define MAX_PROC_MAPS_FILE_SIZE ((2048)*(1024))
 void
 init_map_handler(struct proc_mem_handler_t * handler,
 		char * data, size_t size)

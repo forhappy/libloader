@@ -128,7 +128,6 @@ write_section(int fd, enum ckpt_mark mark, const void * ptr, size_t length)
 static void
 clear_all_thread_mem(void)
 {
-	VERBOSE(LOADER, "clear all thread private data\n");
 	struct tls_desc * td;
 	list_for_each_entry(td, &tls_list, list) {
 		free_aux_mem(td->start_addr + OFFSET_TPD);
@@ -138,7 +137,6 @@ clear_all_thread_mem(void)
 static void
 ckpt_baseinfo(int fd)
 {
-	VERBOSE(CKPT, "writing base info\n");
 
 	/* first, the execuable path (maybe the interp itself) */
 	assert(STACK_INFO(bottom_exec_fn) != NULL);
@@ -168,13 +166,13 @@ static void
 ckpt_archinfo(int fd, struct pusha_regs * regs, void * pc)
 {
 	uint8_t buffer[1024];
-	VERBOSE(CKPT, "ckpt cpuinfo\n");
+	DEBUG(CKPT, "ckpt cpuinfo\n");
 	size_t sz = get_ckpt_cpuinfo(buffer, 1024, regs, pc);
-	VERBOSE(CKPT, "ckpt cpuinfo: size %ld\n", (long int)sz);
+	DEBUG(CKPT, "ckpt cpuinfo: size %ld\n", (long int)sz);
 	write_section(fd, CKPT_SECT_CPU_MARK, buffer, sz);
 
 	sz = get_tls_info(buffer, 1024);
-	VERBOSE(CKPT, "ckpt tlsinfo: size %ld\n", (long int)sz);
+	DEBUG(CKPT, "ckpt tlsinfo: size %ld\n", (long int)sz);
 	write_section(fd, CKPT_SECT_TLS_MARK, buffer, sz);
 }
 
@@ -186,7 +184,7 @@ ckpt_memseg(int fd, struct proc_maps_entry_t r)
 	memset(fn_buffer, '\0', r.fn_len + 1);
 	if (r.fn != NULL)
 		memcpy(fn_buffer, r.fn, r.fn_len);
-	VERBOSE(CKPT, "ckpting |%s|\n", fn_buffer);
+	DEBUG(CKPT, "ckpting |%s|\n", fn_buffer);
 
 	/* format of memset:
 	 *
@@ -210,7 +208,7 @@ ckpt_memseg(int fd, struct proc_maps_entry_t r)
 			&finfo, sizeof(finfo));
 	/* for special file */
 	if ((r.fn != NULL) && (memcmp(r.fn, "/dev", 4) == 0)) {
-		VERBOSE(CKPT, "this is dev file, don't ckpt it\n");
+		DEBUG(CKPT, "this is dev file, don't ckpt it\n");
 		setup_sglist(&list[2], TRUE, CKPT_SUBSECT_FDATA_MARK,
 				NULL, 0);
 		/* ckpt then exit */
@@ -222,7 +220,7 @@ ckpt_memseg(int fd, struct proc_maps_entry_t r)
 	/* make target space readable */
 	if (!(r.prot & PROT_READ)) {
 		size_t len = r.end - r.start;
-		VERBOSE(CKPT, "unprotect %lx to %lx\n", r.start, r.end);
+		DEBUG(CKPT, "unprotect %lx to %lx\n", r.start, r.end);
 		int err = sys_mprotect((void*)r.start, len, r.prot | PROT_READ);
 		assert(err == 0);
 	}
@@ -299,7 +297,7 @@ static void
 do_checkpoint(struct pusha_regs * regs, void * pc, void * stack_top,
 		char * fn, pid_t pid, pid_t tid)
 {
-	VERBOSE(CKPT, "%d:%d do checkpoint\n", pid, tid);
+	DEBUG(CKPT, "%d:%d do checkpoint\n", pid, tid);
 
 	init_self_bigbuffer();
 
@@ -307,7 +305,7 @@ do_checkpoint(struct pusha_regs * regs, void * pc, void * stack_top,
 	int fd = sys_open(fn, O_WRONLY|O_CREAT|O_TRUNC, 0664);
 	CASSERT(fd >= 0, CKPT, "open ckpt file %s failed: %d\n", fn, fd);
 
-	VERBOSE(CKPT, "ckptfile: %d\n", fd);
+	DEBUG(CKPT, "ckptfile: %d\n", fd);
 #ifdef COMPRESS_CKPT
 	write_comp_file_head(fd);
 #endif
@@ -326,7 +324,7 @@ do_checkpoint(struct pusha_regs * regs, void * pc, void * stack_top,
 	head.stack_top = (uintptr_t)(stack_top);
 
 	writeto(fd, &head, sizeof(head));
-	VERBOSE(CKPT, "ckpt head is written\n");
+	DEBUG(CKPT, "ckpt head is written\n");
 
 	/* code cache and mm should have been destoried */
 
@@ -358,7 +356,6 @@ fork_checkpoint(struct pusha_regs * regs, void * pc,
 			0, 0, NULL, NULL, NULL);
 	assert(tmppid >= 0);
 	if (tmppid == 0) {
-		VERBOSE(LOADER,"coming to the child process!\n");
 		tmppid = SYSCALL_MACRO(clone, 5,
 				0, 0, NULL, NULL, NULL);
 		assert(tmppid >= 0);

@@ -228,7 +228,6 @@ void *xmemset(void *s, int c, size_t count)
 }
 
 
-#define LOG_DIR "/tmp/snitchaser/"
 int
 xlogger_init(pid_t pid)
 {
@@ -293,9 +292,10 @@ snitchaser_main(struct snitchaser_startup_stack * stack)
 	init_self_bigbuffer();	
 
 	logger_fd = xlogger_init(sys_getpid());
-//	ckpt_fd = xmemckpt_init(sys_getpid());
-//	flush_mem_to_ckpt(ckpt_fd);
-
+#if 0
+	ckpt_fd = xmemckpt_init(sys_getpid());
+	flush_mem_to_ckpt(ckpt_fd);
+#endif
 #if 1 
 	patch_user_entry();
 #endif
